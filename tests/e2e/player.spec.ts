@@ -5,7 +5,7 @@ const LLM = "topics/how-an-llm-answers/";
 /** Ids of the nodes and edges currently lit up. */
 async function lit(page: Page): Promise<string[]> {
   return page
-    .locator('.diagram [data-on="true"]')
+    .locator('.diagram:visible [data-on="true"]')
     .evaluateAll((els) => els.map((el) => el.getAttribute("data-id") ?? ""));
 }
 
@@ -14,8 +14,8 @@ test.describe("diagram player", () => {
     page,
   }) => {
     await page.goto(LLM);
-    await expect(page.locator(".diagram .node")).toHaveCount(5);
-    await expect(page.locator(".diagram .edge")).toHaveCount(5);
+    await expect(page.locator(".diagram:visible .node")).toHaveCount(5);
+    await expect(page.locator(".diagram:visible .edge")).toHaveCount(5);
     expect(await lit(page)).toEqual(["prompt"]);
   });
 
@@ -135,7 +135,7 @@ test.describe("diagram player", () => {
     test(`${topic}: edge labels sit beside their lines`, async ({ page }) => {
       await page.goto(`topics/${topic}/`);
       const touching = await page
-        .locator(".diagram .pill")
+        .locator(".diagram:visible .pill")
         .evaluateAll((pills) =>
           pills.flatMap((pill) => {
             const id = pill.getAttribute("data-edge");
@@ -165,7 +165,7 @@ test.describe("diagram player", () => {
     }) => {
       await page.goto(`topics/${topic}/`);
       const problems = await page
-        .locator(".diagram .node")
+        .locator(".diagram:visible .node")
         .evaluateAll((nodes) =>
           nodes.flatMap((node) => {
             const face = node.querySelector(".node-face")!;

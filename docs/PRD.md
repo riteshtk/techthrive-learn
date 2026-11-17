@@ -97,7 +97,7 @@ All content lives in typed files under `content/`: one file per roadmap, one per
 | `sources` | `{title, url, read}[]` | at least one outside Tech & Thrive; `read` is the date checked |
 | `video` | `{youtubeId, title}` | optional |
 
-**Layout rules:** at 360 px wide, blocks are at least 72 px wide and labels at least 12 px, in at most two lines. Edges are straight lines clipped at block borders. An edge's label is a pill beside its line, never on it, on whichever side has room; the content check fails if neither side does. Two edges running both ways between the same nodes are offset to either side.
+**Layout rules:** at 360 px wide, blocks are at least 72 px wide and labels at least 12 px, in at most two lines. Edges are straight lines clipped at block borders. An edge's label is a pill beside its line, never on it, on whichever side has room; the content check fails if neither side does. Two edges running both ways between the same nodes are offset to either side. On wide screens the same grid is drawn wider, so the diagram fills most of the stage while the caption and controls stay on screen; the content check verifies both layouts.
 
 ## First roadmap: AI System Design
 

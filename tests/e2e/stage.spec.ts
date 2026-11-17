@@ -5,7 +5,7 @@ const LLM = "topics/how-an-llm-answers/";
 /** Moves the mouse onto the middle of an edge's line. */
 async function hoverEdge(page: Page, id: string) {
   const p = await page
-    .locator(`.edge[data-id="${id}"] .edge-line`)
+    .locator(`.diagram:visible .edge[data-id="${id}"] .edge-line`)
     .evaluate((el) => {
       const b = el.getBoundingClientRect();
       return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
@@ -33,7 +33,9 @@ test.describe("stage", () => {
   }) => {
     await page.goto(LLM);
     const block = page.getByRole("button", { name: "Tokenizer", exact: true });
-    const note = page.getByTestId("inspector");
+    const note = page.locator(
+      '.diagram-wrap:visible [data-testid="inspector"]',
+    );
     await block.click();
     await expect(block).toHaveAttribute("aria-pressed", "true");
     await expect(note).toContainText(
@@ -54,24 +56,30 @@ test.describe("stage", () => {
     page,
   }) => {
     await page.goto(LLM);
-    const note = page.getByTestId("inspector");
+    const note = page.locator(
+      '.diagram-wrap:visible [data-testid="inspector"]',
+    );
     await hoverEdge(page, "tokenizer-model");
     await expect(note).toContainText("Tokenizer → Model");
     await expect(note).toContainText("token ids");
     await page.mouse.move(2, 2);
     await expect(note).toHaveAttribute("data-open", "false");
 
-    await page.locator('.edge[data-id="model-next-token"]').focus();
+    await page
+      .locator('.diagram:visible .edge[data-id="model-next-token"]')
+      .focus();
     await expect(note).toContainText("a score for every possible token");
   });
 
   test("a line's note never covers the blocks it joins", async ({ page }) => {
     await page.goto(LLM);
     await hoverEdge(page, "tokenizer-model");
-    const note = (await page.getByTestId("inspector").boundingBox())!;
+    const note = (await page
+      .locator('.diagram-wrap:visible [data-testid="inspector"]')
+      .boundingBox())!;
     for (const id of ["tokenizer", "model"]) {
       const block = (await page
-        .locator(`.node[data-id="${id}"] .node-face`)
+        .locator(`.diagram:visible .node[data-id="${id}"] .node-face`)
         .boundingBox())!;
       const overlaps =
         note.x < block.x + block.width &&
@@ -120,10 +128,12 @@ test.describe("stage", () => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto(`${LLM}?step=6`);
     // Step 6 lights two lines.
-    await expect(page.locator(".packet")).toHaveCount(2);
-    await expect(page.locator(".packet animateMotion")).toHaveCount(2);
+    await expect(page.locator(".diagram:visible .packet")).toHaveCount(2);
+    await expect(
+      page.locator(".diagram:visible .packet animateMotion"),
+    ).toHaveCount(2);
     const moved = await page
-      .locator(".packet")
+      .locator(".diagram:visible .packet")
       .first()
       .evaluate(
         (el) =>
@@ -141,8 +151,10 @@ test.describe("stage", () => {
   test("with reduced motion the packet sits still", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(`${LLM}?step=2`);
-    await expect(page.locator(".packet")).toHaveCount(1);
-    await expect(page.locator(".packet animateMotion")).toHaveCount(0);
+    await expect(page.locator(".diagram:visible .packet")).toHaveCount(1);
+    await expect(
+      page.locator(".diagram:visible .packet animateMotion"),
+    ).toHaveCount(0);
   });
 
   test("full screen shows the whole player", async ({ page }) => {
@@ -162,6 +174,22 @@ test.describe("stage", () => {
       page.getByRole("button", { name: "Exit full screen" }),
     ).toBeVisible();
   });
+
+  for (const topic of ["how-an-llm-answers", "rag", "agent-loop"]) {
+    test(`${topic}: on a laptop the diagram fills most of the stage`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(`topics/${topic}/`);
+      const stage = (await page.locator(".stage").boundingBox())!;
+      const diagram = (await page.locator(".diagram:visible").boundingBox())!;
+      expect(diagram.width / stage.width).toBeGreaterThanOrEqual(0.75);
+      // Still on one screen with the caption above the bottom bar.
+      const bar = (await page.locator(".bottom-bar").boundingBox())!;
+      const caption = (await page.getByTestId("caption").boundingBox())!;
+      expect(caption.y + caption.height).toBeLessThanOrEqual(bar.y);
+    });
+  }
 
   test("the legend explains the colours", async ({ page }) => {
     await page.goto(LLM);

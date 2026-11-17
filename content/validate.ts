@@ -3,6 +3,8 @@
 // gets a clear message naming the file and field, not a crash.
 
 import {
+  NARROW,
+  WIDE,
   edgeLabelsOverNodes,
   edgesCrossingNodes,
   layoutDiagram,
@@ -251,21 +253,35 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
       add("diagram.edges", "is missing");
     }
 
-    // Layout rules, using the renderer's own geometry.
-    const layout = layoutDiagram(nodes, edges);
-    for (const { edge, node } of edgesCrossingNodes(layout)) {
-      add(
-        `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}]`,
-        `"${edge.id}" crosses node "${node.id}"; move a node so the line is clear`,
-      );
-    }
-    for (const { edge, node } of edgeLabelsOverNodes(layout)) {
-      add(
-        `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}].label`,
-        node
-          ? `"${edge.label}" has no room beside its line and overlaps node "${node.id}"; leave a gap or empty cell between the nodes`
-          : `"${edge.label}" has no room beside its line inside the diagram; move the nodes inwards`,
-      );
+    // Layout rules, using the renderer's own geometry, for both the phone
+    // layout and the wider one big screens use.
+    const said = new Set<string>();
+    for (const [size, where] of [
+      [NARROW, ""],
+      [WIDE, " on wide screens"],
+    ] as const) {
+      const layout = layoutDiagram(nodes, edges, size);
+      // A problem found on both layouts is reported once, phone first.
+      const once = (key: string, field: string, message: string) => {
+        if (!said.has(key)) add(field, message);
+        said.add(key);
+      };
+      for (const { edge, node } of edgesCrossingNodes(layout)) {
+        once(
+          `cross|${edge.id}|${node.id}`,
+          `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}]`,
+          `"${edge.id}" crosses node "${node.id}"${where}; move a node so the line is clear`,
+        );
+      }
+      for (const { edge, node } of edgeLabelsOverNodes(layout)) {
+        once(
+          `label|${edge.id}`,
+          `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}].label`,
+          node
+            ? `"${edge.label}" has no room beside its line${where} and overlaps node "${node.id}"; leave a gap or empty cell between the nodes`
+            : `"${edge.label}" has no room beside its line inside the diagram${where}; move the nodes inwards`,
+        );
+      }
     }
 
     // Steps ----------------------------------------------------------------

@@ -89,7 +89,10 @@ test("a deep link opens on its step without animating there", async ({
       if (records.some((r) => r.attributeName === "data-ready")) {
         (window as unknown as { litAtReady: string[] }).litAtReady = [
           ...document.querySelectorAll('.diagram .node[data-on="true"]'),
-        ].map((el) => el.getAttribute("data-id") ?? "");
+        ]
+          // Only the layout this screen shows; the other is display: none.
+          .filter((el) => el.closest(".diagram-wrap")!.checkVisibility())
+          .map((el) => el.getAttribute("data-id") ?? "");
         observer.disconnect();
       }
     }).observe(document, {
@@ -112,7 +115,7 @@ test.describe("reduced motion", () => {
     await page.goto(LLM);
     await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
     const duration = await page
-      .locator(".diagram .node .node-face")
+      .locator(".diagram:visible .node .node-face")
       .first()
       .evaluate((el) => getComputedStyle(el).transitionDuration);
     expect(duration).toBe("0s");
@@ -123,7 +126,7 @@ test.describe("reduced motion", () => {
     await page.goto(LLM);
     await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
     const duration = await page
-      .locator(".diagram .node .node-face")
+      .locator(".diagram:visible .node .node-face")
       .first()
       .evaluate((el) => getComputedStyle(el).transitionDuration);
     expect(duration.split(",")[0]?.trim()).toBe("0.4s");

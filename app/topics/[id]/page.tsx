@@ -6,7 +6,7 @@ import { Icon } from "@/components/Icon";
 import { formatDate } from "@/lib/dates";
 import { pageMetadata } from "@/lib/metadata";
 import { levelLabel } from "@/lib/roadmap";
-import { layoutDiagram } from "@/player/geometry";
+import { layoutDiagram, NARROW, WIDE } from "@/player/geometry";
 import { Player } from "@/player/Player";
 
 export const dynamicParams = false;
@@ -34,7 +34,10 @@ export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
   const roadmap = homeRoadmapOf(topic.id);
   const position = roadmap ? roadmap.topics.indexOf(topic.id) + 1 : 0;
   // Laid out at build time so the geometry code never ships to the browser.
-  const layout = layoutDiagram(topic.diagram.nodes, topic.diagram.edges);
+  const layouts = {
+    narrow: layoutDiagram(topic.diagram.nodes, topic.diagram.edges, NARROW),
+    wide: layoutDiagram(topic.diagram.nodes, topic.diagram.edges, WIDE),
+  };
 
   return (
     <main className="page page-topic">
@@ -64,7 +67,7 @@ export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
         </ul>
       </header>
       <Player
-        layout={layout}
+        layouts={layouts}
         steps={topic.steps}
         title={topic.title}
         topicId={topic.id}

@@ -53,6 +53,8 @@ test.describe("without JavaScript", () => {
     await expect(page.getByTestId("caption")).toHaveText(
       "You send a prompt, as plain text.",
     );
-    await expect(page.locator('.diagram [data-on="true"]')).toHaveCount(1);
+    await expect(page.locator('.diagram:visible [data-on="true"]')).toHaveCount(
+      1,
+    );
   });
 });

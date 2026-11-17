@@ -11,6 +11,11 @@ import type { DiagramEdge, DiagramNode } from "@/content/types";
 export const VIEW_W = 320;
 export const MIN_BOX_W = 72;
 export const MAX_BOX_W = 112;
+
+/** The phone layout, and a wider one with the same grid for big screens. */
+export type LayoutSize = { width: number; maxBoxW: number };
+export const NARROW: LayoutSize = { width: VIEW_W, maxBoxW: MAX_BOX_W };
+export const WIDE: LayoutSize = { width: 600, maxBoxW: 150 };
 /** Whole block, including the DEPTH-unit side that makes it look raised. */
 export const BOX_H = 56;
 export const DEPTH = 5;
@@ -73,6 +78,7 @@ export function wrapLabel(label: string): string[] {
 export function layoutDiagram(
   nodes: readonly DiagramNode[],
   edges: readonly DiagramEdge[],
+  size: LayoutSize = NARROW,
 ): Layout {
   // Only the columns and rows in use are drawn.
   const xs = nodes.length ? nodes.map((n) => n.x) : [0];
@@ -83,8 +89,8 @@ export function layoutDiagram(
   const rows = Math.max(...ys) - firstRow + 1;
 
   // Fewer columns leave wider gaps rather than ever-wider boxes.
-  const colPitch = VIEW_W / cols;
-  const boxW = Math.min(MAX_BOX_W, Math.max(MIN_BOX_W, colPitch - 30));
+  const colPitch = size.width / cols;
+  const boxW = Math.min(size.maxBoxW, Math.max(MIN_BOX_W, colPitch - 30));
 
   const laidNodes: LaidOutNode[] = nodes.map((n) => {
     const x = (n.x - firstCol) * colPitch + (colPitch - boxW) / 2;
@@ -136,12 +142,12 @@ export function layoutDiagram(
   });
 
   const height = PAD * 2 + (rows - 1) * ROW_PITCH + BOX_H;
-  const view = { x: 0, y: 0, w: VIEW_W, h: height };
+  const view = { x: 0, y: 0, w: size.width, h: height };
   for (const edge of laidEdges) {
     if (edge.label)
       edge.labelAt = placeLabel(edge, edge.label, view, laidNodes);
   }
-  return { width: VIEW_W, height, nodes: laidNodes, edges: laidEdges };
+  return { width: size.width, height, nodes: laidNodes, edges: laidEdges };
 }
 
 /** Gap between an edge label and its line. */

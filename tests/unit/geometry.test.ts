@@ -13,6 +13,7 @@ import {
   layoutDiagram,
   segmentHitsBox,
   VIEW_W,
+  WIDE,
   wrapLabel,
 } from "@/player/geometry";
 
@@ -177,16 +178,32 @@ describe("labels", () => {
   });
 });
 
+describe("wide layout", () => {
+  it("spreads the same grid over a wider stage with wider blocks", () => {
+    const nodes = [node("a", 0, 0), node("b", 1, 0)];
+    const narrow = layoutDiagram(nodes, []);
+    const wide = layoutDiagram(nodes, [], WIDE);
+    expect(wide.width).toBe(600);
+    expect(wide.height).toBe(narrow.height);
+    expect(wide.nodes[0]!.box.w).toBeGreaterThan(narrow.nodes[0]!.box.w);
+    expect(wide.nodes[0]!.box.w).toBeLessThanOrEqual(WIDE.maxBoxW);
+  });
+});
+
 describe("shipped topics", () => {
   it.each(getTopics().map((t) => [t.id, t] as const))(
-    "%s has no crossings or crowded labels",
+    "%s has no crossings or crowded labels, narrow or wide",
     (_id, topic) => {
-      const layout = layoutDiagram(topic.diagram.nodes, topic.diagram.edges);
-      expect(edgesCrossingNodes(layout)).toEqual([]);
-      expect(edgeLabelsOverNodes(layout)).toEqual([]);
-      for (const e of layout.edges) {
-        const box = edgeLabelBox(e);
-        if (box) expect(segmentHitsBox(e.start, e.end, box)).toBe(false);
+      for (const layout of [
+        layoutDiagram(topic.diagram.nodes, topic.diagram.edges),
+        layoutDiagram(topic.diagram.nodes, topic.diagram.edges, WIDE),
+      ]) {
+        expect(edgesCrossingNodes(layout)).toEqual([]);
+        expect(edgeLabelsOverNodes(layout)).toEqual([]);
+        for (const e of layout.edges) {
+          const box = edgeLabelBox(e);
+          if (box) expect(segmentHitsBox(e.start, e.end, box)).toBe(false);
+        }
       }
     },
   );

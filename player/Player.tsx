@@ -27,7 +27,8 @@ import {
 import type { Layout } from "./geometry";
 
 type Props = {
-  layout: Layout;
+  /** The phone layout and the wider one; CSS shows the one that fits. */
+  layouts: { narrow: Layout; wide: Layout };
   steps: Step[];
   title: string;
   topicId: string;
@@ -47,7 +48,7 @@ const subscribeFullscreen = (cb: () => void) => {
 };
 const never = () => () => {};
 
-export function Player({ layout, steps, title, topicId, roadmapId }: Props) {
+export function Player({ layouts, steps, title, topicId, roadmapId }: Props) {
   const router = useRouter();
   const [state, dispatch] = useReducer(reducePlayer, steps.length, initPlayer);
   const step = steps[state.step] ?? steps[0];
@@ -173,27 +174,38 @@ export function Player({ layout, steps, title, topicId, roadmapId }: Props) {
       onKeyDown={onKeyDown}
     >
       <div className="stage">
-        <div
-          className="diagram-wrap"
-          style={{ "--ratio": layout.width / layout.height } as CSSProperties}
-          onClick={(e) => {
-            if ((e.target as Element).tagName === "svg") setPinned(null);
-          }}
-        >
-          <Diagram
-            layout={layout}
-            active={active}
-            step={state.step}
-            label={`Diagram: ${title}`}
-            pinned={pinned}
-            onPin={(t) =>
-              setPinned((p) => (p?.kind === t.kind && p.id === t.id ? null : t))
-            }
-            onPeek={setPeek}
-            still={still}
-          />
-          <Inspector layout={layout} target={shown} />
-        </div>
+        {(["narrow", "wide"] as const).map((size) => {
+          const layout = layouts[size];
+          return (
+            <div
+              key={size}
+              className="diagram-wrap"
+              data-size={size}
+              style={
+                { "--ratio": layout.width / layout.height } as CSSProperties
+              }
+              onClick={(e) => {
+                if ((e.target as Element).tagName === "svg") setPinned(null);
+              }}
+            >
+              <Diagram
+                layout={layout}
+                active={active}
+                step={state.step}
+                label={`Diagram: ${title}`}
+                pinned={pinned}
+                onPin={(t) =>
+                  setPinned((p) =>
+                    p?.kind === t.kind && p.id === t.id ? null : t,
+                  )
+                }
+                onPeek={setPeek}
+                still={still}
+              />
+              <Inspector layout={layout} target={shown} />
+            </div>
+          );
+        })}
         <div className="stage-foot">
           <ul className="legend" aria-label="Legend">
             <li>

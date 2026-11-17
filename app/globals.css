@@ -764,16 +764,29 @@ dialog::backdrop {
   margin: 0 auto;
 }
 
-/* On wider screens the diagram scales up, so cap its height to keep the
-   caption and controls on screen too. Phones draw it at full width, which
-   keeps blocks at 72 px and labels at 12 px. */
-@media (min-width: 40rem) {
-  .diagram-wrap {
-    max-width: calc(max(18rem, 100svh - 27rem) * var(--ratio));
+/* Two layouts of the same diagram: the phone one, drawn at full width so
+   blocks are at least 72 px and labels 12 px, and a wider one with the same
+   grid that fills most of a big stage. CSS shows one; the other is
+   display: none, so it is out of the accessibility tree and the tab order. */
+.diagram-wrap[data-size="wide"] {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .diagram-wrap[data-size="narrow"] {
+    display: none;
   }
 
-  .player:fullscreen .diagram-wrap {
-    max-width: calc((100svh - 14rem) * var(--ratio));
+  /* As wide as the stage allows, while leaving room below for the
+     timeline, caption and bottom bar; never below one unit per pixel, so
+     labels stay at least 12 px. */
+  .diagram-wrap[data-size="wide"] {
+    display: block;
+    max-width: max(600px, calc((100svh - 26rem) * var(--ratio)));
+  }
+
+  .player:fullscreen .diagram-wrap[data-size="wide"] {
+    max-width: max(600px, calc((100svh - 13rem) * var(--ratio)));
   }
 }
 
