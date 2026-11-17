@@ -55,6 +55,13 @@ function baseName(file: string): string {
   return file.replace(/^.*\//, "").replace(/\.ts$/, "");
 }
 
+/** YYYY-MM-DD naming a day that exists (Date.parse rolls 31 Feb over). */
+function isRealDate(text: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const date = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text);
+}
+
 /** Ends like a sentence and doesn't run on into a second one. */
 function isOneSentence(text: string): boolean {
   return /[.!?]$/.test(text) && !/[.!?]\s+[A-Z]/.test(text.slice(0, -1));
@@ -117,6 +124,8 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
     const diagram = topic.diagram;
     const nodes: DiagramNode[] = [];
     const edges: DiagramEdge[] = [];
+    // Position of each valid edge in diagram.edges, for messages.
+    const edgeIndex = new Map<string, number>();
     const allIds = new Map<string, string>(); // id → field that declared it
     const declare = (id: unknown, field: string) => {
       if (typeof id !== "string" || id === "") {
@@ -241,13 +250,15 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
             `${field}.flows`,
             `must be text of at most ${LIMITS.flows} characters`,
           );
-        if (ok && ends && raw.from !== raw.to)
+        if (ok && ends && raw.from !== raw.to) {
+          edgeIndex.set(raw.id as string, i);
           edges.push({
             id: raw.id as string,
             from: raw.from as string,
             to: raw.to as string,
             label: raw.label as string | undefined,
           });
+        }
       });
     } else if (isObj(diagram)) {
       add("diagram.edges", "is missing");
@@ -269,14 +280,14 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
       for (const { edge, node } of edgesCrossingNodes(layout)) {
         once(
           `cross|${edge.id}|${node.id}`,
-          `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}]`,
+          `diagram.edges[${edgeIndex.get(edge.id)}]`,
           `"${edge.id}" crosses node "${node.id}"${where}; move a node so the line is clear`,
         );
       }
       for (const { edge, node } of edgeLabelsOverNodes(layout)) {
         once(
           `label|${edge.id}`,
-          `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}].label`,
+          `diagram.edges[${edgeIndex.get(edge.id)}].label`,
           node
             ? `"${edge.label}" has no room beside its line${where} and overlaps node "${node.id}"; leave a gap or empty cell between the nodes`
             : `"${edge.label}" has no room beside its line inside the diagram${where}; move the nodes inwards`,
@@ -352,11 +363,7 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
           add(`${field}.url`, "must be a full https:// link");
         if (url && !TECH_THRIVE_HOST.test(url.hostname)) outside = true;
         const read = raw.read;
-        if (
-          typeof read !== "string" ||
-          !/^\d{4}-\d{2}-\d{2}$/.test(read) ||
-          Number.isNaN(Date.parse(read))
-        )
+        if (typeof read !== "string" || !isRealDate(read))
           add(`${field}.read`, "must be the date checked, as YYYY-MM-DD");
       });
       if (!outside)

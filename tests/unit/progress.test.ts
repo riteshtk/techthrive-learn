@@ -34,7 +34,8 @@ describe("progress store", () => {
   });
 
   it("marks, unmarks, de-duplicates and resets", () => {
-    const store = createProgressStore(() => memoryStorage());
+    const storage = memoryStorage();
+    const store = createProgressStore(() => storage);
     store.markDone("rag");
     store.markDone("rag");
     store.markDone("agent-loop");
@@ -91,10 +92,61 @@ describe("progress store", () => {
     expect(store.getDone()).toEqual(["rag"]);
   });
 
+  it("keeps what another tab marked done", () => {
+    const storage = memoryStorage();
+    const tabA = createProgressStore(() => storage);
+    const tabB = createProgressStore(() => storage);
+    expect(tabB.getDone()).toEqual([]);
+    tabA.markDone("rag");
+    tabB.markDone("agent-loop");
+    expect(storage.getItem(PROGRESS_KEY)).toBe('{"done":["rag","agent-loop"]}');
+  });
+
+  it("tells listeners when another tab changes progress", () => {
+    const storage = memoryStorage();
+    let changed = () => {};
+    const unwatch = vi.fn();
+    const tabB = createProgressStore(
+      () => storage,
+      (onChange) => {
+        changed = onChange;
+        return unwatch;
+      },
+    );
+    const listener = vi.fn();
+    const unsubscribe = tabB.subscribe(listener);
+    expect(tabB.getDone()).toEqual([]);
+    createProgressStore(() => storage).markDone("rag");
+    changed();
+    expect(listener).toHaveBeenCalledOnce();
+    expect(tabB.getDone()).toEqual(["rag"]);
+    unsubscribe();
+    expect(unwatch).toHaveBeenCalledOnce();
+  });
+
   it("works with no storage at all", () => {
     const store = createProgressStore(() => undefined);
     store.markDone("rag");
-    expect(store.getDone()).toEqual(["rag"]);
+    store.markDone("agent-loop");
+    expect(store.getDone()).toEqual(["rag", "agent-loop"]);
+  });
+
+  it("keeps progress in memory when storage is blocked or full", () => {
+    const blocked = createProgressStore(() => {
+      throw new Error("SecurityError");
+    });
+    blocked.markDone("rag");
+    blocked.markDone("agent-loop");
+    expect(blocked.getDone()).toEqual(["rag", "agent-loop"]);
+
+    const full = memoryStorage();
+    full.setItem = () => {
+      throw new Error("QuotaExceededError");
+    };
+    const store = createProgressStore(() => full);
+    store.markDone("rag");
+    store.markDone("agent-loop");
+    expect(store.getDone()).toEqual(["rag", "agent-loop"]);
   });
 });
 

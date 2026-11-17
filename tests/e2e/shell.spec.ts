@@ -104,6 +104,18 @@ test.describe("search", () => {
     await expect(page.getByTestId("counter")).toHaveText("4 of 7");
   });
 
+  test("a step in the topic already open moves the player there", async ({
+    page,
+  }) => {
+    await page.goto("topics/how-an-llm-answers/?step=2");
+    await expect(page.getByTestId("counter")).toHaveText("2 of 7");
+    await page.keyboard.press("Control+k");
+    await page.getByRole("combobox").fill("temperature");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/topics\/how-an-llm-answers\/\?step=4$/);
+    await expect(page.getByTestId("counter")).toHaveText("4 of 7");
+  });
+
   test("arrow keys move through results; / also opens search", async ({
     page,
   }) => {

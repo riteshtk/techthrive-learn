@@ -14,7 +14,13 @@ import {
 import { BrandImage } from "@/components/BrandImage";
 import { Icon } from "@/components/Icon";
 import { levelLabel } from "@/lib/roadmap";
-import { searchTopics, type NavRoadmap, type SearchEntry } from "@/lib/search";
+import {
+  navTopicIds,
+  searchTopics,
+  type NavRoadmap,
+  type SearchEntry,
+} from "@/lib/search";
+import { stepRequest } from "@/lib/stepRequest";
 import { currentTheme, setTheme, subscribeTheme } from "@/lib/theme";
 import { useProgress } from "@/lib/useProgress";
 
@@ -109,7 +115,7 @@ function CourseDrawer({
   roadmaps: NavRoadmap[];
 }) {
   const pathname = usePathname();
-  const allIds = roadmaps.flatMap((r) => r.topics.map((t) => t.id));
+  const allIds = navTopicIds(roadmaps);
   const done = useProgress(allIds);
   const titleId = useId();
 
@@ -165,9 +171,7 @@ function CourseDrawer({
                           {isDone ? <Icon name="check" size={12} /> : null}
                         </span>
                         <span>{topic.title}</span>
-                        <span className="meta">
-                          {levelLabel[topic.level as keyof typeof levelLabel]}
-                        </span>
+                        <span className="meta">{levelLabel[topic.level]}</span>
                       </Link>
                     </li>
                   );
@@ -202,6 +206,7 @@ function SearchDialog({
   entries: SearchEntry[];
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const results = useMemo(() => searchTopics(entries, query), [entries, query]);
@@ -217,9 +222,12 @@ function SearchDialog({
 
   function go(i: number, dialog: HTMLDialogElement | null) {
     const href = hrefOf(i);
-    if (!href) return;
+    const r = results[i];
+    if (!href || !r) return;
     dialog?.close();
-    router.push(href);
+    // The topic already open keeps its player, which moves and updates ?step.
+    if (pathname === `/topics/${r.id}/`) stepRequest.send(r.step ?? 1);
+    else router.push(href);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {

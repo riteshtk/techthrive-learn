@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import type { Step } from "@/content/types";
 import { doneNotice } from "@/lib/doneNotice";
+import { stepRequest } from "@/lib/stepRequest";
 import { progressStore } from "@/lib/useProgress";
 import { Diagram, type Inspect } from "./Diagram";
 import {
@@ -101,6 +102,12 @@ export function Player({ layouts, steps, title, topicId, roadmapId }: Props) {
     }
   }, [state.step, state.total]);
 
+  // Search picked a step of this topic.
+  useEffect(
+    () => stepRequest.listen((n) => dispatch({ type: "goto", step: n - 1 })),
+    [],
+  );
+
   // Play holds each step for its own time, then advances one step.
   useEffect(() => {
     if (!state.playing || !step) return;
@@ -133,7 +140,7 @@ export function Player({ layouts, steps, title, topicId, roadmapId }: Props) {
 
   // Right/Left step and Space plays or pauses while the player has focus;
   // a focused button, link or diagram part keeps its own Space. Escape
-  // clears a pinned note.
+  // hides the note, pinned or not.
   function onKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.key === "ArrowRight") {
@@ -148,14 +155,16 @@ export function Player({ layouts, steps, title, topicId, roadmapId }: Props) {
         return;
       event.preventDefault();
       dispatch({ type: "toggle" });
-    } else if (event.key === "Escape" && pinned) {
+    } else if (event.key === "Escape" && shown) {
       setPinned(null);
+      setPeek(null);
     }
   }
 
   function markDone() {
+    const already = progressStore.getDone().includes(topicId);
     progressStore.markDone(topicId);
-    doneNotice.set(topicId);
+    doneNotice.set({ topicId, already });
     if (document.fullscreenElement) void document.exitFullscreen();
     router.push(roadmapId ? `/roadmaps/${roadmapId}/` : "/");
   }

@@ -7,13 +7,14 @@ import { progressStore } from "@/lib/useProgress";
 /**
  * "Marked X as done. Undo", shown after "Mark as done" brings the learner
  * back here. Fixed to the bottom of the screen, so it never shifts the page.
+ * A topic that was already done gets no Undo, which would lose that progress.
  */
 export function UndoDone({
   topics,
 }: {
   topics: { id: string; title: string }[];
 }) {
-  const doneId = useSyncExternalStore(
+  const notice = useSyncExternalStore(
     doneNotice.subscribe,
     doneNotice.get,
     () => null,
@@ -23,13 +24,16 @@ export function UndoDone({
   // The notice belongs to this visit of the page only.
   useEffect(() => () => doneNotice.set(null), []);
 
+  const doneId = notice?.topicId;
   const title = topics.find((t) => t.id === doneId)?.title;
 
   return (
     <div className="toast" role="status" data-testid="undo-toast">
       {doneId && title ? (
         <div className="toast-body">
-          {undone ? (
+          {notice?.already ? (
+            <span>“{title}” was already marked as done.</span>
+          ) : undone ? (
             <span>“{title}” is no longer marked as done.</span>
           ) : (
             <>

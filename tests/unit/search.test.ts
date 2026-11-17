@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { searchEntries } from "@/content";
-import { searchTopics } from "@/lib/search";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { navRoadmaps, searchEntries } from "@/content";
+import type { Level } from "@/content/types";
+import {
+  navTopicIds,
+  searchTopics,
+  type NavRoadmap,
+  type NavTopic,
+} from "@/lib/search";
 
 const entries = searchEntries();
 const ids = (q: string) => searchTopics(entries, q).map((r) => r.id);
@@ -37,5 +43,26 @@ describe("search", () => {
     const results = searchTopics(entries, "model");
     expect(results.length).toBeGreaterThan(1);
     expect(results.every((r) => r.step === undefined)).toBe(true);
+  });
+});
+
+describe("course menu data", () => {
+  it("counts a topic in two roadmaps once", () => {
+    const topic = (id: string): NavTopic => ({
+      id,
+      title: id,
+      level: "basics",
+    });
+    const roadmaps: NavRoadmap[] = [
+      { id: "one", title: "One", topics: [topic("rag"), topic("agent-loop")] },
+      { id: "two", title: "Two", topics: [topic("rag"), topic("tools")] },
+    ];
+    expect(navTopicIds(roadmaps)).toEqual(["rag", "agent-loop", "tools"]);
+  });
+
+  it("types each topic's level as a content level", () => {
+    expectTypeOf<NavTopic["level"]>().toEqualTypeOf<Level>();
+    for (const topic of navRoadmaps().flatMap((r) => r.topics))
+      expect(["basics", "intermediate", "advanced"]).toContain(topic.level);
   });
 });

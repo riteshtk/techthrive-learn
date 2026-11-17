@@ -2,8 +2,15 @@
 // build time (content/index.ts) and passed to the client as plain data, so
 // no content files ship as JavaScript.
 
-export type NavTopic = { id: string; title: string; level: string };
+import type { Level } from "@/content/types";
+
+export type NavTopic = { id: string; title: string; level: Level };
 export type NavRoadmap = { id: string; title: string; topics: NavTopic[] };
+
+/** Each topic once, though a topic may sit in more than one roadmap. */
+export function navTopicIds(roadmaps: readonly NavRoadmap[]): string[] {
+  return [...new Set(roadmaps.flatMap((r) => r.topics.map((t) => t.id)))];
+}
 
 export type SearchEntry = {
   id: string;

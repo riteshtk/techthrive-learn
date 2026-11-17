@@ -180,6 +180,20 @@ describe("content checks", () => {
     ]);
   });
 
+  it("point at the right edge when an earlier one is invalid", () => {
+    const t = topic();
+    t.diagram.nodes[2] = { id: "c", label: "Gamma", note: "Ends.", x: 0, y: 2 };
+    t.diagram.edges = [
+      { id: "bad", from: "nowhere", to: "b" },
+      { id: "b-c", from: "b", to: "c" },
+      { id: "a-c", from: "a", to: "c" },
+    ];
+    t.steps[2].highlight = ["a-c", "c"];
+    expect(check(t)).toContain(
+      `${FILE} › diagram.edges[2]: "a-c" crosses node "b"; move a node so the line is clear`,
+    );
+  });
+
   it("reject an edge label with no room between its nodes", () => {
     const t = topic();
     t.diagram.nodes = ["a", "b", "c", "d"].map((id, x) => ({
@@ -242,6 +256,14 @@ describe("content checks", () => {
     t.sources[0].url = "http://example.org";
     expect(check(t)).toEqual([
       `${FILE} › sources[0].url: must be a full https:// link`,
+      `${FILE} › sources[0].read: must be the date checked, as YYYY-MM-DD`,
+    ]);
+  });
+
+  it("reject a read date that doesn't exist", () => {
+    const t = topic();
+    t.sources[0].read = "2026-02-31";
+    expect(check(t)).toEqual([
       `${FILE} › sources[0].read: must be the date checked, as YYYY-MM-DD`,
     ]);
   });

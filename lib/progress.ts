@@ -35,11 +35,19 @@ function parse(raw: string | null): string[] {
   return [];
 }
 
+/**
+ * `watch` reports changes made in other tabs (the "storage" event), so every
+ * open tab shows the same progress.
+ */
 export function createProgressStore(
   getStorage: () => Storage | undefined,
+  watch?: (onChange: () => void) => () => void,
 ): ProgressStore {
   const listeners = new Set<() => void>();
   let done: readonly string[] | null = null;
+  // False once a write fails; storage then lags memory and must not be reread.
+  let stored = true;
+  let unwatch: (() => void) | undefined;
 
   function load(): readonly string[] {
     if (done === null) {
@@ -52,15 +60,21 @@ export function createProgressStore(
     return done;
   }
 
+  /** The stored list as it is now, which another tab may have changed. */
+  function fresh(): readonly string[] {
+    if (stored) done = null;
+    return load();
+  }
+
   function save(next: readonly string[]) {
     done = [...new Set(next)];
     try {
-      getStorage()?.setItem(
-        PROGRESS_KEY,
-        JSON.stringify({ done } satisfies Stored),
-      );
+      const storage = getStorage();
+      storage?.setItem(PROGRESS_KEY, JSON.stringify({ done } satisfies Stored));
+      stored = storage !== undefined;
     } catch {
       // Storage full or blocked: keep the in-memory copy for this visit.
+      stored = false;
     }
     listeners.forEach((l) => l());
   }
@@ -68,12 +82,24 @@ export function createProgressStore(
   return {
     getDone: load,
     setDone: save,
-    markDone: (id) => save([...load(), id]),
-    unmarkDone: (id) => save(load().filter((d) => d !== id)),
+    markDone: (id) => save([...fresh(), id]),
+    unmarkDone: (id) => save(fresh().filter((d) => d !== id)),
     reset: () => save([]),
     subscribe(listener) {
+      if (listeners.size === 0 && watch) {
+        unwatch = watch(() => {
+          done = null;
+          listeners.forEach((l) => l());
+        });
+      }
       listeners.add(listener);
-      return () => listeners.delete(listener);
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+          unwatch?.();
+          unwatch = undefined;
+        }
+      };
     },
   };
 }

@@ -31,6 +31,23 @@ test.describe("progress", () => {
     );
   });
 
+  test("marking a topic done again offers no Undo", async ({ page }) => {
+    await page.addInitScript((k) => {
+      if (!sessionStorage.getItem("seeded")) {
+        localStorage.setItem(k, JSON.stringify({ done: ["rag"] }));
+        sessionStorage.setItem("seeded", "1");
+      }
+    }, KEY);
+    await page.goto("topics/rag/?step=7");
+    await page.getByRole("button", { name: "Mark as done" }).click();
+    const toast = page.getByTestId("undo-toast");
+    await expect(toast).toContainText(
+      "“RAG: answers from your documents” was already marked as done.",
+    );
+    await expect(toast.getByRole("button", { name: "Undo" })).toHaveCount(0);
+    await expect(page.getByTestId("done-rag")).toHaveText("✓ Done");
+  });
+
   test("the Undo notice is not replayed on reload", async ({ page }) => {
     await page.goto("topics/rag/?step=7");
     await page.getByRole("button", { name: "Mark as done" }).click();

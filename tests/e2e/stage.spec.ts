@@ -69,6 +69,8 @@ test.describe("stage", () => {
       .locator('.diagram:visible .edge[data-id="model-next-token"]')
       .focus();
     await expect(note).toContainText("a score for every possible token");
+    await page.keyboard.press("Escape");
+    await expect(note).toHaveAttribute("data-open", "false");
   });
 
   test("a line's note never covers the blocks it joins", async ({ page }) => {
