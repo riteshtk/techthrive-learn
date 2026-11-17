@@ -48,10 +48,37 @@ test.describe("keyboard", () => {
   });
 });
 
+test("a deep link opens on its step without animating there", async ({
+  page,
+}) => {
+  // Record what is lit at the moment transitions switch on.
+  await page.addInitScript(() => {
+    new MutationObserver((records, observer) => {
+      if (records.some((r) => r.attributeName === "data-ready")) {
+        (window as unknown as { litAtReady: string[] }).litAtReady = [
+          ...document.querySelectorAll('.diagram .node[data-on="true"]'),
+        ].map((el) => el.getAttribute("data-id") ?? "");
+        observer.disconnect();
+      }
+    }).observe(document, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["data-ready"],
+    });
+  });
+  await page.goto(`${LLM}?step=7`);
+  await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
+  const litAtReady = await page.evaluate(
+    () => (window as unknown as { litAtReady: string[] }).litAtReady,
+  );
+  expect(litAtReady).toEqual(["answer"]);
+});
+
 test.describe("reduced motion", () => {
   test("steps change without animation", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(LLM);
+    await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
     const duration = await page
       .locator(".diagram .node rect")
       .first()
@@ -62,6 +89,7 @@ test.describe("reduced motion", () => {
   test("animates in about 400 ms otherwise", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto(LLM);
+    await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
     const duration = await page
       .locator(".diagram .node rect")
       .first()

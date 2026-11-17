@@ -1,4 +1,7 @@
-/* Brand tokens (PRD F10). Full theming and contrast checks land with F10. */
+/* Brand and theme (PRD F10). Dark by default; light when the device asks.
+   Ember marks the current step only and never carries text in light mode.
+   Dimmed text is dimmed by colour, never opacity; every text pair here is
+   checked for 4.5:1 contrast by tests/unit/theme.test.ts. */
 :root {
   --ink: #070a12;
   --porcelain: #f4f1ea;
@@ -8,7 +11,7 @@
   --text: var(--porcelain);
   --text-muted: #b8b4ab;
   --border: #2a3142;
-  --focus: var(--ember);
+  --focus: var(--porcelain);
   --node-fill: var(--surface);
   --node-fill-on: var(--surface);
   --node-stroke-dim: var(--border);
@@ -18,6 +21,28 @@
   --edge-dim: #4a5265;
   --edge-on: var(--ember);
   color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: var(--porcelain);
+    --surface: #fbfaf7;
+    --text: var(--ink);
+    --text-muted: #4f4b44;
+    --border: #c9c3b8;
+    --focus: var(--ink);
+    --node-fill: var(--surface);
+    /* Ember fills the current step's boxes, with ink text on top and a
+       heavier ink outline. */
+    --node-fill-on: var(--ember);
+    --node-stroke-dim: var(--border);
+    --node-stroke-on: var(--ink);
+    --node-text-dim: #5d5952;
+    --node-text-on: var(--ink);
+    --edge-dim: #a9a296;
+    --edge-on: var(--ember);
+    color-scheme: light;
+  }
 }
 
 *,
@@ -30,7 +55,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
@@ -161,6 +186,7 @@ h1 {
 }
 
 .level {
+  font-family: var(--font-mono), ui-monospace, monospace;
   padding: 0 0.5rem;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -241,10 +267,10 @@ h1 {
   fill: var(--text);
 }
 
-.diagram rect,
-.diagram line,
-.diagram text,
-.diagram .arrow path {
+.player[data-ready] .diagram rect,
+.player[data-ready] .diagram line,
+.player[data-ready] .diagram text,
+.player[data-ready] .diagram .arrow path {
   transition:
     fill 400ms ease,
     stroke 400ms ease,
@@ -252,10 +278,10 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .diagram rect,
-  .diagram line,
-  .diagram text,
-  .diagram .arrow path {
+  .player[data-ready] .diagram rect,
+  .player[data-ready] .diagram line,
+  .player[data-ready] .diagram text,
+  .player[data-ready] .diagram .arrow path {
     transition: none;
   }
 }
@@ -286,6 +312,7 @@ h1 {
 }
 
 .counter {
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
   min-width: 4.5em;

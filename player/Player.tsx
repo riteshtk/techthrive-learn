@@ -69,6 +69,18 @@ export function Player({ layout, steps, title, topicId, roadmapId }: Props) {
     return () => clearTimeout(timer);
   }, [state.playing, state.step, step]);
 
+  // Transitions switch on only after the first frames, so a deep link opens
+  // straight on its step instead of animating there from step 1.
+  const sectionRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        if (sectionRef.current) sectionRef.current.dataset.ready = "true";
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   // Hiding the tab pauses.
   useEffect(() => {
     const onVisibility = () => {
@@ -101,6 +113,7 @@ export function Player({ layout, steps, title, topicId, roadmapId }: Props) {
 
   return (
     <section
+      ref={sectionRef}
       className="player"
       aria-label={`${title}: diagram player`}
       aria-keyshortcuts="ArrowLeft ArrowRight Space"
