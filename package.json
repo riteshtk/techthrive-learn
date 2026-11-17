@@ -2,13 +2,15 @@
   "name": "techthrive-learn",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "content:index": "node scripts/gen-content-index.ts",
+    "dev": "npm run content:index && next dev",
+    "build": "npm run content:index && next build",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck": "npm run content:index && next typegen && tsc --noEmit",
     "test": "npm run typecheck && vitest run",
     "test:e2e": "playwright test"
   },
