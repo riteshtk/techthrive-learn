@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTopic, getTopics, homeRoadmapOf } from "@/content";
 import { formatDate } from "@/lib/dates";
+import { pageMetadata } from "@/lib/metadata";
 import { levelLabel } from "@/lib/roadmap";
 import { layoutDiagram } from "@/player/geometry";
 import { Player } from "@/player/Player";
@@ -17,7 +18,13 @@ export async function generateMetadata({
   params,
 }: PageProps<"/topics/[id]">): Promise<Metadata> {
   const topic = getTopic((await params).id);
-  return topic ? { title: topic.title, description: topic.summary } : {};
+  return topic
+    ? pageMetadata({
+        title: topic.title,
+        description: topic.summary,
+        path: `/topics/${topic.id}/`,
+      })
+    : {};
 }
 
 export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {

@@ -5,6 +5,7 @@ import { ContinueLink } from "@/components/ContinueLink";
 import { DoneTick } from "@/components/DoneTick";
 import { UndoDone } from "@/components/UndoDone";
 import { getRoadmap, getRoadmaps, roadmapTopics } from "@/content";
+import { pageMetadata } from "@/lib/metadata";
 import { levelLabel } from "@/lib/roadmap";
 
 export const dynamicParams = false;
@@ -17,7 +18,13 @@ export async function generateMetadata({
   params,
 }: PageProps<"/roadmaps/[id]">): Promise<Metadata> {
   const roadmap = getRoadmap((await params).id);
-  return roadmap ? { title: roadmap.title, description: roadmap.goal } : {};
+  return roadmap
+    ? pageMetadata({
+        title: roadmap.title,
+        description: roadmap.goal,
+        path: `/roadmaps/${roadmap.id}/`,
+      })
+    : {};
 }
 
 export default async function RoadmapPage({
