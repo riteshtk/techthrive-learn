@@ -9,6 +9,14 @@
   --text-muted: #b8b4ab;
   --border: #2a3142;
   --focus: var(--ember);
+  --node-fill: var(--surface);
+  --node-fill-on: var(--surface);
+  --node-stroke-dim: var(--border);
+  --node-stroke-on: var(--ember);
+  --node-text-dim: #9ea3ae;
+  --node-text-on: var(--porcelain);
+  --edge-dim: #4a5265;
+  --edge-on: var(--ember);
   color-scheme: dark;
 }
 
@@ -164,4 +172,105 @@ h1 {
   min-height: 1.5em;
   margin-top: 0.25rem;
   font-weight: 600;
+}
+
+/* Diagram player (F3). Dimming is by colour, never opacity (F10). */
+.player {
+  margin: 1.5rem 0;
+}
+
+.diagram {
+  display: block;
+  width: 100%;
+  max-width: 34rem;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.diagram .node rect {
+  fill: var(--node-fill);
+  stroke: var(--node-stroke-dim);
+  stroke-width: 1.5;
+}
+
+.diagram .node text {
+  fill: var(--node-text-dim);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.diagram .node[data-on="true"] rect {
+  fill: var(--node-fill-on);
+  stroke: var(--node-stroke-on);
+  stroke-width: 3;
+}
+
+.diagram .node[data-on="true"] text {
+  fill: var(--node-text-on);
+}
+
+.diagram .edge line {
+  stroke: var(--edge-dim);
+  stroke-width: 1.5;
+}
+
+.diagram .edge[data-on="true"] line {
+  stroke: var(--edge-on);
+  stroke-width: 2.5;
+}
+
+.diagram .arrow-off path {
+  fill: var(--edge-dim);
+}
+
+.diagram .arrow-on path {
+  fill: var(--edge-on);
+}
+
+.diagram .edge-label {
+  fill: var(--node-text-dim);
+  font-size: 12px;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.diagram .edge[data-on="true"] .edge-label {
+  fill: var(--text);
+}
+
+.diagram rect,
+.diagram line,
+.diagram text,
+.diagram .arrow path {
+  transition:
+    fill 400ms ease,
+    stroke 400ms ease,
+    stroke-width 400ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diagram rect,
+  .diagram line,
+  .diagram text,
+  .diagram .arrow path {
+    transition: none;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.button[aria-disabled="true"] {
+  color: var(--text-muted);
+  border-color: var(--border);
+  cursor: default;
 }

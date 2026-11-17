@@ -9,14 +9,14 @@ export default {
   diagram: {
     nodes: [
       { id: "documents", label: "Documents", x: 0, y: 0 },
-      { id: "chunks", label: "Chunks", x: 0, y: 1 },
-      { id: "embeddings", label: "Embeddings", x: 0, y: 2 },
-      { id: "vector-store", label: "Vector store", x: 0, y: 3 },
-      { id: "question", label: "Question", x: 1, y: 3 },
-      { id: "top-chunks", label: "Top chunks", x: 0, y: 4 },
-      { id: "prompt", label: "Prompt", x: 1, y: 4 },
-      { id: "model", label: "Model", x: 2, y: 4 },
-      { id: "answer", label: "Answer", x: 3, y: 4 },
+      { id: "chunks", label: "Chunks", x: 1, y: 0 },
+      { id: "embeddings", label: "Embeddings", x: 2, y: 0 },
+      { id: "vector-store", label: "Vector store", x: 2, y: 1 },
+      { id: "top-chunks", label: "Top chunks", x: 1, y: 1 },
+      { id: "question", label: "Question", x: 2, y: 2 },
+      { id: "prompt", label: "Prompt", x: 1, y: 2 },
+      { id: "model", label: "Model", x: 1, y: 3 },
+      { id: "answer", label: "Answer", x: 2, y: 3 },
     ],
     edges: [
       { id: "documents-chunks", from: "documents", to: "chunks" },
