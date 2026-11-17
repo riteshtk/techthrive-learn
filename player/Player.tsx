@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useMemo, useReducer, type KeyboardEvent } from "react";
 import type { Step } from "@/content/types";
 import { Diagram } from "./Diagram";
 import { holdMs, initPlayer, isLast, reducePlayer } from "./engine";
@@ -36,11 +36,35 @@ export function Player({ layout, steps, title }: Props) {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
+  // Right/Left step and Space plays or pauses while the player has focus;
+  // a focused button or link keeps its own Space.
+  function onKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      dispatch({ type: "next" });
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      dispatch({ type: "back" });
+    } else if (event.key === " ") {
+      const target = event.target as HTMLElement;
+      if (target.closest("button, a, input, select, textarea")) return;
+      event.preventDefault();
+      dispatch({ type: "toggle" });
+    }
+  }
+
   const first = state.step === 0;
   const last = isLast(state);
 
   return (
-    <section className="player" aria-label={`${title}: diagram player`}>
+    <section
+      className="player"
+      aria-label={`${title}: diagram player`}
+      aria-keyshortcuts="ArrowLeft ArrowRight Space"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+    >
       <Diagram layout={layout} active={active} label={`Diagram: ${title}`} />
       <p className="caption" aria-live="polite" data-testid="caption">
         {step?.text}
@@ -73,6 +97,9 @@ export function Player({ layout, steps, title }: Props) {
           {state.step + 1} of {state.total}
         </span>
       </div>
+      <p className="hint">
+        Tip: select the diagram, then use ← and → to step and Space to play.
+      </p>
     </section>
   );
 }
