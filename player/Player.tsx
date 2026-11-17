@@ -42,6 +42,9 @@ export function Player({ layout, steps, title }: Props) {
   return (
     <section className="player" aria-label={`${title}: diagram player`}>
       <Diagram layout={layout} active={active} label={`Diagram: ${title}`} />
+      <p className="caption" aria-live="polite" data-testid="caption">
+        {step?.text}
+      </p>
       <div className="controls">
         <button
           type="button"
@@ -66,6 +69,9 @@ export function Player({ layout, steps, title }: Props) {
         >
           Next
         </button>
+        <span className="counter" data-testid="counter">
+          {state.step + 1} of {state.total}
+        </span>
       </div>
     </section>
   );
