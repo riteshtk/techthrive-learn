@@ -1,9 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  type KeyboardEvent,
+} from "react";
 import type { Step } from "@/content/types";
 import { Diagram } from "./Diagram";
-import { holdMs, initPlayer, isLast, reducePlayer } from "./engine";
+import {
+  holdMs,
+  initPlayer,
+  isLast,
+  reducePlayer,
+  stepFromQuery,
+  stepToQuery,
+} from "./engine";
 import type { Layout } from "./geometry";
 
 type Props = {
@@ -16,6 +29,28 @@ export function Player({ layout, steps, title }: Props) {
   const [state, dispatch] = useReducer(reducePlayer, steps.length, initPlayer);
   const step = steps[state.step] ?? steps[0];
   const active = useMemo(() => new Set(step?.highlight ?? []), [step]);
+
+  // Deep links (F6). The page is prerendered at step 1; after load, ?step
+  // picks the step. A missing or invalid value opens step 1, and the address
+  // is corrected, and kept in step, without adding history entries.
+  const readAddress = useRef(true);
+  useEffect(() => {
+    if (readAddress.current) {
+      readAddress.current = false;
+      const raw = new URLSearchParams(window.location.search).get("step");
+      const { step: wanted, valid } = stepFromQuery(raw, state.total);
+      if (valid) {
+        if (wanted !== state.step) dispatch({ type: "goto", step: wanted });
+        return;
+      }
+    }
+    const url = new URL(window.location.href);
+    const value = stepToQuery(state.step);
+    if (url.searchParams.get("step") !== value) {
+      url.searchParams.set("step", value);
+      window.history.replaceState(window.history.state, "", url);
+    }
+  }, [state.step, state.total]);
 
   // Play holds each step for its own time, then advances one step.
   useEffect(() => {
