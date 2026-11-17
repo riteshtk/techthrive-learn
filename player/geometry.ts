@@ -35,6 +35,8 @@ export type LaidOutEdge = DiagramEdge & {
   start: Point;
   end: Point;
   mid: Point;
+  /** Centre of the label, beside the line (only when the edge has one). */
+  labelAt?: Point;
   /** True when the reverse edge also exists and the two are offset. */
   twoWay: boolean;
 };
@@ -119,7 +121,60 @@ export function layoutDiagram(
   });
 
   const height = PAD * 2 + (rows - 1) * ROW_PITCH + BOX_H;
+  const view = { x: 0, y: 0, w: VIEW_W, h: height };
+  for (const edge of laidEdges) {
+    if (edge.label)
+      edge.labelAt = placeLabel(edge, edge.label, view, laidNodes);
+  }
   return { width: VIEW_W, height, nodes: laidNodes, edges: laidEdges };
+}
+
+/** Gap between an edge label and its line. */
+const LABEL_GAP = 4;
+
+function labelSize(label: string): { w: number; h: number } {
+  return {
+    w: estimateTextWidth(label, EDGE_LABEL_SIZE) + 4,
+    h: EDGE_LABEL_SIZE + 2,
+  };
+}
+
+/**
+ * Puts a label beside its line, never on it: pushed out along the line's
+ * normal just far enough to clear it. Tries the right (or, for flat lines,
+ * the upper) side first, a two-way edge's own side first, and keeps the
+ * first spot inside the diagram that covers no box.
+ */
+function placeLabel(
+  edge: LaidOutEdge,
+  label: string,
+  view: Box,
+  nodes: readonly LaidOutNode[],
+): Point {
+  const { w, h } = labelSize(label);
+  let n = unitNormal(edge.start, edge.end);
+  const prefer = edge.twoWay
+    ? 1
+    : Math.abs(n.x) > 1e-6
+      ? Math.sign(n.x)
+      : -Math.sign(n.y);
+  n = { x: n.x * prefer, y: n.y * prefer };
+  // How far the box reaches along the normal, plus a small gap.
+  const d = (w / 2) * Math.abs(n.x) + (h / 2) * Math.abs(n.y) + LABEL_GAP;
+  const candidates = [1, -1].map((side) => ({
+    x: edge.mid.x + n.x * d * side,
+    y: edge.mid.y + n.y * d * side,
+  }));
+  const fits = (c: Point) => {
+    const box = { x: c.x - w / 2, y: c.y - h / 2, w, h };
+    const inside =
+      box.x >= view.x &&
+      box.y >= view.y &&
+      box.x + box.w <= view.x + view.w &&
+      box.y + box.h <= view.y + view.h;
+    return inside && !nodes.some((node) => boxesOverlap(box, node.box));
+  };
+  return candidates.find(fits) ?? candidates[0]!;
 }
 
 function unitNormal(a: Point, b: Point): Point {
@@ -210,12 +265,11 @@ export function estimateTextWidth(text: string, size: number): number {
   return text.length * size * 0.56;
 }
 
-/** The area an edge's label takes up, centred on the edge's midpoint. */
+/** The area an edge's label takes up, beside its line. */
 export function edgeLabelBox(edge: LaidOutEdge): Box | undefined {
-  if (!edge.label) return undefined;
-  const w = estimateTextWidth(edge.label, EDGE_LABEL_SIZE) + 8;
-  const h = EDGE_LABEL_SIZE + 4;
-  return { x: edge.mid.x - w / 2, y: edge.mid.y - h / 2, w, h };
+  if (!edge.label || !edge.labelAt) return undefined;
+  const { w, h } = labelSize(edge.label);
+  return { x: edge.labelAt.x - w / 2, y: edge.labelAt.y - h / 2, w, h };
 }
 
 export function boxesOverlap(a: Box, b: Box): boolean {
@@ -224,17 +278,24 @@ export function boxesOverlap(a: Box, b: Box): boolean {
   );
 }
 
-/** Edge labels that would sit on top of a node box. */
+/**
+ * Edge labels with nowhere to go: on top of a node box, or outside the
+ * diagram, on both sides of their line.
+ */
 export function edgeLabelsOverNodes(
   layout: Layout,
-): { edge: LaidOutEdge; node: LaidOutNode }[] {
-  const hits: { edge: LaidOutEdge; node: LaidOutNode }[] = [];
+): { edge: LaidOutEdge; node?: LaidOutNode }[] {
+  const hits: { edge: LaidOutEdge; node?: LaidOutNode }[] = [];
   for (const edge of layout.edges) {
     const box = edgeLabelBox(edge);
     if (!box) continue;
-    for (const node of layout.nodes) {
-      if (boxesOverlap(box, node.box)) hits.push({ edge, node });
-    }
+    const node = layout.nodes.find((n) => boxesOverlap(box, n.box));
+    const outside =
+      box.x < 0 ||
+      box.y < 0 ||
+      box.x + box.w > layout.width ||
+      box.y + box.h > layout.height;
+    if (node || outside) hits.push({ edge, node });
   }
   return hits;
 }

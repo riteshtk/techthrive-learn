@@ -54,7 +54,7 @@ test.describe("every page", () => {
     );
     await page.getByRole("link", { name: "Go to the roadmaps" }).click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "Pick a roadmap",
+      "System design and AI, one step at a time",
     );
   });
 

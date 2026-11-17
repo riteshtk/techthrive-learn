@@ -121,9 +121,19 @@ export function Player({ layout, steps, title, topicId, roadmapId }: Props) {
       onKeyDown={onKeyDown}
     >
       <Diagram layout={layout} active={active} label={`Diagram: ${title}`} />
-      <p className="caption" aria-live="polite" data-testid="caption">
-        {step?.text}
-      </p>
+      {/* Every sentence sits invisibly in the same grid cell, so the box is
+          exactly as tall as this topic's longest one and the controls never
+          move, without reserving more room than the topic needs. */}
+      <div className="caption-box">
+        {steps.map((s, i) => (
+          <p key={i} className="caption caption-sizer" aria-hidden="true">
+            {s.text}
+          </p>
+        ))}
+        <p className="caption" aria-live="polite" data-testid="caption">
+          {step?.text}
+        </p>
+      </div>
       <div className="controls">
         <button
           type="button"

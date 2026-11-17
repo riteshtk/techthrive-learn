@@ -49,11 +49,11 @@ export function Diagram({ layout, active, label }: Props) {
               y2={edge.end.y}
               markerEnd={`url(#${markerId}-${on ? "on" : "off"})`}
             />
-            {edge.label ? (
+            {edge.label && edge.labelAt ? (
               <text
                 className="edge-label"
-                x={edge.mid.x}
-                y={edge.mid.y}
+                x={edge.labelAt.x}
+                y={edge.labelAt.y}
                 textAnchor="middle"
                 dominantBaseline="central"
               >

@@ -76,13 +76,25 @@ a {
 }
 
 .brand {
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   text-decoration: none;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.brand picture,
+.brand img {
+  display: block;
+  height: 28px;
+  width: auto;
 }
 
 .brand span {
-  font-weight: 400;
   color: var(--text-muted);
+  /* Sit on the lockup's text baseline rather than its centre. */
+  padding-top: 0.2rem;
 }
 
 .page {
@@ -201,10 +213,6 @@ h1 {
 }
 
 /* Diagram player (F3). Dimming is by colour, never opacity (F10). */
-.player {
-  margin: 1.5rem 0;
-}
-
 .diagram {
   display: block;
   width: 100%;
@@ -292,7 +300,37 @@ h1 {
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+}
+
+/* Topic page: a short header so the whole player fits on a phone screen. */
+.crumb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.topic-title {
+  font-size: 1.5rem;
+}
+
+.player {
+  margin: 1rem 0 1.5rem;
+}
+
+/* On wider screens the diagram scales up, so cap its height to keep the
+   caption and controls on screen too. Phones always draw it at full width,
+   which keeps boxes at 72 px and labels at 12 px. */
+@media (min-width: 40rem) {
+  .diagram {
+    max-height: max(18rem, calc(100svh - 22rem));
+  }
+
+  .topic-title {
+    font-size: 1.75rem;
+  }
 }
 
 .button[aria-disabled="true"] {
@@ -301,14 +339,25 @@ h1 {
   cursor: default;
 }
 
-/* Step captions (F4): at least 18 px, with room for the longest sentence
-   so the controls never jump as the caption changes. */
+/* Step captions (F4): at least 18 px. */
+.caption-box {
+  display: grid;
+  max-width: 34rem;
+  margin: 0.75rem auto 0;
+}
+
+.caption-box > .caption {
+  grid-area: 1 / 1;
+}
+
 .caption {
   font-size: 1.125rem;
   line-height: 1.5;
-  min-height: 6em;
-  margin: 1rem auto 0;
-  max-width: 34rem;
+  margin: 0;
+}
+
+.caption-sizer {
+  visibility: hidden;
 }
 
 .counter {
@@ -425,4 +474,81 @@ h3 {
 
 .sources a {
   overflow-wrap: anywhere;
+}
+
+/* Home (design pass). */
+.hero {
+  padding: 0.5rem 0 0;
+}
+
+.hero .lede {
+  margin-bottom: 0;
+}
+
+.hero + h2 {
+  margin-top: 1.75rem;
+}
+
+.hero-mark img {
+  display: block;
+  width: auto;
+  height: 72px;
+  margin-bottom: 1rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  max-width: 20ch;
+}
+
+.roadmap-card h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.card-topics {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.card-topics li + li {
+  margin-top: 0.125rem;
+}
+
+.card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.card-footer .meta {
+  margin: 0;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.dots {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+}
+
+.dot[data-done="true"] {
+  background: var(--text);
+  border-color: var(--text);
 }

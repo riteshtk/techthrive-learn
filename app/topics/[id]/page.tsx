@@ -36,18 +36,17 @@ export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
 
   return (
     <main className="page">
-      {roadmap ? (
-        <p className="crumb">
+      {/* Kept short above the player so, on a phone, the diagram, caption
+          and controls fit on one screen. The summary follows the player. */}
+      <p className="crumb crumb-row">
+        {roadmap ? (
           <Link href={`/roadmaps/${roadmap.id}/`}>{roadmap.title}</Link>
-        </p>
-      ) : null}
-      <h1>{topic.title}</h1>
-      <p className="meta">
+        ) : null}
         <span className={`level level-${topic.level}`}>
           {levelLabel[topic.level]}
         </span>
       </p>
-      <p className="lede">{topic.summary}</p>
+      <h1 className="topic-title">{topic.title}</h1>
       <Player
         layout={layout}
         steps={topic.steps}
@@ -55,6 +54,10 @@ export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
         topicId={topic.id}
         roadmapId={roadmap?.id}
       />
+      <section aria-labelledby="about">
+        <h2 id="about">About this topic</h2>
+        <p className="lede">{topic.summary}</p>
+      </section>
       <section aria-labelledby="all-steps">
         <h2 id="all-steps">All steps</h2>
         <ol className="all-steps">

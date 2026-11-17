@@ -7,6 +7,7 @@ import {
   MIN_BOX_W,
   TWO_WAY_OFFSET,
   clipToBox,
+  edgeLabelBox,
   edgeLabelsOverNodes,
   edgesCrossingNodes,
   layoutDiagram,
@@ -127,6 +128,40 @@ describe("crossings", () => {
   });
 });
 
+describe("edge labels", () => {
+  it("sit beside a vertical line, not on it", () => {
+    const layout = layoutDiagram(
+      [node("a", 0, 0), node("b", 0, 2)],
+      [edge("a", "b", "embedded")],
+    );
+    const e = layout.edges[0]!;
+    const box = edgeLabelBox(e)!;
+    expect(segmentHitsBox(e.start, e.end, box)).toBe(false);
+    expect(box.x).toBeGreaterThan(e.start.x);
+  });
+
+  it("move to the other side when the first has no room", () => {
+    // Rightmost column: the label goes on the left of the line.
+    const layout = layoutDiagram(
+      [node("a", 0, 0), node("b", 3, 0), node("c", 3, 2)],
+      [edge("b", "c", "embedded")],
+    );
+    const e = layout.edges[0]!;
+    const box = edgeLabelBox(e)!;
+    expect(box.x + box.w).toBeLessThan(e.start.x);
+    expect(box.x + box.w).toBeLessThanOrEqual(layout.width);
+  });
+
+  it("sit above a flat line", () => {
+    const layout = layoutDiagram(
+      [node("a", 0, 0), node("b", 2, 0)],
+      [edge("a", "b", "sends")],
+    );
+    const e = layout.edges[0]!;
+    expect(edgeLabelBox(e)!.y + edgeLabelBox(e)!.h).toBeLessThan(e.start.y);
+  });
+});
+
 describe("labels", () => {
   it.each([
     ["Model", ["Model"]],
@@ -146,6 +181,10 @@ describe("shipped topics", () => {
       const layout = layoutDiagram(topic.diagram.nodes, topic.diagram.edges);
       expect(edgesCrossingNodes(layout)).toEqual([]);
       expect(edgeLabelsOverNodes(layout)).toEqual([]);
+      for (const e of layout.edges) {
+        const box = edgeLabelBox(e);
+        if (box) expect(segmentHitsBox(e.start, e.end, box)).toBe(false);
+      }
     },
   );
 });

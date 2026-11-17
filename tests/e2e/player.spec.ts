@@ -93,6 +93,53 @@ test.describe("diagram player", () => {
   });
 
   for (const topic of ["how-an-llm-answers", "rag", "agent-loop"]) {
+    test(`${topic}: the caption and controls are on screen with the diagram`, async ({
+      page,
+    }, testInfo) => {
+      // A phone with browser chrome leaves about 740 px; a laptop 800.
+      const narrow = testInfo.project.name.endsWith("360");
+      await page.setViewportSize(
+        narrow ? { width: 360, height: 740 } : { width: 1280, height: 800 },
+      );
+      await page.goto(`topics/${topic}/`);
+      const height = page.viewportSize()!.height;
+      for (const el of [
+        page.locator(".diagram"),
+        page.getByTestId("caption"),
+        page.getByRole("button", { name: "Next" }),
+        page.getByRole("button", { name: "Back" }),
+      ]) {
+        const box = (await el.boundingBox())!;
+        expect(box.y + box.height).toBeLessThanOrEqual(height);
+      }
+    });
+
+    test(`${topic}: edge labels sit beside their lines`, async ({ page }) => {
+      await page.goto(`topics/${topic}/`);
+      const touching = await page
+        .locator(".diagram .edge")
+        .evaluateAll((edges) =>
+          edges.flatMap((edge) => {
+            const text = edge.querySelector("text");
+            const line = edge.querySelector("line");
+            if (!text || !line) return [];
+            const b = text.getBBox();
+            const [x1, y1, x2, y2] = ["x1", "y1", "x2", "y2"].map((a) =>
+              Number(line.getAttribute(a)),
+            ) as [number, number, number, number];
+            // Sample the line; any point inside the label's box means overlap.
+            for (let t = 0; t <= 1; t += 0.02) {
+              const x = x1 + (x2 - x1) * t;
+              const y = y1 + (y2 - y1) * t;
+              if (x > b.x && x < b.x + b.width && y > b.y && y < b.y + b.height)
+                return [edge.getAttribute("data-id") ?? ""];
+            }
+            return [];
+          }),
+        );
+      expect(touching).toEqual([]);
+    });
+
     test(`${topic}: labels fit their boxes and the page never scrolls sideways`, async ({
       page,
     }) => {

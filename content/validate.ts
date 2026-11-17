@@ -219,7 +219,9 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
     for (const { edge, node } of edgeLabelsOverNodes(layout)) {
       add(
         `diagram.edges[${edges.findIndex((e) => e.id === edge.id)}].label`,
-        `"${edge.label}" has no room and overlaps node "${node.id}"; leave a gap or empty cell between the nodes`,
+        node
+          ? `"${edge.label}" has no room beside its line and overlaps node "${node.id}"; leave a gap or empty cell between the nodes`
+          : `"${edge.label}" has no room beside its line inside the diagram; move the nodes inwards`,
       );
     }
 
