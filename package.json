@@ -13,7 +13,9 @@
     "format:check": "prettier --check .",
     "typecheck": "npm run content:index && next typegen && tsc --noEmit",
     "test": "npm run check:content && npm run typecheck && vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project=chromium-360 --project=chromium-1280",
+    "test:e2e:webkit": "playwright test --project=webkit-360",
+    "check:budget": "tsx scripts/check-js-budget.ts"
   },
   "dependencies": {
     "next": "16.4.6",
@@ -21,6 +23,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
     "@types/react": "^19",

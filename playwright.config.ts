@@ -30,6 +30,14 @@ export default defineConfig({
         viewport: { width: 360, height: 780 },
       },
     },
+    // Advisory in CI: npm run test:e2e:webkit
+    {
+      name: "webkit-360",
+      use: {
+        ...devices["Desktop Safari"],
+        viewport: { width: 360, height: 780 },
+      },
+    },
     {
       name: "chromium-1280",
       use: {

@@ -33,11 +33,15 @@ test.describe("keyboard", () => {
 
   test("every control is reachable with Tab and shows focus", async ({
     page,
+    browserName,
   }) => {
+    // Safari moves between buttons with Option+Tab unless the user has
+    // turned on "Press Tab to highlight each item".
+    const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
     await page.goto(LLM);
     await page.locator(".player").focus();
     for (const name of ["Back", "Play", "Next"]) {
-      await page.keyboard.press("Tab");
+      await page.keyboard.press(tab);
       const focused = page.getByRole("button", { name });
       await expect(focused).toBeFocused();
       const outline = await focused.evaluate(

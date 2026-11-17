@@ -14,7 +14,9 @@ npm run format         # Prettier write; format:check to verify
 npm run typecheck      # next typegen && tsc --noEmit
 npm test               # content check + typecheck + Vitest (no browsers; must stay under 30 s)
 npm run check:content  # just the content rules (also runs before every build)
-npm run test:e2e       # Playwright (Chromium at 360 px and 1280 px)
+npm run test:e2e       # Playwright, Chromium at 360 px and 1280 px (builds under /techthrive-learn, port 4517)
+npm run test:e2e:webkit  # advisory WebKit run
+npm run check:budget   # after a build: each page under 150 KB gzipped JS
 
 npx vitest run tests/unit/engine.test.ts      # one unit test file
 npx vitest run -t "restarts from step 1"      # tests matching a name
