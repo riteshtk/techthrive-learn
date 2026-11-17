@@ -209,7 +209,7 @@ export function Player({ layouts, steps, title, topicId, roadmapId }: Props) {
         <div className="stage-foot">
           <ul className="legend" aria-label="Legend">
             <li>
-              <span className="swatch swatch-on" aria-hidden="true" /> This step
+              <span className="swatch swatch-on" aria-hidden="true" /> Active
             </li>
             <li>
               <span className="swatch swatch-packet" aria-hidden="true" />{" "}

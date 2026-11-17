@@ -1187,3 +1187,66 @@ dialog::backdrop {
 .sources a {
   overflow-wrap: anywhere;
 }
+
+/* Kept last so these phone overrides win over the base rules above. */
+/* Phones: keep the header short and the chips on one line, with room to
+   spare, so the stage, timeline and caption all fit above the bottom bar
+   whatever the platform's font metrics. */
+@media (max-width: 40rem) {
+  .lesson-head h1 {
+    font-size: 1.125rem;
+  }
+
+  .chips {
+    gap: 0.25rem;
+  }
+
+  .chips li {
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .chips .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .legend {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    gap: 0 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  .stage-foot {
+    padding: 0.25rem;
+  }
+
+  .shell-inner {
+    padding-block: 0.375rem;
+  }
+
+  .caption {
+    line-height: 1.35;
+  }
+
+  .legend li {
+    gap: 0.25rem;
+  }
+
+  .stage-tools {
+    gap: 0.25rem;
+  }
+
+  /* 32 px targets: above WCAG 2.2's 24 px minimum. */
+  .stage-tools .icon-button {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .legend .swatch {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+}

@@ -194,7 +194,7 @@ test.describe("stage", () => {
   test("the legend explains the colours", async ({ page }) => {
     await page.goto(LLM);
     await expect(page.getByRole("list", { name: "Legend" })).toHaveText(
-      /This step\s*Moving\s*Waiting/,
+      /Active\s*Moving\s*Waiting/,
     );
   });
 });
