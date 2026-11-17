@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Tech & Thrive Learn",
@@ -9,7 +11,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <header className="site-header">
+          <Link href="/" className="brand">
+            Tech &amp; Thrive <span>Learn</span>
+          </Link>
+        </header>
+        {children}
+      </body>
     </html>
   );
 }

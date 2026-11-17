@@ -1,0 +1,117 @@
+/* Brand tokens (PRD F10). Full theming and contrast checks land with F10. */
+:root {
+  --ink: #070a12;
+  --porcelain: #f4f1ea;
+  --ember: #ff5a1f;
+  --bg: var(--ink);
+  --surface: #111725;
+  --text: var(--porcelain);
+  --text-muted: #b8b4ab;
+  --border: #2a3142;
+  --focus: var(--ember);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.site-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand span {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+.lede {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+}
+
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  position: relative;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.card p {
+  margin: 0.25rem 0 0;
+}
+
+/* The whole card is the tap target; the link text stays the accessible name. */
+.card-link {
+  text-decoration: none;
+}
+
+.card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.meta,
+.progress-count {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.progress-count {
+  min-height: 1.5em;
+}
