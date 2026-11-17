@@ -1,0 +1,136 @@
+name: CI
+
+# Required to merge (set in branch protection): "Checks", "Build" and
+# "End-to-end (Chromium) + axe". The other jobs are advisory.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Content check
+        run: npm run check:content
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Formatting
+        run: npm run format:check
+      - name: Unit tests
+        run: npx vitest run
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Static export
+        run: npm run build
+        env:
+          BASE_PATH: /techthrive-learn
+      - name: JavaScript budget
+        run: npm run check:budget
+        env:
+          BASE_PATH: /techthrive-learn
+
+  e2e:
+    name: End-to-end (Chromium) + axe
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-chromium
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  webkit:
+    name: End-to-end (WebKit, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - run: npm run test:e2e:webkit
+
+  lighthouse:
+    name: Lighthouse (mobile, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Built without a base path so Lighthouse's static server finds assets.
+      - run: npm run build
+      # Installed outside the project, taking only releases at least two
+      # weeks old so a just-published dependency can't break the run.
+      - name: Install Lighthouse CI
+        run: >
+          npm install --prefix "$RUNNER_TEMP/lhci" --no-save --no-audit
+          --no-fund --before="$(date -u -d '14 days ago' +%F)"
+          @lhci/cli@0.16.0
+      - run: '"$RUNNER_TEMP/lhci/node_modules/.bin/lhci" autorun'
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse
+          path: .lighthouseci/
+          retention-days: 7
+
+  audit:
+    name: npm audit (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: npm audit --omit=dev --audit-level=high

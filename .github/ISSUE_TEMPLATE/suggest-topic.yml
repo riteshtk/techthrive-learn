@@ -1,0 +1,49 @@
+name: Suggest a topic
+description: Propose a system design or AI topic to explain step by step.
+title: "Add a topic: "
+labels: ["new topic"]
+body:
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      placeholder: e.g. Caching
+    validations:
+      required: true
+  - type: dropdown
+    id: roadmap
+    attributes:
+      label: Roadmap
+      options:
+        - AI System Design
+        - A new roadmap (describe below)
+    validations:
+      required: true
+  - type: dropdown
+    id: level
+    attributes:
+      label: Level
+      options:
+        - Basics
+        - Intermediate
+        - Advanced
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happens, step by step?
+      description: A rough list of the moving parts and the order they act in.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Papers, official docs or engineering posts to check it against.
+  - type: checkboxes
+    id: write
+    attributes:
+      label: Writing it
+      options:
+        - label: I'd like to write this topic myself (see CONTRIBUTING.md).

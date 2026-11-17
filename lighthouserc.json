@@ -1,0 +1,30 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./out",
+      "numberOfRuns": 3,
+      "autodiscoverUrlBlocklist": [
+        "/404.html",
+        "/404/index.html",
+        "/_not-found/index.html"
+      ]
+    },
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": [
+          "warn",
+          { "maxNumericValue": 2500, "aggregationMethod": "median" }
+        ],
+        "cumulative-layout-shift": [
+          "warn",
+          { "maxNumericValue": 0.1, "aggregationMethod": "median" }
+        ],
+        "categories:accessibility": [
+          "warn",
+          { "minScore": 0.95, "aggregationMethod": "median" }
+        ]
+      }
+    },
+    "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
+  }
+}

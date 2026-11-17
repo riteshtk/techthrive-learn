@@ -1,0 +1,1252 @@
+/* Momentum, the Tech & Thrive theme (PRD F10): ink, porcelain and one ember
+   accent, set in Inter and JetBrains Mono.
+
+   Each colour token is defined once with light-dark(light, dark). The
+   colour-scheme property picks the side: dark by default, light when the
+   device asks, and either one when the learner chooses with the toggle
+   (<html data-theme>). Ember marks the current step only and never carries
+   text in light mode. Dimmed text is dimmed by colour, never opacity. Every
+   text pair here is checked for 4.5:1 by tests/unit/theme.test.ts. */
+:root {
+  --ink: #070a12;
+  --porcelain: #f4f1ea;
+  --ember: #ff5a1f;
+
+  --bg: light-dark(#f4f1ea, #070a12);
+  --surface: light-dark(#fbfaf7, #111725);
+  --surface-2: light-dark(#ebe7dd, #0c111c);
+  --text: light-dark(#070a12, #f4f1ea);
+  --text-muted: light-dark(#4f4b44, #b8b4ab);
+  --border: light-dark(#c9c3b8, #2a3142);
+  --focus: light-dark(#070a12, #f4f1ea);
+  --grid-dot: light-dark(#d9d3c7, #1d2433);
+
+  --node-fill: light-dark(#fbfaf7, #161d2c);
+  --node-side: light-dark(#cfc8bb, #04060b);
+  --node-stroke-dim: light-dark(#c9c3b8, #2a3142);
+  --node-text-dim: light-dark(#5d5952, #9ea3ae);
+  /* The current step: ember outline on dark; on light, an ember block with
+     ink text and a heavier ink outline. */
+  --node-fill-on: light-dark(var(--ember), #1b2334);
+  --node-side-on: light-dark(#b8400f, #7a2a0e);
+  --node-stroke-on: light-dark(#070a12, var(--ember));
+  --node-text-on: light-dark(#070a12, #f4f1ea);
+  --edge-dim: light-dark(#a9a296, #4a5265);
+  /* Ember is under 3:1 on light surfaces, so in light mode lit lines are
+     heavier ink, and the packet and current timeline step get an ink ring. */
+  --edge-on: light-dark(#070a12, var(--ember));
+  --packet: var(--ember);
+  --step-on: var(--ember);
+  --on-ring: light-dark(#070a12, #111725);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Base ------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+kbd {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  padding: 0 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  color: var(--text-muted);
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 2rem 0 0.5rem;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 1.25rem 0 0.25rem;
+}
+
+.meta {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.lede {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+}
+
+/* The brand kit files: show the one that matches the theme. */
+.brand-image {
+  display: inline-flex;
+}
+
+.brand-image img {
+  display: block;
+  width: auto;
+}
+
+.brand-image .on-light {
+  display: none;
+}
+
+:root[data-theme="light"] .brand-image .on-dark {
+  display: none;
+}
+
+:root[data-theme="light"] .brand-image .on-light {
+  display: block;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .brand-image .on-dark {
+    display: none;
+  }
+
+  :root:not([data-theme="dark"]) .brand-image .on-light {
+    display: block;
+  }
+}
+
+/* Buttons -------------------------------------------------------------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-primary {
+  border-color: var(--text);
+}
+
+.button[aria-disabled="true"] {
+  color: var(--text-muted);
+  border-color: var(--border);
+  cursor: default;
+}
+
+.button-quiet {
+  border-color: transparent;
+  background: transparent;
+  min-width: 2.75rem;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* App shell ------------------------------------------------------------ */
+
+.shell-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.shell-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: auto;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.brand img {
+  height: 26px;
+}
+
+.brand > span:last-child {
+  color: var(--text-muted);
+  padding-top: 0.2rem;
+}
+
+.search-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+/* On a phone, search shrinks to its icon and the "Learn" label hides. */
+@media (max-width: 34rem) {
+  .search-button {
+    width: 2.5rem;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .search-button kbd,
+  .brand > span:last-child {
+    display: none;
+  }
+
+  /* Still the button's name for screen readers. */
+  .search-button .search-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 34rem) {
+  .search-button {
+    min-width: 14rem;
+  }
+
+  .search-button kbd {
+    margin-left: auto;
+  }
+}
+
+/* Dialogs: the course drawer and search. Native <dialog> gives focus
+   trapping, Escape and an inert page behind. */
+dialog {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0;
+}
+
+dialog::backdrop {
+  background: rgb(7 10 18 / 0.6);
+}
+
+.drawer {
+  margin: 0;
+  height: 100dvh;
+  max-height: none;
+  width: min(22rem, 88vw);
+  border-width: 0 1px 0 0;
+}
+
+.drawer-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.drawer-head form {
+  margin: 0;
+}
+
+.drawer-roadmap h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.drawer-count {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.drawer-roadmap ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.drawer-roadmap ol a {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+}
+
+.drawer-roadmap ol a[aria-current="page"] {
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+.drawer-roadmap .meta {
+  font-size: 0.8125rem;
+}
+
+.drawer-tick {
+  display: grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+}
+
+.drawer-tick[data-done="true"] {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+
+.drawer-foot {
+  display: flex;
+  justify-content: space-between;
+  margin: auto 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.search {
+  width: min(36rem, calc(100vw - 2rem));
+  margin: 12vh auto auto;
+  border-radius: 1rem;
+}
+
+.search-body {
+  padding: 0.5rem;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-field input {
+  flex: 1;
+  min-width: 0;
+  height: 3rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.0625rem;
+}
+
+.search-field input:focus-visible {
+  outline: none;
+}
+
+.search-field:focus-within {
+  box-shadow: inset 0 -2px 0 var(--focus);
+}
+
+.search-results {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.search-results li {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.search-results li[aria-selected="true"] {
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+.result-title {
+  font-weight: 600;
+}
+
+.search-empty {
+  padding: 0.75rem;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Pages ---------------------------------------------------------------- */
+
+.page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.crumb,
+.breadcrumb {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  position: relative;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.card p {
+  margin: 0.25rem 0 0;
+}
+
+/* The whole card is the tap target; the link text stays the accessible name. */
+.card-link {
+  text-decoration: none;
+}
+
+.card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.topic-list .meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0 0 0.25rem;
+}
+
+.topic-number {
+  font-weight: 700;
+}
+
+.level {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+}
+
+.done-tick {
+  display: block;
+  min-height: 1.5em;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+/* Home */
+.hero {
+  padding: 0.5rem 0 0;
+}
+
+.hero-mark img {
+  height: 72px;
+  margin-bottom: 1rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  max-width: 20ch;
+}
+
+.hero .lede {
+  margin-bottom: 0;
+}
+
+.hero + h2 {
+  margin-top: 1.75rem;
+}
+
+.roadmap-card h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.card-topics {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.card-topics li + li {
+  margin-top: 0.125rem;
+}
+
+.card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.card-footer .meta {
+  margin: 0;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.progress-count {
+  min-height: 1.5em;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.dots {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+}
+
+.dot[data-done="true"] {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+/* Progress (F7) */
+.toast {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast-body {
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  max-width: 34rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--text);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.reset {
+  margin-top: 2rem;
+}
+
+.reset-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.reset-confirm p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.reset-status {
+  min-height: 1.5em;
+  color: var(--text-muted);
+}
+
+/* Topic page ----------------------------------------------------------- */
+
+.page-topic {
+  max-width: 56rem;
+  padding-top: 0.5rem;
+  /* Room for the fixed bottom bar. */
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+.lesson-head h1 {
+  font-size: 1.375rem;
+  margin: 0 0 0.25rem;
+}
+
+.lesson-head .breadcrumb {
+  margin-bottom: 0.25rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.8125rem;
+}
+
+@media (min-width: 40rem) {
+  .lesson-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 0 1rem;
+  }
+
+  .lesson-head .breadcrumb {
+    grid-column: 1 / -1;
+  }
+
+  .lesson-head h1 {
+    font-size: 1.875rem;
+    margin: 0;
+  }
+}
+
+/* The player: stage, timeline, caption and bottom bar (F3–F5). */
+.player {
+  margin: 0.5rem 0 1.5rem;
+}
+
+.player:focus-visible {
+  outline-offset: 4px;
+  border-radius: 1rem;
+}
+
+.player:fullscreen {
+  overflow-y: auto;
+  padding: 1rem 1rem 6rem;
+  background: var(--bg);
+}
+
+.stage {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background-color: var(--surface);
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1.4px);
+  background-size: 16px 16px;
+  background-position: 8px 8px;
+}
+
+.diagram-wrap {
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Two layouts of the same diagram: the phone one, drawn at full width so
+   blocks are at least 72 px and labels 12 px, and a wider one with the same
+   grid that fills most of a big stage. CSS shows one; the other is
+   display: none, so it is out of the accessibility tree and the tab order. */
+.diagram-wrap[data-size="wide"] {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .diagram-wrap[data-size="narrow"] {
+    display: none;
+  }
+
+  /* As wide as the stage allows, while leaving room below for the
+     timeline, caption and bottom bar; never below one unit per pixel, so
+     labels stay at least 12 px. */
+  .diagram-wrap[data-size="wide"] {
+    display: block;
+    max-width: max(600px, calc((100svh - 26rem) * var(--ratio)));
+  }
+
+  .player:fullscreen .diagram-wrap[data-size="wide"] {
+    max-width: max(600px, calc((100svh - 13rem) * var(--ratio)));
+  }
+}
+
+.diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.diagram .node {
+  cursor: pointer;
+}
+
+.diagram .node-face {
+  fill: var(--node-fill);
+  stroke: var(--node-stroke-dim);
+  stroke-width: 1.5;
+}
+
+.diagram .node-side {
+  fill: var(--node-side);
+  stroke: var(--node-stroke-dim);
+  stroke-width: 1.5;
+}
+
+.diagram .node text {
+  fill: var(--node-text-dim);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.diagram .node-icon {
+  fill: none;
+  stroke: var(--node-text-dim);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.diagram .node[data-on="true"] .node-face {
+  fill: var(--node-fill-on);
+  stroke: var(--node-stroke-on);
+  stroke-width: 3;
+}
+
+.diagram .node[data-on="true"] .node-side {
+  fill: var(--node-side-on);
+  stroke: var(--node-stroke-on);
+  stroke-width: 3;
+}
+
+.diagram .node[data-on="true"] text {
+  fill: var(--node-text-on);
+}
+
+.diagram .node[data-on="true"] .node-icon {
+  stroke: var(--node-text-on);
+}
+
+/* Focus and pinned rings are drawn shapes: outline on SVG isn't reliable. */
+.diagram .node-focus {
+  fill: none;
+  stroke: none;
+  stroke-width: 2;
+}
+
+.diagram .node[data-pinned="true"] .node-focus {
+  stroke: var(--focus);
+  stroke-dasharray: 4 3;
+}
+
+/* Blocks and lines draw their own focus ring; skip the browser's box. */
+.diagram .node:focus,
+.diagram .edge:focus {
+  outline: none;
+}
+
+.diagram .node:focus-visible .node-focus {
+  stroke: var(--focus);
+  stroke-dasharray: none;
+  stroke-width: 3;
+}
+
+.diagram .edge {
+  cursor: help;
+}
+
+.diagram .edge-hit {
+  stroke: transparent;
+  stroke-width: 16;
+}
+
+.diagram .edge:focus-visible .edge-hit,
+.diagram .edge[data-pinned="true"] .edge-hit {
+  stroke: var(--focus);
+  stroke-width: 3;
+  stroke-dasharray: 2 4;
+}
+
+.diagram .edge-line {
+  stroke: var(--edge-dim);
+  stroke-width: 1.75;
+}
+
+.diagram .edge[data-on="true"] .edge-line {
+  stroke: var(--edge-on);
+  stroke-width: 2.5;
+}
+
+.diagram .arrow-off path {
+  fill: var(--edge-dim);
+}
+
+.diagram .arrow-on path {
+  fill: var(--edge-on);
+}
+
+.diagram .pill rect {
+  fill: var(--surface);
+  stroke: var(--node-stroke-dim);
+  stroke-width: 1;
+}
+
+.diagram .pill text {
+  fill: var(--node-text-dim);
+  font-size: 12px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.diagram .pill[data-lit="true"] rect {
+  stroke: var(--text);
+}
+
+.diagram .pill[data-lit="true"] text {
+  fill: var(--text);
+}
+
+.diagram .packet {
+  fill: var(--packet);
+  stroke: var(--on-ring);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+/* Colours fade between steps; focus and pinned rings appear at once. */
+.player[data-ready] .diagram rect:not(.node-focus),
+.player[data-ready] .diagram line:not(.edge-hit),
+.player[data-ready] .diagram text,
+.player[data-ready] .diagram path {
+  transition:
+    fill 400ms ease,
+    stroke 400ms ease,
+    stroke-width 400ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player[data-ready] .diagram rect:not(.node-focus),
+  .player[data-ready] .diagram line:not(.edge-hit),
+  .player[data-ready] .diagram text,
+  .player[data-ready] .diagram path {
+    transition: none;
+  }
+}
+
+/* The note for a block, or what flows along a line. */
+.inspector {
+  position: absolute;
+  z-index: 2;
+  left: clamp(0%, calc(var(--x, 50%) - 8rem), calc(100% - 16rem));
+  width: min(16rem, 100%);
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--text);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  box-shadow: 0 4px 0 var(--node-side);
+}
+
+.inspector[data-open="false"] {
+  visibility: hidden;
+}
+
+.inspector strong {
+  display: block;
+}
+
+.stage-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.375rem 0.375rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  border: 2px solid var(--node-stroke-dim);
+  background: var(--node-fill);
+}
+
+.swatch-on {
+  border-color: var(--node-stroke-on);
+  background: var(--node-fill-on);
+}
+
+.swatch-packet {
+  border-color: var(--on-ring);
+  border-radius: 50%;
+  background: var(--packet);
+}
+
+.stage-tools {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+}
+
+.counter {
+  flex: none;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.timeline {
+  display: flex;
+  flex: 1;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  flex: 1;
+}
+
+.timeline button {
+  display: block;
+  width: 100%;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* The visible bar sits in the middle of a taller tap target. */
+.timeline button::before {
+  content: "";
+  display: block;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.timeline button[data-state="seen"]::before {
+  background: var(--text-muted);
+}
+
+.timeline button[data-state="current"]::before {
+  height: 0.5rem;
+  background: var(--step-on);
+  box-shadow: 0 0 0 2px var(--on-ring);
+}
+
+/* Step captions (F4): at least 18 px. */
+.caption-box {
+  display: grid;
+  max-width: 40rem;
+  margin: 0.25rem auto 0;
+}
+
+.caption-box > .caption {
+  grid-area: 1 / 1;
+}
+
+.caption {
+  font-size: 1.125rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.caption-sizer {
+  visibility: hidden;
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+@media (hover: none), (max-width: 40rem) {
+  .hint {
+    display: none;
+  }
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-inner {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0.625rem 1rem;
+}
+
+.button-next {
+  flex: 1;
+  min-width: 0;
+  justify-content: space-between;
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* On a phone, Back is just its arrow so the Next button can name the step. */
+@media (max-width: 34rem) {
+  .button-back {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .back-label {
+    display: none;
+  }
+}
+
+.button-done {
+  justify-content: center;
+}
+
+.next-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Topic page sections below the player. */
+.all-steps {
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.all-steps li + li {
+  margin-top: 0.375rem;
+}
+
+.sources {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.sources li + li {
+  margin-top: 0.375rem;
+}
+
+.sources a {
+  overflow-wrap: anywhere;
+}
+
+/* Kept last so these phone overrides win over the base rules above. */
+/* Phones: keep the header short and the chips on one line, with room to
+   spare, so the stage, timeline and caption all fit above the bottom bar
+   whatever the platform's font metrics. */
+@media (max-width: 40rem) {
+  .lesson-head h1 {
+    font-size: 1.125rem;
+  }
+
+  .chips {
+    gap: 0.25rem;
+  }
+
+  .chips li {
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .chips .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .legend {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    gap: 0 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  .stage-foot {
+    padding: 0.25rem;
+  }
+
+  .shell-inner {
+    padding-block: 0.375rem;
+  }
+
+  .caption {
+    line-height: 1.35;
+  }
+
+  .legend li {
+    gap: 0.25rem;
+  }
+
+  .stage-tools {
+    gap: 0.25rem;
+  }
+
+  /* 32 px targets: above WCAG 2.2's 24 px minimum. */
+  .stage-tools .icon-button {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .legend .swatch {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+}

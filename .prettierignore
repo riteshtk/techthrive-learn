@@ -7,3 +7,5 @@ content/.generated/
 test-results/
 playwright-report/
 docs/
+/.lighthouseci/
+public/brand/
