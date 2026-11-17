@@ -1,4 +1,5 @@
 import { roadmapFiles, topicFiles } from "./.generated";
+import type { NavRoadmap, SearchEntry } from "@/lib/search";
 import type { Roadmap, Topic } from "./types";
 
 export function getRoadmaps(): Roadmap[] {
@@ -25,4 +26,29 @@ export function roadmapTopics(roadmap: Roadmap): Topic[] {
 /** The first roadmap that lists this topic; "Back to roadmap" goes here. */
 export function homeRoadmapOf(topicId: string): Roadmap | undefined {
   return getRoadmaps().find((r) => r.topics.includes(topicId));
+}
+
+/** Roadmaps and their topics, for the navigation drawer. */
+export function navRoadmaps(): NavRoadmap[] {
+  return getRoadmaps().map((r) => ({
+    id: r.id,
+    title: r.title,
+    topics: roadmapTopics(r).map((t) => ({
+      id: t.id,
+      title: t.title,
+      level: t.level,
+    })),
+  }));
+}
+
+/** Everything search looks through, one entry per topic. */
+export function searchEntries(): SearchEntry[] {
+  return getTopics().map((t) => ({
+    id: t.id,
+    title: t.title,
+    roadmap: homeRoadmapOf(t.id)?.title ?? "",
+    summary: t.summary,
+    nodes: t.diagram.nodes.map((n) => n.label),
+    steps: t.steps.map((s) => ({ title: s.title, text: s.text })),
+  }));
 }

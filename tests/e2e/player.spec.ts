@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 const LLM = "topics/how-an-llm-answers/";
 
@@ -21,9 +21,9 @@ test.describe("diagram player", () => {
 
   test("Next and Back move one step", async ({ page }) => {
     await page.goto(LLM);
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: /^Next:/ }).click();
     expect((await lit(page)).sort()).toEqual(["prompt-tokenizer", "tokenizer"]);
-    await page.getByRole("button", { name: "Back" }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     expect(await lit(page)).toEqual(["prompt"]);
   });
 
@@ -32,11 +32,12 @@ test.describe("diagram player", () => {
   }) => {
     await page.clock.install();
     await page.goto(LLM);
-    await page.getByRole("button", { name: "Play" }).click();
+    await page.getByRole("button", { name: "Play", exact: true }).click();
     // Step 1: "You send a prompt, as plain text." is 33 characters.
-    await page.clock.runFor(2000 + 45 * 33 - 50);
+    // The installed clock also moves with real time, so allow a margin.
+    await page.clock.runFor(2000 + 45 * 33 - 400);
     expect(await lit(page)).toEqual(["prompt"]);
-    await page.clock.runFor(100);
+    await page.clock.runFor(800);
     expect((await lit(page)).sort()).toEqual(["prompt-tokenizer", "tokenizer"]);
     // Each later step advances after its own hold; React schedules the next
     // timer after rendering, so advance one step at a time.
@@ -56,25 +57,31 @@ test.describe("diagram player", () => {
     // It stops on the last step.
     await page.clock.runFor(60_000);
     expect((await lit(page)).sort()).toEqual(["answer", "next-token-answer"]);
-    await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Play", exact: true }),
+    ).toBeVisible();
   });
 
   test("Play on the last step restarts from step 1", async ({ page }) => {
     await page.clock.install();
     await page.goto(LLM);
-    const next = page.getByRole("button", { name: "Next" });
+    const next = page.getByRole("button", { name: /^Next:/ });
     for (let i = 0; i < 6; i++) await next.click();
-    await page.getByRole("button", { name: "Play" }).click();
+    await page.getByRole("button", { name: "Play", exact: true }).click();
     expect(await lit(page)).toEqual(["prompt"]);
-    await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Pause", exact: true }),
+    ).toBeVisible();
   });
 
   test("Next pauses playback", async ({ page }) => {
     await page.clock.install();
     await page.goto(LLM);
-    await page.getByRole("button", { name: "Play" }).click();
-    await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await page.getByRole("button", { name: /^Next:/ }).click();
+    await expect(
+      page.getByRole("button", { name: "Play", exact: true }),
+    ).toBeVisible();
     await page.clock.runFor(30_000);
     expect((await lit(page)).sort()).toEqual(["prompt-tokenizer", "tokenizer"]);
   });
@@ -82,12 +89,14 @@ test.describe("diagram player", () => {
   test("hiding the tab pauses playback", async ({ page }) => {
     await page.clock.install();
     await page.goto(LLM);
-    await page.getByRole("button", { name: "Play" }).click();
+    await page.getByRole("button", { name: "Play", exact: true }).click();
     await page.evaluate(() => {
       Object.defineProperty(document, "hidden", { value: true });
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Play", exact: true }),
+    ).toBeVisible();
     await page.clock.runFor(30_000);
     expect(await lit(page)).toEqual(["prompt"]);
   });
@@ -103,11 +112,20 @@ test.describe("diagram player", () => {
       );
       await page.goto(`topics/${topic}/`);
       const height = page.viewportSize()!.height;
+      // The bottom bar is fixed, so the stage and caption must end above it.
+      const bar = (await page.locator(".bottom-bar").boundingBox())!;
+      expect(bar.y + bar.height).toBeLessThanOrEqual(height + 0.5);
       for (const el of [
-        page.locator(".diagram"),
+        page.locator(".stage"),
+        page.locator(".timeline"),
         page.getByTestId("caption"),
-        page.getByRole("button", { name: "Next" }),
-        page.getByRole("button", { name: "Back" }),
+      ]) {
+        const box = (await el.boundingBox())!;
+        expect(box.y + box.height).toBeLessThanOrEqual(bar.y);
+      }
+      for (const el of [
+        page.getByRole("button", { name: /^Next:/ }),
+        page.getByRole("button", { name: "Back", exact: true }),
       ]) {
         const box = (await el.boundingBox())!;
         expect(box.y + box.height).toBeLessThanOrEqual(height);
@@ -117,22 +135,24 @@ test.describe("diagram player", () => {
     test(`${topic}: edge labels sit beside their lines`, async ({ page }) => {
       await page.goto(`topics/${topic}/`);
       const touching = await page
-        .locator(".diagram .edge")
-        .evaluateAll((edges) =>
-          edges.flatMap((edge) => {
-            const text = edge.querySelector("text");
-            const line = edge.querySelector("line");
-            if (!text || !line) return [];
-            const b = text.getBBox();
+        .locator(".diagram .pill")
+        .evaluateAll((pills) =>
+          pills.flatMap((pill) => {
+            const id = pill.getAttribute("data-edge");
+            const line = pill
+              .closest("svg")!
+              .querySelector(`.edge[data-id="${id}"] .edge-line`);
+            const b = (pill as SVGGElement).getBBox();
+            if (!line) return [`${id}: no line`];
             const [x1, y1, x2, y2] = ["x1", "y1", "x2", "y2"].map((a) =>
               Number(line.getAttribute(a)),
             ) as [number, number, number, number];
-            // Sample the line; any point inside the label's box means overlap.
+            // Sample the line; any point inside the pill means overlap.
             for (let t = 0; t <= 1; t += 0.02) {
               const x = x1 + (x2 - x1) * t;
               const y = y1 + (y2 - y1) * t;
               if (x > b.x && x < b.x + b.width && y > b.y && y < b.y + b.height)
-                return [edge.getAttribute("data-id") ?? ""];
+                return [id ?? ""];
             }
             return [];
           }),
@@ -148,14 +168,13 @@ test.describe("diagram player", () => {
         .locator(".diagram .node")
         .evaluateAll((nodes) =>
           nodes.flatMap((node) => {
-            const rect = node.querySelector("rect")!.getBoundingClientRect();
+            const face = node.querySelector(".node-face")!;
+            const rect = face.getBoundingClientRect();
             const text = node.querySelector("text")!.getBoundingClientRect();
             const size = parseFloat(
               getComputedStyle(node.querySelector("text")!).fontSize,
             );
-            const scale =
-              rect.width /
-              Number(node.querySelector("rect")!.getAttribute("width"));
+            const scale = rect.width / Number(face.getAttribute("width"));
             const out: string[] = [];
             if (text.width > rect.width - 2)
               out.push(`${node.getAttribute("data-id")} overflows`);

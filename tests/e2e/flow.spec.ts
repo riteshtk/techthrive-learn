@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const TOPICS = [
   { id: "how-an-llm-answers", title: "How an LLM answers", steps: 7 },
@@ -23,7 +23,7 @@ test("home → roadmap → each topic → last step → mark done", async ({
     );
     await expect(page.getByTestId("counter")).toHaveText(`1 of ${topic.steps}`);
 
-    const next = page.getByRole("button", { name: "Next" });
+    const next = page.getByRole("button", { name: /^Next:/ });
     for (let step = 2; step <= topic.steps; step++) {
       await next.click();
       await expect(page.getByTestId("counter")).toHaveText(

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const LLM = "topics/how-an-llm-answers/";
 
@@ -18,17 +18,23 @@ test.describe("keyboard", () => {
     await page.goto(LLM);
     await page.locator(".player").focus();
     await page.keyboard.press(" ");
-    await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Pause", exact: true }),
+    ).toBeVisible();
     await page.keyboard.press(" ");
-    await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Play", exact: true }),
+    ).toBeVisible();
   });
 
   test("a focused button keeps its own Space", async ({ page }) => {
     await page.goto(LLM);
-    await page.getByRole("button", { name: "Next" }).focus();
+    await page.getByRole("button", { name: /^Next:/ }).focus();
     await page.keyboard.press(" ");
     await expect(page.getByTestId("counter")).toHaveText("2 of 7");
-    await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Play", exact: true }),
+    ).toBeVisible();
   });
 
   test("every control is reachable with Tab and shows focus", async ({
@@ -40,15 +46,37 @@ test.describe("keyboard", () => {
     const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
     await page.goto(LLM);
     await page.locator(".player").focus();
-    for (const name of ["Back", "Play", "Next"]) {
+    const wanted = new Set([
+      "Prompt",
+      "Prompt to Tokenizer: plain text",
+      "Replay from step 1",
+      "Play",
+      "Step 3: Score next tokens",
+      "Back",
+      "Next: Split into tokens",
+    ]);
+    const seen = new Set<string>();
+    for (let i = 0; i < 40 && seen.size < wanted.size; i++) {
       await page.keyboard.press(tab);
-      const focused = page.getByRole("button", { name });
-      await expect(focused).toBeFocused();
-      const outline = await focused.evaluate(
-        (el) => getComputedStyle(el).outlineStyle,
-      );
-      expect(outline).not.toBe("none");
+      const { name, ring } = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement;
+        const name =
+          el.getAttribute("aria-label") ?? el.textContent?.trim() ?? "";
+        // Blocks and lines draw their own ring; everything else uses outline.
+        const drawn = el.querySelector(".node-focus, .edge-hit");
+        const ring = drawn
+          ? getComputedStyle(drawn).stroke !== "none" &&
+            getComputedStyle(drawn).stroke !== "transparent" &&
+            !getComputedStyle(drawn).stroke.endsWith(", 0)")
+          : getComputedStyle(el).outlineStyle !== "none";
+        return { name, ring };
+      });
+      if (wanted.has(name)) {
+        expect(ring, `${name} shows focus`).toBe(true);
+        seen.add(name);
+      }
     }
+    expect([...seen].sort()).toEqual([...wanted].sort());
   });
 });
 
@@ -84,7 +112,7 @@ test.describe("reduced motion", () => {
     await page.goto(LLM);
     await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
     const duration = await page
-      .locator(".diagram .node rect")
+      .locator(".diagram .node .node-face")
       .first()
       .evaluate((el) => getComputedStyle(el).transitionDuration);
     expect(duration).toBe("0s");
@@ -95,7 +123,7 @@ test.describe("reduced motion", () => {
     await page.goto(LLM);
     await expect(page.locator(".player")).toHaveAttribute("data-ready", "true");
     const duration = await page
-      .locator(".diagram .node rect")
+      .locator(".diagram .node .node-face")
       .first()
       .evaluate((el) => getComputedStyle(el).transitionDuration);
     expect(duration.split(",")[0]?.trim()).toBe("0.4s");

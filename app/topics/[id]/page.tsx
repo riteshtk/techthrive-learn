@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTopic, getTopics, homeRoadmapOf } from "@/content";
+import { Icon } from "@/components/Icon";
 import { formatDate } from "@/lib/dates";
 import { pageMetadata } from "@/lib/metadata";
 import { levelLabel } from "@/lib/roadmap";
@@ -31,22 +32,37 @@ export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
   const topic = getTopic((await params).id);
   if (!topic) notFound();
   const roadmap = homeRoadmapOf(topic.id);
+  const position = roadmap ? roadmap.topics.indexOf(topic.id) + 1 : 0;
   // Laid out at build time so the geometry code never ships to the browser.
   const layout = layoutDiagram(topic.diagram.nodes, topic.diagram.edges);
 
   return (
-    <main className="page">
-      {/* Kept short above the player so, on a phone, the diagram, caption
-          and controls fit on one screen. The summary follows the player. */}
-      <p className="crumb crumb-row">
-        {roadmap ? (
-          <Link href={`/roadmaps/${roadmap.id}/`}>{roadmap.title}</Link>
-        ) : null}
-        <span className={`level level-${topic.level}`}>
-          {levelLabel[topic.level]}
-        </span>
-      </p>
-      <h1 className="topic-title">{topic.title}</h1>
+    <main className="page page-topic">
+      <header className="lesson-head">
+        <p className="breadcrumb">
+          {roadmap ? (
+            <>
+              <Link href={`/roadmaps/${roadmap.id}/`}>{roadmap.title}</Link>
+              <span aria-hidden="true"> / </span>
+              <span>
+                Topic {position} of {roadmap.topics.length}
+              </span>
+            </>
+          ) : null}
+        </p>
+        <h1>{topic.title}</h1>
+        <ul className="chips" aria-label="About this topic">
+          <li>
+            <Icon name="clock" size={14} /> {topic.minutes} min
+          </li>
+          <li>
+            <Icon name="level" size={14} /> {levelLabel[topic.level]}
+          </li>
+          <li>
+            <Icon name="steps" size={14} /> {topic.steps.length} steps
+          </li>
+        </ul>
+      </header>
       <Player
         layout={layout}
         steps={topic.steps}

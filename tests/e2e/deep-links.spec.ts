@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 const LLM = "topics/how-an-llm-answers/";
 
@@ -44,11 +44,11 @@ test.describe("deep links", () => {
   }) => {
     const before = await baseline(page);
     await page.goto(`${LLM}?step=1`);
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: /^Next:/ }).click();
     await expect(page).toHaveURL(/\?step=2$/);
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: /^Next:/ }).click();
     await expect(page).toHaveURL(/\?step=3$/);
-    await page.getByRole("button", { name: "Back" }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await expect(page).toHaveURL(/\?step=2$/);
     expect(await page.evaluate(() => history.length)).toBe(before + 1);
   });

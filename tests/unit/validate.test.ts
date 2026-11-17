@@ -16,21 +16,29 @@ function topic(): Loose {
     title: "A sample topic",
     level: "basics",
     summary: "One short sentence about the sample.",
+    minutes: 5,
     diagram: {
       nodes: [
-        { id: "a", label: "Alpha", x: 0, y: 0 },
-        { id: "b", label: "Beta", x: 0, y: 1 },
-        { id: "c", label: "Gamma", x: 1, y: 1 },
+        { id: "a", label: "Alpha", note: "Starts it.", x: 0, y: 0 },
+        { id: "b", label: "Beta", note: "Passes it on.", x: 0, y: 1 },
+        {
+          id: "c",
+          label: "Gamma",
+          note: "Ends it.",
+          icon: "check",
+          x: 1,
+          y: 1,
+        },
       ],
       edges: [
-        { id: "a-b", from: "a", to: "b" },
+        { id: "a-b", from: "a", to: "b", flows: "a message" },
         { id: "b-c", from: "b", to: "c" },
       ],
     },
     steps: [
-      { text: "First step.", highlight: ["a"] },
-      { text: "Second step.", highlight: ["a-b", "b"] },
-      { text: "Third step.", highlight: ["b-c", "c"] },
+      { title: "Start", text: "First step.", highlight: ["a"] },
+      { title: "Pass it on", text: "Second step.", highlight: ["a-b", "b"] },
+      { title: "Finish", text: "Third step.", highlight: ["b-c", "c"] },
     ],
     sources: [
       { title: "Outside", url: "https://example.org/a", read: "2026-11-17" },
@@ -164,7 +172,7 @@ describe("content checks", () => {
 
   it("reject an edge that crosses a third node", () => {
     const t = topic();
-    t.diagram.nodes[2] = { id: "c", label: "Gamma", x: 0, y: 2 };
+    t.diagram.nodes[2] = { id: "c", label: "Gamma", note: "Ends.", x: 0, y: 2 };
     t.diagram.edges[1] = { id: "a-c", from: "a", to: "c" };
     t.steps[2].highlight = ["a-c", "c"];
     expect(check(t)).toEqual([
@@ -174,12 +182,13 @@ describe("content checks", () => {
 
   it("reject an edge label with no room between its nodes", () => {
     const t = topic();
-    t.diagram.nodes = [
-      { id: "a", label: "A", x: 0, y: 0 },
-      { id: "b", label: "B", x: 1, y: 0 },
-      { id: "c", label: "C", x: 2, y: 0 },
-      { id: "d", label: "D", x: 3, y: 0 },
-    ];
+    t.diagram.nodes = ["a", "b", "c", "d"].map((id, x) => ({
+      id,
+      label: id.toUpperCase(),
+      note: "A box.",
+      x,
+      y: 0,
+    }));
     t.diagram.edges = [
       { id: "a-b", from: "a", to: "b", label: "embedded" },
       { id: "b-c", from: "b", to: "c" },
@@ -243,6 +252,58 @@ describe("content checks", () => {
     expect(check(t)).toEqual([
       `${FILE} › video.youtubeId: must be an 11-character YouTube video id`,
       `${FILE} › video.title: is missing`,
+    ]);
+  });
+
+  it("require minutes from 1 to 60", () => {
+    const t = topic();
+    t.minutes = 0;
+    expect(check(t)).toEqual([
+      `${FILE} › minutes: must be a whole number from 1 to 60`,
+    ]);
+    delete t.minutes;
+    expect(check(t)).toEqual([
+      `${FILE} › minutes: must be a whole number from 1 to 60`,
+    ]);
+  });
+
+  it("require a short title on every step", () => {
+    const t = topic();
+    delete t.steps[0].title;
+    t.steps[1].title = "A step title that is far too long";
+    t.steps[2].title = "Finish.";
+    expect(check(t)).toEqual([
+      `${FILE} › steps[0].title: is missing`,
+      `${FILE} › steps[1].title: "A step title that is far too long" is 33 characters; the limit is 24`,
+      `${FILE} › steps[2].title: is a short name; leave off the full stop`,
+    ]);
+  });
+
+  it("require a one-sentence note on every node", () => {
+    const t = topic();
+    delete t.diagram.nodes[0].note;
+    t.diagram.nodes[1].note = "Two ideas. Not one.";
+    t.diagram.nodes[2].note = `${"n".repeat(90)}.`;
+    expect(check(t)).toEqual([
+      `${FILE} › diagram.nodes[0].note: is missing`,
+      `${FILE} › diagram.nodes[1].note: must be one sentence`,
+      `${FILE} › diagram.nodes[2].note: is 91 characters; the limit is 90`,
+    ]);
+  });
+
+  it("only allow known icons", () => {
+    const t = topic();
+    t.diagram.nodes[0].icon = "rocket";
+    expect(check(t).join("\n")).toContain(
+      `${FILE} › diagram.nodes[0].icon: must be one of text, question,`,
+    );
+  });
+
+  it("keep what flows along an edge short", () => {
+    const t = topic();
+    t.diagram.edges[0].flows = "f".repeat(41);
+    expect(check(t)).toEqual([
+      `${FILE} › diagram.edges[0].flows: must be text of at most 40 characters`,
     ]);
   });
 

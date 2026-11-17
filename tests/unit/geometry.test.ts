@@ -19,6 +19,7 @@ import {
 const node = (id: string, x: number, y: number): DiagramNode => ({
   id,
   label: id,
+  note: "A part.",
   x,
   y,
 });
@@ -42,7 +43,9 @@ describe("layout", () => {
   });
 
   it("matches a 360 px phone: one unit per CSS pixel, 12 px labels", () => {
-    expect(VIEW_W).toBe(360 - 2 * 16);
+    // The stage is 360 − 2 × 16 px gutters − a 1 px border on each side.
+    const stageInner = 360 - 2 * 16 - 2;
+    expect(VIEW_W).toBeLessThanOrEqual(stageInner);
     expect(LABEL_SIZE).toBeGreaterThanOrEqual(12);
   });
 

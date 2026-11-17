@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.describe("sources and video", () => {
   test("each topic lists its sources with the date read", async ({ page }) => {

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.describe("home", () => {
   test("lists the roadmap with goal, topic count and progress", async ({
@@ -47,13 +47,13 @@ test.describe("home", () => {
     await expect(lockup).toBeVisible();
     await expect(lockup).toHaveAttribute(
       "src",
-      "/techthrive-learn/brand/lockup-horizontal_on-dark.svg",
+      /^\/techthrive-learn\/brand\/lockup-horizontal_on-(dark|light)\.svg$/,
     );
     const svg = await (
       await request.get("brand/lockup-horizontal_on-dark.svg")
     ).text();
     expect(svg).toContain('viewBox="0 0 1342.86 300"');
-    await expect(page.locator(".hero-mark img")).toBeVisible();
+    await expect(page.locator(".hero-mark img:visible")).toBeVisible();
   });
 
   test("shows progress as one dot per topic, filled when done", async ({

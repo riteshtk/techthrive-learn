@@ -22,21 +22,27 @@ add one without touching any component code.
 
 `npm test` and the build enforce these:
 
-| Field             | Rule                                                                                     |
-| ----------------- | ---------------------------------------------------------------------------------------- |
-| `id`              | kebab-case, the same as the file name; never changes once merged                         |
-| `title`           | at most 60 characters                                                                    |
-| `level`           | `basics`, `intermediate` or `advanced`                                                   |
-| `summary`         | one sentence, at most 140 characters                                                     |
-| `diagram.nodes`   | grid cells x 0–3, y 0–5, one node per cell; label at most 20 characters, no word over 10 |
-| `diagram.edges`   | join two node ids; a line may not pass through a third node                              |
-| `steps`           | 3 to 9; each `text` is one sentence of at most 140 characters                            |
-| `steps.highlight` | node and edge ids from this topic                                                        |
-| `sources`         | at least one outside Tech & Thrive; `read` is the date you checked it (YYYY-MM-DD)       |
-| `video`           | optional; an 11-character YouTube id and the video's title                               |
+| Field               | Rule                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| `id`                | kebab-case, the same as the file name; never changes once merged                                   |
+| `title`             | at most 60 characters                                                                              |
+| `level`             | `basics`, `intermediate` or `advanced`                                                             |
+| `minutes`           | whole minutes to work through it, 1–60                                                             |
+| `summary`           | one sentence, at most 140 characters                                                               |
+| `diagram.nodes`     | grid cells x 0–3, y 0–5, one node per cell; label at most 20 characters, no word over 10           |
+| `nodes[].note`      | one sentence, at most 90 characters, on what the part does (shown when a learner clicks the block) |
+| `nodes[].icon`      | optional; one of the icons listed in the template                                                  |
+| `diagram.edges`     | join two node ids; a line may not pass through a third node                                        |
+| `edges[].flows`     | optional; what moves along the line, at most 40 characters (shown on hover)                        |
+| `steps`             | 3 to 9; each `text` is one sentence of at most 140 characters                                      |
+| `steps[].title`     | a short name for the step, at most 24 characters, no full stop (it names the Next button)          |
+| `steps[].highlight` | node and edge ids from this topic                                                                  |
+| `sources`           | at least one outside Tech & Thrive; `read` is the date you checked it (YYYY-MM-DD)                 |
+| `video`             | optional; an 11-character YouTube id and the video's title                                         |
 
-Every node and edge id must be unique within the topic. An edge with a label
-needs room for it: leave a gap or an empty cell between the two nodes.
+Every node and edge id must be unique within the topic. An edge's label is a
+small pill drawn beside its line, so it needs room on one side: leave a gap or
+an empty cell next to the line.
 
 Writing tips:
 

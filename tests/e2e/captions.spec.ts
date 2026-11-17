@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const LLM = "topics/how-an-llm-answers/";
 
@@ -11,7 +11,7 @@ test.describe("step captions", () => {
     await expect(caption).toHaveAttribute("aria-live", "polite");
     await expect(caption).toHaveText("You send a prompt, as plain text.");
     await expect(page.getByTestId("counter")).toHaveText("1 of 7");
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: /^Next:/ }).click();
     await expect(caption).toHaveText(
       "A tokenizer splits the text into tokens: whole words, parts of words or punctuation.",
     );
@@ -24,14 +24,18 @@ test.describe("step captions", () => {
 
   test("the controls stay put as the caption changes", async ({ page }) => {
     await page.goto(LLM);
-    const next = page.getByRole("button", { name: "Next" });
     // Page coordinates: clicking may scroll the viewport.
-    const top = () =>
-      next.evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
-    const before = await top();
+    const top = (selector: string) =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    const before = [await top(".bottom-bar"), await top(".timeline")];
     for (let i = 0; i < 6; i++) {
-      await next.click();
-      expect(await top()).toBe(before);
+      await page.getByRole("button", { name: /^Next:/ }).click();
+      expect([await top(".bottom-bar"), await top(".timeline")]).toEqual(
+        before,
+      );
     }
   });
 });

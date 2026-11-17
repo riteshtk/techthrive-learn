@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import Link from "next/link";
-import { BrandImage } from "@/components/BrandImage";
+import { AppShell } from "@/components/AppShell";
+import { navRoadmaps, searchEntries } from "@/content";
 import { pageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/metadata";
 import { withBase } from "@/lib/paths";
+import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 // Downloaded at build time and served from this site: no third-party requests.
@@ -31,14 +32,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
+    // data-theme is set before paint by THEME_SCRIPT, so React must not
+    // complain that it differs from the server render.
+    <html
+      lang="en"
+      className={`${inter.variable} ${mono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
-        <header className="site-header">
-          <Link href="/" className="brand">
-            <BrandImage kind="lockup" height={28} alt="Tech & Thrive" />
-            <span>Learn</span>
-          </Link>
-        </header>
+        <AppShell roadmaps={navRoadmaps()} search={searchEntries()} />
         {children}
       </body>
     </html>

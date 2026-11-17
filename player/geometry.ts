@@ -1,20 +1,24 @@
 // Diagram layout from grid cells. Pure, and shared by Diagram.tsx (drawing)
 // and content/validate.ts (layout checks), so they can never disagree.
 //
-// Units are SVG viewBox units. The viewBox is VIEW_W wide, which is the
-// content width of a 360 px phone (360 − 2 × 16 px gutters), so at 360 px
-// one unit is one CSS pixel: boxes are at least 72 px and labels 12 px.
+// Units are SVG viewBox units. The viewBox is VIEW_W wide, a little less
+// than the stage's inner width on a 360 px phone (360 − 2 × 16 px gutters −
+// the stage border), so phones draw it at slightly over one CSS pixel per
+// unit: blocks are at least 72 px wide and labels at least 12 px.
 
 import type { DiagramEdge, DiagramNode } from "@/content/types";
 
-export const VIEW_W = 328;
+export const VIEW_W = 320;
 export const MIN_BOX_W = 72;
 export const MAX_BOX_W = 112;
-export const BOX_H = 46;
-export const ROW_PITCH = 84;
-export const PAD = 4;
+/** Whole block, including the DEPTH-unit side that makes it look raised. */
+export const BOX_H = 56;
+export const DEPTH = 5;
+export const ROW_PITCH = 80;
+export const PAD = 6;
 export const LABEL_SIZE = 12;
-export const LABEL_LINE_H = 15;
+export const LABEL_LINE_H = 13;
+export const ICON_SIZE = 12;
 export const EDGE_LABEL_SIZE = 12;
 /** Longest line, in characters, a label may use before wrapping. */
 export const LABEL_LINE_CHARS = 10;
@@ -27,7 +31,11 @@ export type Point = { x: number; y: number };
 export type Box = { x: number; y: number; w: number; h: number };
 
 export type LaidOutNode = DiagramNode & {
+  /** The whole block, side included; edges clip to it. */
   box: Box;
+  /** Where the icon's centre and each label line sit, on the top face. */
+  iconAt: Point;
+  lineYs: number[];
   center: Point;
   lines: string[];
 };
@@ -82,11 +90,18 @@ export function layoutDiagram(
     const x = (n.x - firstCol) * colPitch + (colPitch - boxW) / 2;
     const y = PAD + (n.y - firstRow) * ROW_PITCH;
     const box = { x, y, w: boxW, h: BOX_H };
+    const lines = wrapLabel(n.label);
+    // Top face: the icon near the top, the label centred beneath it.
+    const labelMid = y + 35;
     return {
       ...n,
       box,
       center: { x: x + boxW / 2, y: y + BOX_H / 2 },
-      lines: wrapLabel(n.label),
+      iconAt: { x: x + boxW / 2, y: y + 13 },
+      lineYs: lines.map(
+        (_, i) => labelMid + (i - (lines.length - 1) / 2) * LABEL_LINE_H,
+      ),
+      lines,
     };
   });
 
@@ -132,10 +147,11 @@ export function layoutDiagram(
 /** Gap between an edge label and its line. */
 const LABEL_GAP = 4;
 
-function labelSize(label: string): { w: number; h: number } {
+/** Edge labels are drawn as pills: text plus padding. */
+export function labelSize(label: string): { w: number; h: number } {
   return {
-    w: estimateTextWidth(label, EDGE_LABEL_SIZE) + 4,
-    h: EDGE_LABEL_SIZE + 2,
+    w: estimateTextWidth(label, EDGE_LABEL_SIZE) + 14,
+    h: EDGE_LABEL_SIZE + 8,
   };
 }
 

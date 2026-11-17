@@ -25,6 +25,7 @@ npx playwright test tests/e2e/flow.spec.ts --project=chromium-360
 
 - `tsc` alone fails on a fresh checkout. `app/layout.tsx` uses the global `LayoutProps` type that `next typegen` generates, so always go through `npm run typecheck`.
 - Use Node 26 LTS (`.nvmrc`).
+- E2E specs import `test` from `tests/e2e/fixtures.ts`, whose `page.goto` waits for hydration. Diagram blocks and lines are buttons too ("Next token", "Model to Tokenizer: …"), so match buttons by exact name or a pattern like `/^Next:/`.
 
 ## Hard constraints
 

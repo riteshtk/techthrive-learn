@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const KEY = "ttl-learn:progress:v1";
 
@@ -8,7 +8,7 @@ test.describe("progress", () => {
     await expect(
       page.getByRole("button", { name: "Mark as done" }),
     ).toHaveCount(0);
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: /^Next:/ }).click();
     await expect(
       page.getByRole("button", { name: "Mark as done" }),
     ).toBeVisible();

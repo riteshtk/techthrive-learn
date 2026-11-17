@@ -8,7 +8,7 @@ import {
   layoutDiagram,
   wrapLabel,
 } from "../player/geometry";
-import type { DiagramEdge, DiagramNode } from "./types";
+import { NODE_ICONS, type DiagramEdge, type DiagramNode } from "./types";
 
 export type Issue = { file: string; field: string; message: string };
 
@@ -28,6 +28,11 @@ export const LIMITS = {
   maxSteps: 9,
   maxX: 3,
   maxY: 5,
+  stepTitle: 24,
+  note: 90,
+  flows: 40,
+  minMinutes: 1,
+  maxMinutes: 60,
 } as const;
 
 const LEVELS = ["basics", "intermediate", "advanced"];
@@ -93,6 +98,16 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
     }
     text("title", LIMITS.title);
     text("summary", LIMITS.summary, { sentence: true });
+    const minutes = topic.minutes;
+    if (
+      !Number.isInteger(minutes) ||
+      (minutes as number) < LIMITS.minMinutes ||
+      (minutes as number) > LIMITS.maxMinutes
+    )
+      add(
+        "minutes",
+        `must be a whole number from ${LIMITS.minMinutes} to ${LIMITS.maxMinutes}`,
+      );
     if (!LEVELS.includes(topic.level as string))
       add("level", `must be one of ${LEVELS.join(", ")}`);
 
@@ -142,6 +157,23 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
           else if (wrapLabel(label).length > LIMITS.labelLines)
             add(`${field}.label`, `"${label}" needs more than two lines`);
         }
+        const note = raw.note;
+        if (typeof note !== "string" || note.trim() === "") {
+          add(`${field}.note`, "is missing");
+        } else {
+          if (note.length > LIMITS.note)
+            add(
+              `${field}.note`,
+              `is ${note.length} characters; the limit is ${LIMITS.note}`,
+            );
+          if (!isOneSentence(note))
+            add(`${field}.note`, "must be one sentence");
+        }
+        if (
+          raw.icon !== undefined &&
+          !(NODE_ICONS as readonly unknown[]).includes(raw.icon)
+        )
+          add(`${field}.icon`, `must be one of ${NODE_ICONS.join(", ")}`);
         const x = raw.x;
         const y = raw.y;
         const xOk =
@@ -166,6 +198,7 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
           nodes.push({
             id: raw.id as string,
             label,
+            note: typeof note === "string" ? note : "",
             x: x as number,
             y: y as number,
           });
@@ -195,6 +228,16 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
           add(
             `${field}.label`,
             `must be text of at most ${LIMITS.label} characters`,
+          );
+        if (
+          raw.flows !== undefined &&
+          (typeof raw.flows !== "string" ||
+            raw.flows.trim() === "" ||
+            raw.flows.length > LIMITS.flows)
+        )
+          add(
+            `${field}.flows`,
+            `must be text of at most ${LIMITS.flows} characters`,
           );
         if (ok && ends && raw.from !== raw.to)
           edges.push({
@@ -238,6 +281,18 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
       steps.forEach((raw: unknown, i: number) => {
         const field = `steps[${i}]`;
         if (!isObj(raw)) return add(field, "must be an object");
+        const title = raw.title;
+        if (typeof title !== "string" || title.trim() === "")
+          add(`${field}.title`, "is missing");
+        else {
+          if (title.length > LIMITS.stepTitle)
+            add(
+              `${field}.title`,
+              `"${title}" is ${title.length} characters; the limit is ${LIMITS.stepTitle}`,
+            );
+          if (/[.!?]$/.test(title))
+            add(`${field}.title`, "is a short name; leave off the full stop");
+        }
         const t = raw.text;
         if (typeof t !== "string" || t.trim() === "")
           add(`${field}.text`, "is missing");

@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element -- static brand SVGs; next/image
+   adds nothing on a statically exported site. */
 import { withBase } from "@/lib/paths";
 
 // The brand kit's own SVG files (public/brand/), used exactly as supplied.
-// Each comes in an on-dark and an on-light version; the device's colour
-// scheme picks one, matching the site theme.
+// Both the on-dark and on-light files are in the page; CSS shows the one
+// that matches the theme, so the theme toggle switches the logo too.
 const FILES = {
   lockup: {
     dark: "/brand/lockup-horizontal_on-dark.svg",
@@ -34,12 +36,21 @@ export function BrandImage({
   const file = FILES[kind];
   const width = Math.round((file.width / file.height) * height);
   return (
-    <picture className={className}>
-      <source
-        srcSet={withBase(file.light)}
-        media="(prefers-color-scheme: light)"
+    <span className={`brand-image ${className ?? ""}`}>
+      <img
+        className="on-dark"
+        src={withBase(file.dark)}
+        alt={alt}
+        width={width}
+        height={height}
       />
-      <img src={withBase(file.dark)} alt={alt} width={width} height={height} />
-    </picture>
+      <img
+        className="on-light"
+        src={withBase(file.light)}
+        alt={alt}
+        width={width}
+        height={height}
+      />
+    </span>
   );
 }
