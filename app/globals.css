@@ -323,3 +323,60 @@ h2 {
     display: none;
   }
 }
+
+/* Progress (F7). */
+.mark-done {
+  text-align: center;
+  margin: 1rem 0 0;
+}
+
+.toast {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast-body {
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  max-width: 34rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--text);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.button-quiet {
+  border-color: transparent;
+  background: transparent;
+  min-width: 2.75rem;
+  justify-content: center;
+}
+
+.reset {
+  margin-top: 2rem;
+}
+
+.reset-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.reset-confirm p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.reset-status {
+  min-height: 1.5em;
+  color: var(--text-muted);
+}

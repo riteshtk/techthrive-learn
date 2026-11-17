@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProgressCount } from "@/components/ProgressCount";
+import { ResetProgress } from "@/components/ResetProgress";
 import { getRoadmaps } from "@/content";
 
 export default function Home() {
@@ -28,6 +29,9 @@ export default function Home() {
           </li>
         ))}
       </ul>
+      <ResetProgress
+        topicIds={[...new Set(roadmaps.flatMap((r) => r.topics))]}
+      />
     </main>
   );
 }

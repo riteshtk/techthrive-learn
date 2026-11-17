@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContinueLink } from "@/components/ContinueLink";
 import { DoneTick } from "@/components/DoneTick";
+import { UndoDone } from "@/components/UndoDone";
 import { getRoadmap, getRoadmaps, roadmapTopics } from "@/content";
 import { levelLabel } from "@/lib/roadmap";
 
@@ -57,6 +58,7 @@ export default async function RoadmapPage({
           </li>
         ))}
       </ol>
+      <UndoDone topics={topics.map((t) => ({ id: t.id, title: t.title }))} />
     </main>
   );
 }

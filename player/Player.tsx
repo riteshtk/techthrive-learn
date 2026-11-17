@@ -7,7 +7,10 @@ import {
   useRef,
   type KeyboardEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { Step } from "@/content/types";
+import { doneNotice } from "@/lib/doneNotice";
+import { progressStore } from "@/lib/useProgress";
 import { Diagram } from "./Diagram";
 import {
   holdMs,
@@ -23,9 +26,13 @@ type Props = {
   layout: Layout;
   steps: Step[];
   title: string;
+  topicId: string;
+  /** Where "Mark as done" returns to; home when the topic is in no roadmap. */
+  roadmapId?: string;
 };
 
-export function Player({ layout, steps, title }: Props) {
+export function Player({ layout, steps, title, topicId, roadmapId }: Props) {
+  const router = useRouter();
   const [state, dispatch] = useReducer(reducePlayer, steps.length, initPlayer);
   const step = steps[state.step] ?? steps[0];
   const active = useMemo(() => new Set(step?.highlight ?? []), [step]);
@@ -132,6 +139,21 @@ export function Player({ layout, steps, title }: Props) {
           {state.step + 1} of {state.total}
         </span>
       </div>
+      {last ? (
+        <p className="mark-done">
+          <button
+            type="button"
+            className="button button-primary"
+            onClick={() => {
+              progressStore.markDone(topicId);
+              doneNotice.set(topicId);
+              router.push(roadmapId ? `/roadmaps/${roadmapId}/` : "/");
+            }}
+          >
+            <span aria-hidden="true">✓</span> Mark as done
+          </button>
+        </p>
+      ) : null}
       <p className="hint">
         Tip: select the diagram, then use ← and → to step and Space to play.
       </p>

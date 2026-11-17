@@ -40,7 +40,13 @@ export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
         </span>
       </p>
       <p className="lede">{topic.summary}</p>
-      <Player layout={layout} steps={topic.steps} title={topic.title} />
+      <Player
+        layout={layout}
+        steps={topic.steps}
+        title={topic.title}
+        topicId={topic.id}
+        roadmapId={roadmap?.id}
+      />
       <section aria-labelledby="all-steps">
         <h2 id="all-steps">All steps</h2>
         <ol className="all-steps">
