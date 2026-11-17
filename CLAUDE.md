@@ -12,7 +12,8 @@ npm run build          # static export to out/
 npm run lint           # ESLint (Next core-web-vitals + TypeScript + Prettier)
 npm run format         # Prettier write; format:check to verify
 npm run typecheck      # next typegen && tsc --noEmit
-npm test               # typecheck + Vitest (no browsers; must stay under 30 s)
+npm test               # content check + typecheck + Vitest (no browsers; must stay under 30 s)
+npm run check:content  # just the content rules (also runs before every build)
 npm run test:e2e       # Playwright (Chromium at 360 px and 1280 px)
 
 npx vitest run tests/unit/engine.test.ts      # one unit test file

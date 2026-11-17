@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "content:index": "node scripts/gen-content-index.ts",
+    "check:content": "npm run content:index && tsx scripts/check-content.ts",
     "dev": "npm run content:index && next dev",
-    "build": "npm run content:index && next build",
+    "build": "npm run check:content && next build",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run content:index && next typegen && tsc --noEmit",
-    "test": "npm run typecheck && vitest run",
+    "test": "npm run check:content && npm run typecheck && vitest run",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "eslint-config-next": "16.4.6",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0"
   },
