@@ -5,6 +5,8 @@
 // - content/topics/<id>/topic.ts: a topic and its course outline
 // - content/topics/<id>/lessons/<lesson>.ts: a built lesson
 // - content/topics/<id>/checkpoints/<lesson>.ts: a lesson's checkpoint
+// - content/topics/<id>/diagrams/<diagram>.ts: a system's geometry, shared
+//   by the topic overview and the lessons that draw it
 // - content/facts/<name>.ts: facts register records
 //
 // Titles, minutes and positions of a lesson live in its topic's outline
@@ -19,6 +21,7 @@ import {
   optional,
   record,
   string,
+  tagged,
   tuple,
   type Infer,
 } from "./schema";
@@ -133,11 +136,93 @@ export const TopicSchema = object({
 });
 export type Topic = Infer<typeof TopicSchema>;
 
-// Lessons ------------------------------------------------------------------
+// Diagrams -----------------------------------------------------------------
 
 const nodeId = () =>
   string({ pattern: /^[A-Z]$/, patternHint: "one capital letter" });
 const color = () => oneOf(COLORS);
+const px = () => number({ min: -2000, max: 2000 });
+const size = () => number({ min: 0, max: 400 });
+
+/** Icons a 2D diagram node can show (spec 03 §7.10). */
+export const DIAGRAM_ICONS = [
+  "trend-up",
+  "bolt",
+  "shield",
+  "user",
+  "flask",
+  "chip",
+  "server",
+  "lock",
+  "database",
+  "users",
+  "search",
+  "inbox",
+  "alert",
+  "globe",
+  "check",
+  "layers",
+  "send",
+] as const;
+
+/** The seven shapes a 3D node's glyph can take (spec 03 §7.3). Block
+    sizes are world units (× 0.9 to draw); a cylinder is baked in px. */
+export const GlyphSchema = tagged("type", {
+  cube: object({ half: size(), h: size() }),
+  twin: object({ half: size(), h: size(), dy: size() }),
+  stack3: object({ half: size(), layer: size(), pitch: size() }),
+  step2: object({
+    lower: tuple(size(), size()),
+    upper: tuple(size(), size()),
+  }),
+  cylinder: object({
+    rx: size(),
+    h: size(),
+    bands: number({ int: true, min: 0, max: 4 }),
+  }),
+  crowd: object({}),
+  person: object({}),
+});
+
+export const DiagramNodeSchema = object({
+  id: nodeId(),
+  color: color(),
+  /** 3D: the label pill's text and top edge (its x and width are
+      computed). */
+  label: text(40),
+  labelY: px(),
+  /** 3D: plinth-top centre in the viewBox, and plinth half-side (world
+      units). */
+  cx: px(),
+  cy: px(),
+  plinth: size(),
+  glyph: GlyphSchema,
+  /** 2D: name, mono sub-label, box [x, y, width, height] and icon. */
+  name2: text(40),
+  sub2: text(40),
+  box2: tuple(px(), px(), size(), size()),
+  icon: oneOf(DIAGRAM_ICONS),
+});
+export type DiagramNode = Infer<typeof DiagramNodeSchema>;
+
+export const DiagramSchema = object({
+  id: id(),
+  topic: id(),
+  /** "Card-dispute agent": the hero's title card adds "· n components". */
+  caption: text(60),
+  nodes: array(DiagramNodeSchema, { min: 2 }),
+  /** 2D edge paths by edge id ("A_B"), drawn from A to B. */
+  paths2: record(
+    string({ pattern: /^[A-Z]_[A-Z]$/, patternHint: 'an edge id like "A_B"' }),
+    string({
+      pattern: /^M[\d.,\sL]+$/,
+      patternHint: "an SVG path of straight segments (M…L…)",
+    }),
+  ),
+});
+export type Diagram = Infer<typeof DiagramSchema>;
+
+// Lessons ------------------------------------------------------------------
 
 export const STEP_TYPES = [
   "BRIEF",
@@ -156,13 +241,14 @@ export const HopSchema = object({
 });
 export type Hop = Infer<typeof HopSchema>;
 
+/** A diagram node's part in the lesson; its colour and geometry come from
+    the diagram. */
 export const LessonNodeSchema = object({
   id: nodeId(),
-  /** Popover title and 3D label, e.g. "Policy · Cedar". */
+  /** Popover title, e.g. "Policy · Cedar". */
   name: text(40),
   /** Hop chips and tags, e.g. "Policy". */
   short: text(24),
-  color: color(),
   /** The step that adds it; 1 means it is there from the start. */
   addedAt: number({ int: true, min: 1, max: 12 }),
   what: text(300),
@@ -201,6 +287,8 @@ export type Step = Infer<typeof StepSchema>;
 export const LessonSchema = object({
   id: id(),
   topic: id(),
+  /** The diagram file it draws, in content/topics/<topic>/diagrams/. */
+  diagram: id(),
   metricLabels: tuple(text(24), text(24), text(24), text(24)),
   legend: array(tuple(color(), text(30)), { min: 1, max: 6 }),
   /** The hop well's text when a step has no hops. */

@@ -3,6 +3,7 @@
 // fact past its re-check date, are printed but don't fail.
 import {
   checkpointFiles,
+  diagramFiles,
   factFiles,
   lessonFiles,
   topicFiles,
@@ -21,6 +22,7 @@ const { issues, content } = validateContent(
     topics: topicFiles,
     lessons: lessonFiles,
     checkpoints: checkpointFiles,
+    diagrams: diagramFiles,
     facts: factFiles,
   },
   today,

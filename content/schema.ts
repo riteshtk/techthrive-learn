@@ -214,6 +214,36 @@ export function object<S extends Shape>(shape: S): Schema<ObjectOf<S>> {
   };
 }
 
+/** One of several object shapes, told apart by a `tag` field. */
+export function tagged<
+  K extends string,
+  V extends Record<string, Schema<object>>,
+>(
+  tag: K,
+  variants: V,
+): Schema<{ [T in keyof V]: { [P in K]: T } & Infer<V[T]> }[keyof V]> {
+  return {
+    check(value, path, report) {
+      if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        report(path, `must be an object, not ${describe(value)}`);
+        return false;
+      }
+      const { [tag]: kind, ...rest } = value as Record<string, unknown>;
+      const variant = typeof kind === "string" ? variants[kind] : undefined;
+      if (!variant) {
+        report(
+          at(path, tag),
+          `${describe(kind)} must be one of: ${Object.keys(variants)
+            .map((v) => `"${v}"`)
+            .join(", ")}`,
+        );
+        return false;
+      }
+      return variant.check(rest, path, report);
+    },
+  };
+}
+
 /** Runs a schema over one file's default export. */
 export function checkFile<T>(
   schema: Schema<T>,

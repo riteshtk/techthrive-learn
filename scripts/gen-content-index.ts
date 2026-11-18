@@ -3,7 +3,8 @@
 // folders starting with "_" (templates) are skipped.
 //
 // - content/.generated/index.ts: v2 topics (content/topics/<id>/topic.ts),
-//   their lessons and checkpoints, and the facts register (content/facts).
+//   their lessons, checkpoints and diagrams, and the facts register
+//   (content/facts).
 // - content/v1/.generated/index.ts: the v1 topics and roadmaps, until
 //   Foundations replaces them.
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
@@ -40,11 +41,14 @@ type Entry = { file: string; name: string };
 const topics: Entry[] = [];
 const lessons: Entry[] = [];
 const checkpoints: Entry[] = [];
+const diagrams: Entry[] = [];
 for (const id of folders("content/topics")) {
   if (existsSync(join(root, "content/topics", id, "topic.ts")))
     topics.push({ file: `content/topics/${id}/topic.ts`, name: id });
   for (const l of tsFiles(`content/topics/${id}/lessons`))
     lessons.push({ file: `content/topics/${id}/lessons/${l}.ts`, name: l });
+  for (const d of tsFiles(`content/topics/${id}/diagrams`))
+    diagrams.push({ file: `content/topics/${id}/diagrams/${d}.ts`, name: d });
   for (const c of tsFiles(`content/topics/${id}/checkpoints`))
     checkpoints.push({
       file: `content/topics/${id}/checkpoints/${c}.ts`,
@@ -66,6 +70,7 @@ write("content", [
   ...topics.map(importOf("t")),
   ...lessons.map(importOf("l")),
   ...checkpoints.map(importOf("c")),
+  ...diagrams.map(importOf("d")),
   ...facts.map(importOf("f")),
   "",
   "// Each file's default export, unchecked: content/validate.ts checks it.",
@@ -77,6 +82,9 @@ write("content", [
   "];",
   "export const checkpointFiles: { file: string; data: unknown }[] = [",
   ...listOf("c", checkpoints),
+  "];",
+  "export const diagramFiles: { file: string; data: unknown }[] = [",
+  ...listOf("d", diagrams),
   "];",
   "export const factFiles: { file: string; data: unknown }[] = [",
   ...listOf("f", facts),
@@ -110,6 +118,7 @@ write("content/v1", [
 
 console.log(
   `content index: ${topics.length} topics, ${lessons.length} lessons, ` +
-    `${checkpoints.length} checkpoints, ${facts.length} fact files ` +
+    `${checkpoints.length} checkpoints, ${diagrams.length} diagrams, ` +
+    `${facts.length} fact files ` +
     `(v1: ${v1Topics.length} topics, ${v1Roadmaps.length} roadmaps)`,
 );

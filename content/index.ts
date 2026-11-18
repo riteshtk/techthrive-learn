@@ -3,12 +3,13 @@
 // asks for content it is valid; this throws only if that step was skipped.
 import {
   checkpointFiles,
+  diagramFiles,
   factFiles,
   lessonFiles,
   topicFiles,
 } from "./.generated";
 import { formatIssue } from "./schema";
-import type { Checkpoint, Fact, Lesson, Topic } from "./types";
+import type { Checkpoint, Diagram, Fact, Lesson, Topic } from "./types";
 import { validateContent, type Content } from "./validate";
 
 let cached: Content | undefined;
@@ -21,6 +22,7 @@ function content(): Content {
       topics: topicFiles,
       lessons: lessonFiles,
       checkpoints: checkpointFiles,
+      diagrams: diagramFiles,
       facts: factFiles,
     },
     "0000-01-01",
@@ -62,6 +64,15 @@ export function getCheckpoint(
 ): Checkpoint | undefined {
   return content().checkpoints.find(
     (c) => c.topic === topicId && c.lesson === lessonId,
+  );
+}
+
+export function getDiagram(
+  topicId: string,
+  diagramId: string,
+): Diagram | undefined {
+  return content().diagrams.find(
+    (d) => d.topic === topicId && d.id === diagramId,
   );
 }
 

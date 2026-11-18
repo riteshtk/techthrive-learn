@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { formatIssue } from "@/content/schema";
-import type { Checkpoint, Fact, Lesson, Topic } from "@/content/types";
+import type { Checkpoint, Diagram, Fact, Lesson, Topic } from "@/content/types";
 import { validateContent, type ContentInput } from "@/content/validate";
 
 const TOPIC_FILE = "content/topics/payments/topic.ts";
 const LESSON_FILE = "content/topics/payments/lessons/exactly-once.ts";
 const CHECKPOINT_FILE = "content/topics/payments/checkpoints/exactly-once.ts";
 const FACT_FILE = "content/facts/payments.ts";
+const DIAGRAM_FILE = "content/topics/payments/diagrams/checkout.ts";
 const TODAY = "2026-11-18";
 
 function topic(): Topic {
@@ -72,6 +73,7 @@ function lesson(): Lesson {
   return {
     id: "exactly-once",
     topic: "payments",
+    diagram: "checkout",
     metricLabels: ["A", "B", "C", "D"],
     legend: [["cyan", "request"]],
     emptyTraceText: "No request moves in this step.",
@@ -80,7 +82,6 @@ function lesson(): Lesson {
         id: "C",
         name: "Checkout",
         short: "Checkout",
-        color: "text",
         addedAt: 1,
         what: "Customers paying.",
         points: [],
@@ -89,7 +90,6 @@ function lesson(): Lesson {
         id: "G",
         name: "API gateway",
         short: "Gateway",
-        color: "violet",
         addedAt: 2,
         what: "The front door.",
         points: [],
@@ -98,7 +98,6 @@ function lesson(): Lesson {
         id: "S",
         name: "Payment service",
         short: "Payments",
-        color: "violet",
         addedAt: 1,
         what: "Moves money.",
         points: [],
@@ -134,7 +133,32 @@ function checkpoint(): Checkpoint {
   };
 }
 
+function diagram(): Diagram {
+  const node = (id: string, cx: number) => ({
+    id,
+    color: "violet" as const,
+    label: id,
+    labelY: 10,
+    cx,
+    cy: 100,
+    plinth: 40,
+    glyph: { type: "cube" as const, half: 20, h: 20 },
+    name2: id,
+    sub2: "part",
+    box2: [cx, 40, 168, 56] as [number, number, number, number],
+    icon: "chip" as const,
+  });
+  return {
+    id: "checkout",
+    topic: "payments",
+    caption: "Checkout",
+    nodes: [node("C", 100), node("G", 300), node("S", 500)],
+    paths2: { C_G: "M1,1 L2,2", G_S: "M1,1 L2,2", C_S: "M1,1 L2,2" },
+  };
+}
+
 type Parts = {
+  diagram?: unknown;
   topic?: unknown;
   lesson?: unknown;
   checkpoint?: unknown;
@@ -148,6 +172,7 @@ function run(parts: Parts = {}) {
     checkpoints: [
       { file: CHECKPOINT_FILE, data: parts.checkpoint ?? checkpoint() },
     ],
+    diagrams: [{ file: DIAGRAM_FILE, data: parts.diagram ?? diagram() }],
     facts: [{ file: FACT_FILE, data: parts.facts ?? [fact()] }],
   };
   const { issues } = validateContent(input, TODAY);
@@ -269,6 +294,42 @@ describe("the v2 content model", () => {
     });
   });
 
+  describe("diagrams", () => {
+    it("must hold every lesson node and edge", () => {
+      const d = diagram();
+      d.nodes.pop();
+      delete (d.paths2 as Record<string, string>).C_S;
+      const errors = run({ diagram: d }).errors;
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          `${LESSON_FILE} › nodes[2].id: "S" is not in the diagram`,
+          `${LESSON_FILE} › edges[2]: "C_S" has no 2D path in the diagram`,
+          `${DIAGRAM_FILE} › paths2.G_S: "S" is not a node`,
+        ]),
+      );
+    });
+
+    it("check glyph shapes by their type", () => {
+      const d = diagram() as unknown as { nodes: { glyph: unknown }[] };
+      d.nodes[0]!.glyph = { type: "pyramid" };
+      d.nodes[1]!.glyph = { type: "cylinder", rx: 30, h: 40 };
+      expect(run({ diagram: d }).errors).toEqual(
+        expect.arrayContaining([
+          `${DIAGRAM_FILE} › nodes[0].glyph.type: "pyramid" must be one of: "cube", "twin", "stack3", "step2", "cylinder", "crowd", "person"`,
+          `${DIAGRAM_FILE} › nodes[1].glyph.bands: is missing`,
+        ]),
+      );
+    });
+
+    it("keep their labels' figures in the register", () => {
+      const d = diagram();
+      d.nodes[0]!.sub2 = "20k chats a day";
+      expect(run({ diagram: d }).errors).toEqual([
+        `${DIAGRAM_FILE} › nodes[0].sub2: the figure "20k" is not in the facts register for "payments"; add a fact whose value shows it (content/facts/)`,
+      ]);
+    });
+  });
+
   describe("checkpoints", () => {
     it("need one right option, and a lesson", () => {
       const c = checkpoint();
@@ -382,6 +443,7 @@ describe("the v2 content model", () => {
           ],
           lessons: [{ file: LESSON_FILE, data: l }],
           checkpoints: [],
+          diagrams: [{ file: DIAGRAM_FILE, data: diagram() }],
           facts: [{ file: FACT_FILE, data: [fact({ topics: ["agents"] })] }],
         },
         TODAY,

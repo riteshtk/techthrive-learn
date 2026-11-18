@@ -7,11 +7,13 @@ import { figureKey, figureKeys, figuresIn } from "./figures";
 import { checkFile, type Issue } from "./schema";
 import {
   CheckpointSchema,
+  DiagramSchema,
   FactFileSchema,
   LessonSchema,
   RESERVED_TOPIC_IDS,
   TopicSchema,
   type Checkpoint,
+  type Diagram,
   type Fact,
   type Lesson,
   type Topic,
@@ -23,6 +25,7 @@ export type ContentInput = {
   topics: ContentFile[];
   lessons: ContentFile[];
   checkpoints: ContentFile[];
+  diagrams: ContentFile[];
   facts: ContentFile[];
 };
 
@@ -31,6 +34,7 @@ export type Content = {
   topics: Topic[];
   lessons: Lesson[];
   checkpoints: Checkpoint[];
+  diagrams: Diagram[];
   facts: Fact[];
 };
 
@@ -68,6 +72,9 @@ const NOT_DISPLAY = new Set([
   "status",
   "level",
   "url",
+  "icon",
+  "glyph",
+  "paths2",
 ]);
 
 /** Calls back with every display string in a content object. */
@@ -109,6 +116,10 @@ export function validateContent(
   for (const { file, data } of input.checkpoints)
     if (checkFile(CheckpointSchema, file, data, issues))
       checkpoints.push({ file, checkpoint: data });
+  const diagrams: { file: string; diagram: Diagram }[] = [];
+  for (const { file, data } of input.diagrams)
+    if (checkFile(DiagramSchema, file, data, issues))
+      diagrams.push({ file, diagram: data });
   const facts: { file: string; field: string; fact: Fact }[] = [];
   for (const { file, data } of input.facts)
     if (checkFile(FactFileSchema, file, data, issues))
@@ -171,6 +182,28 @@ export function validateContent(
       error(file, "lessons", "a live topic needs its course outline");
   }
 
+  // Diagrams --------------------------------------------------------------
+  const diagramByKey = new Map<string, Diagram>();
+  for (const { file, diagram } of diagrams) {
+    if (baseName(file) !== diagram.id)
+      error(file, "id", `"${diagram.id}" must match the file name`);
+    if (topicFolder(file) !== diagram.topic)
+      error(file, "topic", `must be "${topicFolder(file)}", its folder`);
+    if (!topicById.has(diagram.topic))
+      error(file, "topic", `"${diagram.topic}" is not a topic`);
+    diagramByKey.set(`${diagram.topic}/${diagram.id}`, diagram);
+    const ids = new Set<string>();
+    diagram.nodes.forEach((n, i) => {
+      if (ids.has(n.id))
+        error(file, `nodes[${i}].id`, `"${n.id}" is used twice`);
+      ids.add(n.id);
+    });
+    for (const edge of Object.keys(diagram.paths2))
+      for (const end of edge.split("_"))
+        if (!ids.has(end))
+          error(file, `paths2.${edge}`, `"${end}" is not a node`);
+  }
+
   // Lessons ---------------------------------------------------------------
   const lessonByKey = new Map<string, Lesson>();
   for (const { file, lesson } of lessons) {
@@ -188,6 +221,27 @@ export function validateContent(
       );
     lessonByKey.set(`${lesson.topic}/${lesson.id}`, lesson);
     checkLesson(file, lesson, factById, error);
+    const diagram = diagramByKey.get(`${lesson.topic}/${lesson.diagram}`);
+    if (!diagram)
+      error(
+        file,
+        "diagram",
+        `"${lesson.diagram}" has no file in content/topics/${lesson.topic}/diagrams/`,
+      );
+    else {
+      const drawn = new Set(diagram.nodes.map((n) => n.id));
+      lesson.nodes.forEach((n, i) => {
+        if (!drawn.has(n.id))
+          error(file, `nodes[${i}].id`, `"${n.id}" is not in the diagram`);
+      });
+      for (const id of drawn)
+        if (!lesson.nodes.some((n) => n.id === id))
+          error(file, "nodes", `the diagram's "${id}" has no lesson node`);
+      lesson.edges.forEach((e, i) => {
+        if (!diagram.paths2[e])
+          error(file, `edges[${i}]`, `"${e}" has no 2D path in the diagram`);
+      });
+    }
   }
 
   // Checkpoints -----------------------------------------------------------
@@ -267,6 +321,8 @@ export function validateContent(
     checkFigures(file, lesson.topic, lesson);
   for (const { file, checkpoint } of checkpoints)
     checkFigures(file, checkpoint.topic, checkpoint);
+  for (const { file, diagram } of diagrams)
+    checkFigures(file, diagram.topic, diagram);
 
   return {
     issues,
@@ -274,6 +330,7 @@ export function validateContent(
       topics: topics.map((t) => t.topic),
       lessons: lessons.map((l) => l.lesson),
       checkpoints: checkpoints.map((c) => c.checkpoint),
+      diagrams: diagrams.map((d) => d.diagram),
       facts: [...factById.values()],
     },
   };
