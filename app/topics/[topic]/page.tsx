@@ -1,118 +1,105 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTopic, getTopics, homeRoadmapOf } from "@/content/v1";
-import { Icon } from "@/components/Icon";
-import { formatDate } from "@/lib/dates";
+import { TopicBar } from "@/components/shell/TopicBar";
+import { Overview, type OverviewData } from "@/components/topic/Overview";
+import {
+  getDiagram,
+  getFacts,
+  getLessons,
+  getTopic,
+  getTopics,
+  oldestReadOn,
+} from "@/content";
+import { getTopics as getV1Topics } from "@/content/v1";
 import { pageMetadata } from "@/lib/metadata";
-import { levelLabel } from "@/lib/roadmap";
-import { layoutDiagram, NARROW, WIDE } from "@/player/geometry";
-import { Player } from "@/player/Player";
+import { DIAGRAM_ICON_PATHS } from "@/player/diagramIcons";
+import { drawDiagram } from "@/player/drawing";
+import { v1Metadata, V1Topic } from "./V1Topic";
 
 export const dynamicParams = false;
 
+/** Live v2 topics, plus the v1 topic addresses until P17 redirects them. */
 export function generateStaticParams() {
-  return getTopics().map((t) => ({ topic: t.id }));
+  return [
+    ...getTopics()
+      .filter((t) => t.status === "live")
+      .map((t) => ({ topic: t.id })),
+    ...getV1Topics().map((t) => ({ topic: t.id })),
+  ];
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<"/topics/[topic]">): Promise<Metadata> {
-  const topic = getTopic((await params).topic);
-  return topic
-    ? pageMetadata({
-        title: topic.title,
-        description: topic.summary,
-        path: `/topics/${topic.id}/`,
-      })
-    : {};
+  const id = (await params).topic;
+  const topic = getTopic(id);
+  if (!topic) return v1Metadata(id);
+  return pageMetadata({
+    title: topic.title,
+    description: topic.summary,
+    path: `/topics/${topic.id}/`,
+  });
 }
 
 export default async function TopicPage({
   params,
 }: PageProps<"/topics/[topic]">) {
-  const topic = getTopic((await params).topic);
-  if (!topic) notFound();
-  const roadmap = homeRoadmapOf(topic.id);
-  const position = roadmap ? roadmap.topics.indexOf(topic.id) + 1 : 0;
-  // Laid out at build time so the geometry code never ships to the browser.
-  const layouts = {
-    narrow: layoutDiagram(topic.diagram.nodes, topic.diagram.edges, NARROW),
-    wide: layoutDiagram(topic.diagram.nodes, topic.diagram.edges, WIDE),
+  const id = (await params).topic;
+  const topic = getTopic(id);
+  if (!topic) return <V1Topic id={id} />;
+  const o = topic.overview;
+  const diagram = o && getDiagram(topic.id, o.diagram);
+  if (!o || !diagram) notFound();
+
+  const lessons = getLessons(topic.id);
+  const built = topic.lessons.flatMap((l, i) =>
+    lessons.some((x) => x.id === l.id)
+      ? [{ id: l.id, n: i + 1, ctaName: l.ctaName ?? l.title }]
+      : [],
+  );
+  // The lesson that builds this system: which parts were already there,
+  // and the step that adds each of the others.
+  const builder = lessons.find((l) => l.diagram === diagram.id);
+  const edges = Object.keys(diagram.paths2);
+  const facts = Object.fromEntries(getFacts(topic.id).map((f) => [f.id, f]));
+  const data: OverviewData = {
+    topic,
+    built,
+    facts,
+    hero: {
+      caption: diagram.caption,
+      components: builder
+        ? builder.nodes.filter((n) => n.addedAt > 1).length
+        : diagram.nodes.length,
+      drawing: drawDiagram(diagram, edges, DIAGRAM_ICON_PATHS),
+      portrait: diagram.portrait
+        ? drawDiagram(diagram, edges, DIAGRAM_ICON_PATHS, { portrait: true })
+        : undefined,
+      edges,
+      bypass: builder?.bypass,
+      trace: o.heroTrace,
+      names: Object.fromEntries(diagram.nodes.map((n) => [n.id, n.label])),
+      links: builder
+        ? Object.fromEntries(
+            builder.nodes.map((n) => [
+              n.id,
+              `/topics/${topic.id}/lessons/${builder.id}/?step=${n.addedAt}`,
+            ]),
+          )
+        : {},
+    },
   };
 
   return (
-    <main className="page page-topic">
-      <header className="lesson-head">
-        <p className="breadcrumb">
-          {roadmap ? (
-            <>
-              <Link href={`/roadmaps/${roadmap.id}/`}>{roadmap.title}</Link>
-              <span aria-hidden="true"> / </span>
-              <span>
-                Topic {position} of {roadmap.topics.length}
-              </span>
-            </>
-          ) : null}
-        </p>
-        <h1>{topic.title}</h1>
-        <ul className="chips" aria-label="About this topic">
-          <li>
-            <Icon name="clock" size={14} /> {topic.minutes} min
-          </li>
-          <li>
-            <Icon name="level" size={14} /> {levelLabel[topic.level]}
-          </li>
-          <li>
-            <Icon name="steps" size={14} /> {topic.steps.length} steps
-          </li>
-        </ul>
-      </header>
-      <Player
-        layouts={layouts}
-        steps={topic.steps}
-        title={topic.title}
+    <>
+      <TopicBar
         topicId={topic.id}
-        roadmapId={roadmap?.id}
+        title={topic.switcherLabel}
+        tabs={topic.tabs}
+        active="overview"
+        verifiedOn={oldestReadOn(Object.values(facts))}
       />
-      <section aria-labelledby="about">
-        <h2 id="about">About this topic</h2>
-        <p className="lede">{topic.summary}</p>
-      </section>
-      <section aria-labelledby="all-steps">
-        <h2 id="all-steps">All steps</h2>
-        <ol className="all-steps">
-          {topic.steps.map((step, i) => (
-            <li key={i}>{step.text}</li>
-          ))}
-        </ol>
-      </section>
-      <section aria-labelledby="go-deeper">
-        <h2 id="go-deeper">Go deeper</h2>
-        {topic.video ? (
-          <p>
-            <a
-              className="button"
-              href={`https://www.youtube.com/watch?v=${topic.video.youtubeId}`}
-              rel="noopener"
-            >
-              <span aria-hidden="true">▶</span> Watch on YouTube:{" "}
-              {topic.video.title}
-            </a>
-          </p>
-        ) : null}
-        <h3>Sources</h3>
-        <ul className="sources">
-          {topic.sources.map((source) => (
-            <li key={source.url}>
-              <a href={source.url} rel="noopener">
-                {source.title}
-              </a>{" "}
-              <span className="meta">(read {formatDate(source.read)})</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+      <Overview data={data} />
+    </>
   );
 }

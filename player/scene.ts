@@ -147,21 +147,37 @@ const hitsBox = (p: Pt, [x, y, w, h]: Box) => {
 };
 
 /** Where along the edge to try a badge: the middle first, then further
-    out on alternate sides, on its own side of the line, then the other. */
+    out on alternate sides, on its own side of the line, then the other.
+    Short edges (the phone layouts) also try the finer spots and a wider
+    gap from the line. */
 const SPOTS = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.2, 0.8];
+const FINE = Array.from(
+  { length: 17 },
+  (_, i) => 0.5 + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 0.05,
+).filter((t) => t > 0.08 && t < 0.92);
+const TRIES: [number[], number][] = [
+  [SPOTS, 17],
+  [FINE, 17],
+  [FINE, 28],
+  [FINE, 44],
+  [FINE, 60],
+  [FINE, 76],
+];
 
 /**
  * Each hop's badge position: beside its edge's middle, outbound and return
  * hops on opposite sides, repeats spread along the edge (spec 04 §3.6).
  * Unlike the design, a badge never covers a label or a node box, nor
- * another badge: it moves along its edge, or to the other side, until it
- * is clear (it keeps its first spot if nothing is).
+ * another badge, nor leaves the drawing: it moves along its edge, or to the other side, until it
+ * is clear. If nothing is, it takes the spot that covers least.
  */
 export function badgePositions(
   lines: Readonly<Record<string, EdgeDrawing>>,
   edges: readonly string[],
   trace: readonly { from: string; to: string }[],
   avoid: readonly Box[] = [],
+  /** The drawing's size: a badge stays wholly inside it. */
+  size?: readonly [number, number],
 ): (Pt | null)[] {
   const seen = new Map<string, number>();
   const placed: Pt[] = [];
@@ -173,20 +189,30 @@ export function badgePositions(
     const occurrence = seen.get(key) ?? 0;
     seen.set(key, occurrence + 1);
     const count = trace.filter((h) => `${h.from}_${h.to}` === key).length;
-    const clear = (p: Pt) =>
-      !avoid.some((box) => hitsBox(p, box)) &&
-      !placed.some((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) < 2 * BADGE_R);
-    let chosen: Pt | null = null;
-    search: for (const side of [edge.forward, !edge.forward])
-      for (const t of SPOTS) {
-        const p = badgeAt(pointAt(line, t), side, occurrence, count);
-        if (clear(p)) {
-          chosen = p;
-          break search;
+    const outside = (p: Pt) =>
+      !!size &&
+      (p[0] < BADGE_R ||
+        p[1] < BADGE_R ||
+        p[0] > size[0] - BADGE_R ||
+        p[1] > size[1] - BADGE_R);
+    const hits = (p: Pt) =>
+      (outside(p) ? 1 : 0) +
+      avoid.filter((box) => hitsBox(p, box)).length +
+      placed.filter((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) < 2 * BADGE_R)
+        .length;
+    let at = badgeAt(pointAt(line, 0.5), edge.forward, occurrence, count);
+    let least = hits(at);
+    search: for (const [spots, offset] of TRIES)
+      for (const side of [edge.forward, !edge.forward])
+        for (const t of spots) {
+          const p = badgeAt(pointAt(line, t), side, occurrence, count, offset);
+          const n = hits(p);
+          if (n < least) {
+            at = p;
+            least = n;
+          }
+          if (n === 0) break search;
         }
-      }
-    const at =
-      chosen ?? badgeAt(pointAt(line, 0.5), edge.forward, occurrence, count);
     placed.push(at);
     return at;
   });

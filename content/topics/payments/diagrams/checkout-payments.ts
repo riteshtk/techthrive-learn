@@ -9,7 +9,24 @@ const box = (x: number, y: number, w = 168, h = 56) =>
 const diagram: Diagram = {
   id: "checkout-payments",
   topic: "payments",
-  caption: "Checkout payment system",
+  caption: "Checkout payments",
+  // The approved phone still's layout (design-v2/phone-stills).
+  portrait: {
+    scale: 0.5,
+    nodes: [
+      { id: "R", cx: 44, cy: 100, label: "Risk engine" },
+      { id: "I", cx: 156, cy: 84, label: "Idempotency store" },
+      { id: "V", cx: 262, cy: 100, label: "Token vault" },
+      { id: "A", cx: 56, cy: 212, label: "API" },
+      { id: "S", cx: 158, cy: 206, label: "Payment service" },
+      { id: "P", cx: 260, cy: 212, label: "PSP" },
+      { id: "C", cx: 58, cy: 322, label: "Customers", below: true },
+      { id: "L", cx: 156, cy: 318, label: "Ledger" },
+      { id: "W", cx: 258, cy: 312, label: "Webhooks" },
+      { id: "Q", cx: 150, cy: 404, label: "Outbox relay" },
+      { id: "N", cx: 258, cy: 404, label: "Reconciliation" },
+    ],
+  },
   nodes: [
     {
       id: "I",

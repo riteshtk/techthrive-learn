@@ -57,13 +57,15 @@ export function badgeAt(
   forward: boolean,
   occurrence: number,
   count: number,
+  /** How far from the line, px: 17 as designed. */
+  offset = 17,
 ): Pt {
   const [dx, dy] = mid.d;
   const n: Pt = [-dy, dx];
   const side = forward ? 1 : -1;
   const shift = (occurrence - (count - 1) / 2) * 28;
   return [
-    mid.p[0] + n[0] * 17 * side + dx * shift,
-    mid.p[1] + n[1] * 17 * side + dy * shift,
+    mid.p[0] + n[0] * offset * side + dx * shift,
+    mid.p[1] + n[1] * offset * side + dy * shift,
   ];
 }

@@ -147,13 +147,13 @@
   background: var(--raised);
 }
 
-.tt-field {
+.tt-viewer {
   position: relative;
   height: clamp(300px, 64vw, 560px);
   transition: height 0.35s ease;
 }
 
-.tt-lesson.wide .tt-field {
+.tt-lesson.wide .tt-viewer {
   height: clamp(300px, 64vw, 720px);
 }
 

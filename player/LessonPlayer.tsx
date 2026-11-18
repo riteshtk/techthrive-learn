@@ -378,7 +378,7 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
                   </button>
                 }
               />
-              <div className="tt-field">
+              <div className="tt-viewer">
                 <Stage
                   drawing={drawing}
                   edges={lesson.edges}

@@ -16,11 +16,15 @@ import {
   focusPoint,
   glyphBlocks,
   labelBox,
+  PILL_H,
+  SCALE,
+  SLAB,
   paintOrder,
   PERSON_HEAD,
   plinthFaces,
   ringOf,
   toPoints,
+  type Glyph,
   type IsoNode,
   type Pt,
 } from "./iso";
@@ -94,13 +98,15 @@ function pathArrows(points: readonly Pt[]): { f: Pt[]; b: Pt[] } {
 const r1 = (n: number) => Math.round(n * 10) / 10;
 const rp = (p: Pt): Pt => [r1(p[0]), r1(p[1])];
 
-function glyphOf(node: IsoNode): GlyphDrawing {
+function glyphOf(node: IsoNode, scale = 1): GlyphDrawing {
   const g = node.glyph;
   if (g.type === "crowd" || g.type === "person") {
     const heads = g.type === "crowd" ? CROWD_HEADS : [PERSON_HEAD];
     return {
       kind: "figures",
-      heads: heads.map(([x, y]) => rp([node.cx + x, node.cy + y])),
+      heads: heads.map(([x, y]) =>
+        rp([node.cx + x * scale, node.cy + y * scale]),
+      ),
       solo: g.type === "person",
     };
   }
@@ -129,40 +135,124 @@ function glyphOf(node: IsoNode): GlyphDrawing {
   };
 }
 
+/** A glyph at a smaller size: block sizes in world units, cylinders in
+    px; figures scale their spacing in glyphOf. */
+function scaleGlyph(g: Glyph, s: number): Glyph {
+  switch (g.type) {
+    case "cube":
+      return { ...g, half: g.half * s, h: g.h * s };
+    case "twin":
+      return { ...g, half: g.half * s, h: g.h * s, dy: g.dy * s };
+    case "stack3":
+      return { ...g, half: g.half * s, layer: g.layer * s, pitch: g.pitch * s };
+    case "step2":
+      return {
+        ...g,
+        lower: [g.lower[0] * s, g.lower[1] * s],
+        upper: [g.upper[0] * s, g.upper[1] * s],
+      };
+    case "cylinder":
+      return { ...g, rx: g.rx * s, h: g.h * s };
+    default:
+      return g;
+  }
+}
+
+/** The highest point of a drawn glyph, for placing a label over it. */
+function glyphTop(n: IsoNode, glyph: GlyphDrawing): number {
+  if (glyph.kind === "blocks")
+    return Math.min(
+      ...glyph.faces.flatMap((f) =>
+        f.points.split(" ").map((p) => Number(p.split(",")[1])),
+      ),
+    );
+  if (glyph.kind === "cylinder") return glyph.top.cy - glyph.top.ry;
+  return Math.min(...glyph.heads.map(([, y]) => y - 3.4), n.cy);
+}
+
+/**
+ * Draws a diagram for the stage. With `portrait`, the 3D view is the
+ * diagram's phone layout (the approved still) instead of the design's:
+ * the same glyphs at the portrait's scale, labels placed over (or under)
+ * each glyph and the viewBox fitted to them. 2D is the same either way.
+ */
 export function drawDiagram(
   diagram: Diagram,
   edges: readonly string[],
   /** Icon paths by name (24 px grid). */
   icons: Readonly<Record<string, string>>,
+  options: { portrait?: boolean } = {},
 ): Drawing {
+  const portrait = options.portrait ? diagram.portrait : undefined;
+  const scale = portrait?.scale ?? 1;
   const iso = new Map<string, IsoNode>(
-    diagram.nodes.map((n) => [
-      n.id,
-      { id: n.id, cx: n.cx, cy: n.cy, plinth: n.plinth, glyph: n.glyph },
-    ]),
+    diagram.nodes.map((n) => {
+      const at = portrait?.nodes.find((p) => p.id === n.id);
+      return [
+        n.id,
+        {
+          id: n.id,
+          cx: at?.cx ?? n.cx,
+          cy: at?.cy ?? n.cy,
+          plinth: n.plinth * scale,
+          glyph: scaleGlyph(n.glyph, scale),
+        },
+      ];
+    }),
   );
   const byId = new Map(diagram.nodes.map((n) => [n.id, n]));
-  const fit = fitViewBox(
-    [...iso.values()],
-    diagram.nodes.map((n) => ({ id: n.id, text: n.label, y: n.labelY })),
+  const glyphs = new Map(
+    [...iso.values()].map((n) => [n.id, glyphOf(n, scale)]),
   );
+  const labels = diagram.nodes.map((n) => {
+    if (!portrait) return { id: n.id, text: n.label, y: n.labelY };
+    const at = portrait.nodes.find((p) => p.id === n.id)!;
+    const node = iso.get(n.id)!;
+    const y = at.below
+      ? node.cy + node.plinth * SCALE + SLAB + 8
+      : Math.min(
+          glyphTop(node, glyphs.get(n.id)!),
+          node.cy - node.plinth * SCALE,
+        ) -
+        8 -
+        PILL_H;
+    return { id: n.id, text: at.label, y: r1(y) };
+  });
+  const labelOf = new Map(labels.map((l) => [l.id, l]));
+  const fit = fitViewBox([...iso.values()], labels);
+  // A portrait's coordinates are its own: shift them to start at the
+  // margin, as the design's drawings do.
+  const dx = portrait ? -fit.minX : 0;
+  const dy = portrait ? -fit.minY : 0;
+  if (portrait) {
+    for (const n of iso.values()) {
+      n.cx += dx;
+      n.cy += dy;
+    }
+    for (const l of labels) l.y = r1(l.y + dy);
+    for (const n of iso.values()) glyphs.set(n.id, glyphOf(n, scale));
+  }
+  const size3: [number, number] = portrait
+    ? [Math.round(fit.width - fit.minX), Math.round(fit.height - fit.minY)]
+    : [fit.width, fit.height];
 
   const nodes3 = paintOrder([...iso.values()]).map((n): NodeDrawing3 => {
     const node = byId.get(n.id)!;
     const plinth = plinthFaces(n);
-    const box = labelBox(n, { id: n.id, text: node.label, y: node.labelY });
+    const label = labelOf.get(n.id)!;
+    const box = labelBox(n, label);
     return {
       id: n.id,
       color: node.color,
       ring: toPoints(ringOf(n)),
       slabs: plinth.sides.map(toPoints),
       plate: toPoints(plinth.top),
-      glyph: glyphOf(n),
+      glyph: glyphs.get(n.id)!,
       label: {
         x: box.x,
         y: box.y,
         w: box.w,
-        text: node.label,
+        text: label.text,
         tx: r1(box.textX),
         ty: r1(box.textY),
       },
@@ -195,7 +285,7 @@ export function drawDiagram(
   return {
     labels3: nodes3.map((n) => [n.label.x, n.label.y, n.label.w, 26] as const),
     boxes2: diagram.nodes.map((n) => [...n.box2] as const),
-    size3: [fit.width, fit.height],
+    size3,
     size2: [960, 500],
     nodes3,
     nodes2: diagram.nodes.map((n) => ({

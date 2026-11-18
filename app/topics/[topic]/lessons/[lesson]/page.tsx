@@ -82,7 +82,7 @@ export default async function LessonPage({
       seen.add(key);
       return [
         {
-          title: fact.source,
+          title: fact.title ?? fact.source,
           detail:
             fact.kind === "real"
               ? `${fact.value} · read ${formatDate(fact.readOn)}`

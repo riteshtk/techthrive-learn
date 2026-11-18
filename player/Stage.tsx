@@ -50,6 +50,8 @@ type Props = {
   /** A node's name for its button, e.g. "Policy · Cedar". */
   nameOf: (id: string) => string;
   reducedMotion: boolean;
+  /** What pressing a part does, for its name: "show details" by default. */
+  nodeAction?: string;
   /** Drawn over the field, e.g. the component detail popover. */
   children?: ReactNode;
 };
@@ -65,6 +67,7 @@ export function Stage({
   label,
   nameOf,
   reducedMotion,
+  nodeAction = "show details",
   children,
 }: Props) {
   const packetRef = useRef<SVGGElement>(null);
@@ -212,11 +215,12 @@ export function Stage({
     dispatch(action);
   };
 
-  // Badges keep off the labels (3D) and node boxes (2D).
+  // Badges keep off the labels (3D) and node boxes (2D), inside the drawing.
   const avoid = view === "3d" ? drawing.labels3 : drawing.boxes2;
+  const size = view === "3d" ? drawing.size3 : drawing.size2;
   const badges = useMemo(
-    () => badgePositions(lines, edges, scene.trace, avoid),
-    [lines, edges, scene.trace, avoid],
+    () => badgePositions(lines, edges, scene.trace, avoid, size),
+    [lines, edges, scene.trace, avoid, size],
   );
 
   const rootClass = [
@@ -277,6 +281,7 @@ export function Stage({
                   node={n}
                   look={looks.get(n.id)}
                   name={nameOf(n.id)}
+                  action={nodeAction}
                   onSelect={select}
                 />
               ))
@@ -286,6 +291,7 @@ export function Stage({
                   node={n}
                   look={looks.get(n.id)}
                   name={nameOf(n.id)}
+                  action={nodeAction}
                   onSelect={select}
                 />
               ))}
@@ -454,6 +460,7 @@ function NodeButton({
   color,
   look,
   name,
+  action,
   onSelect,
   children,
 }: {
@@ -461,6 +468,7 @@ function NodeButton({
   color: string;
   look: NodeLook | undefined;
   name: string;
+  action: string;
   onSelect: (id: string) => void;
   children: ReactNode;
 }) {
@@ -471,7 +479,7 @@ function NodeButton({
       style={{ color: `var(--${color})` }}
       role="button"
       tabIndex={ghost ? -1 : 0}
-      aria-label={`${name}${ghost ? " (not built yet)" : ""}: show details`}
+      aria-label={`${name}${ghost ? " (not built yet)" : ""}: ${action}`}
       aria-pressed={look?.selected ?? false}
       onClick={() => onSelect(id)}
       onKeyDown={(e) => {
@@ -490,11 +498,13 @@ function Node3({
   node,
   look,
   name,
+  action,
   onSelect,
 }: {
   node: NodeDrawing3;
   look: NodeLook | undefined;
   name: string;
+  action: string;
   onSelect: (id: string) => void;
 }) {
   const g = node.glyph;
@@ -504,6 +514,7 @@ function Node3({
       color={node.color}
       look={look}
       name={name}
+      action={action}
       onSelect={onSelect}
     >
       <polygon className="ring" points={node.ring} />
@@ -564,11 +575,13 @@ function Node2({
   node,
   look,
   name,
+  action,
   onSelect,
 }: {
   node: NodeDrawing2;
   look: NodeLook | undefined;
   name: string;
+  action: string;
   onSelect: (id: string) => void;
 }) {
   const [x, y, w, h] = node.box;
@@ -579,6 +592,7 @@ function Node2({
       color={node.color}
       look={look}
       name={name}
+      action={action}
       onSelect={onSelect}
     >
       <rect

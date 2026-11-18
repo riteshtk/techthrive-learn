@@ -1,0 +1,852 @@
+/* A topic's overview (spec 03 §3–4). Sizes are the AI agents board's
+   ("grid"); the payments board ("list") differs only where noted. Phones
+   follow the approved still: one column, the diagram in portrait. */
+
+.tt-ov-page {
+  --hero-pad: 56px 32px 64px;
+  --hero-h1-max: 72px;
+  --promise-max: 580px;
+  --why-pad: 72px 32px 24px;
+  --why-h-max: 820px;
+  --stat-min: 270px;
+  --stat-gap-top: 32px;
+  --stat-size: 44px;
+}
+
+.tt-ov-page.list {
+  --hero-pad: 52px 32px 60px;
+  --hero-h1-max: 70px;
+  --promise-max: 590px;
+  --why-pad: 64px 32px 16px;
+  --why-h-max: 860px;
+  --stat-min: 260px;
+  --stat-gap-top: 30px;
+  --stat-size: 42px;
+}
+
+/* Hero */
+.tt-hero {
+  border-bottom: 1px solid var(--line);
+}
+
+.tt-hero-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 44px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--hero-pad);
+}
+
+.tt-hero-text {
+  display: flex;
+  flex: 1 1 460px;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.tt-hero-meta {
+  align-self: flex-start;
+  height: auto;
+  min-height: var(--h-chip);
+  padding-block: 4px;
+  background: var(--surface);
+  text-transform: uppercase;
+  white-space: normal;
+}
+
+.tt-hero-h1 {
+  font-size: clamp(42px, 5.4vw, var(--hero-h1-max));
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+
+.tt-hero-promise {
+  max-width: var(--promise-max);
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.tt-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tt-hero-cta {
+  min-height: 52px;
+  padding: 0 24px;
+  font-size: 15px;
+}
+
+.tt-hero-secondary {
+  padding: 0 22px;
+  background: var(--surface);
+}
+
+.tt-hero-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--fs-cap);
+  font-weight: 500;
+}
+
+.tt-hero-highlights li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-hero-diagram {
+  flex: 1 1 560px;
+  min-width: 0;
+}
+
+.tt-hero-card {
+  position: relative;
+  height: 520px;
+  padding: 10px;
+  overflow: hidden;
+  border-radius: var(--r-28);
+  background-color: var(--surface);
+}
+
+.tt-hero-title {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.tt-hero-caption {
+  margin-top: 3px;
+}
+
+.tt-hero-controls {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-hero-pause {
+  background: var(--sunken);
+}
+
+.tt-hero-view {
+  position: absolute;
+  inset: 64px 10px 10px;
+}
+
+/* Why */
+.tt-ov-why {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--why-pad);
+}
+
+.tt-ov-why-h {
+  max-width: var(--why-h-max);
+  margin-top: 12px;
+}
+
+.tt-ov-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--stat-min), 1fr));
+  gap: 14px;
+  margin: var(--stat-gap-top) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-ov-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+}
+
+.tt-ov-stat-value {
+  font-size: var(--stat-size);
+  letter-spacing: -0.02em;
+}
+
+.tt-ov-stat-claim {
+  color: var(--text);
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+}
+
+.tt-ov-stat-source {
+  margin-top: auto;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Brief and current with (grid) */
+.tt-ov-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 48px 32px;
+}
+
+.tt-ov-brief {
+  display: flex;
+  flex: 1.2 1 520px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+}
+
+.tt-ov-brief-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.tt-ov-brief-items > div {
+  padding: 12px 14px;
+}
+
+.tt-ov-brief-items dd {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+}
+
+.tt-ov-current {
+  display: flex;
+  flex: 1 1 400px;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px;
+}
+
+.tt-ov-current-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tt-ov-current-table th,
+.tt-ov-current-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-body-s);
+  vertical-align: baseline;
+}
+
+.tt-ov-current-table th {
+  color: var(--text);
+  font-weight: 400;
+  text-align: left;
+}
+
+.tt-ov-current-table td {
+  padding-left: 14px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  text-align: right;
+}
+
+.tt-ov-all {
+  align-self: flex-start;
+}
+
+/* Lesson cards (grid) */
+.tt-ov-grid {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 24px 32px 72px;
+}
+
+.tt-ov-grid-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tt-ov-grid-h {
+  margin-top: 12px;
+}
+
+.tt-ov-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-ov-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 140px;
+  padding: 18px;
+}
+
+a.tt-ov-card:hover {
+  border-color: var(--line-3);
+}
+
+.tt-ov-card.coming .tt-ov-card-title {
+  color: var(--muted);
+}
+
+.tt-ov-card-top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tt-ov-card-top .tt-num {
+  font-size: 12px;
+}
+
+.tt-ov-card-title {
+  font-size: var(--fs-title-row-15);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.tt-ov-card-ref {
+  margin-top: auto;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Lesson rows and aside (list) */
+.tt-ov-listrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 48px 32px 16px;
+}
+
+.tt-ov-lessons {
+  display: flex;
+  flex: 999 1 620px;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.tt-ov-lessons-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.tt-ov-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-ov-lrow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-16);
+  background: var(--raised);
+}
+
+a.tt-ov-lrow:hover {
+  border-color: var(--line-3);
+}
+
+.tt-ov-n {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--line-3);
+  border-radius: 50%;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tt-ov-n.live {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.tt-ov-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tt-ov-row-title {
+  font-size: 15.5px;
+  font-weight: 700;
+}
+
+.tt-ov-row-summary {
+  color: var(--muted);
+  font-size: var(--fs-body-13-5);
+  line-height: 1.5;
+}
+
+.tt-ov-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tt-ov-aside {
+  display: flex;
+  flex: 1 1 340px;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.tt-ov-aside .tt-card-l {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tt-ov-outcomes,
+.tt-ov-skills,
+.tt-ov-audiences {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-ov-skills li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tt-ov-skill-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: var(--fs-body-s);
+}
+
+.tt-ov-skill-row .tt-mono {
+  font-size: 12px;
+}
+
+.tt-ov-audiences {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tt-ov-audiences .tt-chip {
+  text-transform: uppercase;
+}
+
+.tt-ov-pre {
+  color: var(--text);
+}
+
+/* The topic's facts (list) */
+.tt-ov-facts {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 48px 32px 72px;
+}
+
+.tt-ov-facts-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.tt-ov-facts-head .tt-h2 {
+  margin-top: 10px;
+}
+
+.tt-ov-fact-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-ov-fact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 0.9fr);
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.tt-ov-fact-name {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.tt-ov-fact-claim {
+  color: var(--text);
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+}
+
+.tt-ov-fact-read {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+
+/* Footer (grid) */
+.tt-ov-footer {
+  border-top: 1px solid var(--line);
+}
+
+.tt-ov-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 48px 32px;
+}
+
+.tt-ov-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tt-ov-footer-brand .brand-image img {
+  height: 30px;
+}
+
+.tt-ov-footer-note {
+  max-width: 520px;
+  font-size: var(--fs-cap-12);
+}
+
+/* Phones: one column, portrait diagram (approved still). */
+@media (max-width: 760px) {
+  .tt-ov-fact {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 720px) {
+  .tt-hero-inner,
+  .tt-ov-why,
+  .tt-ov-row,
+  .tt-ov-grid,
+  .tt-ov-listrow,
+  .tt-ov-facts,
+  .tt-ov-footer-inner {
+    padding-inline: 16px;
+  }
+
+  .tt-hero-inner {
+    padding-block: 24px 32px;
+    gap: 28px;
+  }
+
+  .tt-hero-cta {
+    flex: 1 1 100%;
+  }
+
+  .tt-ov-brief-items {
+    grid-template-columns: 1fr;
+  }
+
+  .tt-hero-highlights {
+    flex-direction: column;
+  }
+
+  .tt-hero-card {
+    height: 640px;
+  }
+
+  .tt-hero-title {
+    right: 18px;
+  }
+
+  .tt-hero-controls {
+    top: 104px;
+  }
+
+  .tt-hero-view {
+    inset: 152px 6px 6px;
+  }
+
+  .tt-ov-why {
+    padding-top: 40px;
+  }
+
+  .tt-ov-why .tt-h1,
+  .tt-ov-grid-h {
+    font-size: 28px;
+  }
+
+  .tt-ov-lrow {
+    flex-wrap: wrap;
+  }
+
+  .tt-ov-row-meta {
+    flex: 1 1 100%;
+    padding-left: 50px;
+  }
+}
+
+/* The course page (spec 03 §5). The list comes first; on desktop the
+   aside sits beside it, on phones below (approved still). */
+.tt-course {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 30px 32px 56px;
+}
+
+.tt-course-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tt-course-h1 {
+  margin-top: 10px;
+}
+
+.tt-course-sub {
+  margin-top: 6px;
+}
+
+.tt-course-progress {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  padding: 14px 18px;
+}
+
+.tt-course-progress dd {
+  margin: 4px 0 0;
+  font-size: var(--fs-stat-20);
+}
+
+.tt-course-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 22px;
+}
+
+.tt-course-list {
+  flex: 999 1 680px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.tt-les {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 220px;
+  align-items: start;
+  gap: 18px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tt-les:last-child {
+  border-bottom: 0;
+}
+
+.tt-les-st {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border: 1.5px solid var(--line-3);
+  border-radius: 50%;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tt-les.done .tt-les-st {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--surface);
+}
+
+.tt-les.here .tt-les-st {
+  border: 0;
+}
+
+.tt-les-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tt-les-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+a.tt-les-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tt-les.coming .tt-les-title {
+  color: var(--muted);
+}
+
+.tt-les-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-les-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.tt-les-side .tt-cap {
+  font-size: var(--fs-cap-12);
+}
+
+.tt-course-aside {
+  display: flex;
+  flex: 1 1 280px;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 340px;
+}
+
+.tt-course-aside .tt-card-l {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tt-course-bullets {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  font-size: var(--fs-body-s);
+  line-height: 1.6;
+}
+
+.tt-course-outcomes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-body-s);
+}
+
+.tt-course-outcomes li {
+  display: flex;
+  gap: 10px;
+}
+
+.tt-course-outcomes .tt-ic {
+  margin-top: 3px;
+}
+
+@media (max-width: 760px) {
+  .tt-les {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .tt-les-side {
+    grid-column: 2;
+  }
+
+  .tt-course-aside {
+    max-width: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .tt-course {
+    padding: 20px 16px 40px;
+  }
+
+  .tt-course-h1 {
+    font-size: 30px;
+  }
+
+  .tt-les {
+    padding: 16px;
+  }
+}

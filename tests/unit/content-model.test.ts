@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { formatIssue } from "@/content/schema";
-import type { Checkpoint, Diagram, Fact, Lesson, Topic } from "@/content/types";
+import type {
+  Checkpoint,
+  Diagram,
+  Fact,
+  Lesson,
+  Topic,
+  Overview,
+} from "@/content/types";
 import { validateContent, type ContentInput } from "@/content/validate";
 
 const TOPIC_FILE = "content/topics/payments/topic.ts";
@@ -36,6 +43,39 @@ function topic(): Topic {
         minutes: 16,
       },
     ],
+    overview: overview(),
+  };
+}
+
+function overview(): Overview {
+  const stat = {
+    value: "3,000,000",
+    claim: "Payments a day.",
+    facts: ["daily-payments"],
+  };
+  return {
+    layout: "list",
+    heroTitle: "Move money exactly once.",
+    promise: "Retries without double charges.",
+    diagram: "checkout",
+    heroTrace: [
+      { from: "C", to: "G", color: "cyan" },
+      { from: "G", to: "S", color: "violet" },
+    ],
+    secondary: { label: "All lessons", tab: "lessons", icon: "book" },
+    highlights: [
+      { icon: "check", text: "Every figure sourced" },
+      { icon: "shield", text: "PCI rules" },
+      { icon: "layers", text: "One engine" },
+    ],
+    why: {
+      label: "Why",
+      headline: "Rare cases happen often.",
+      stats: [stat, stat, stat, stat],
+    },
+    outcomesLabel: "You will be able to",
+    outcomes: ["Design a safe API", "Model a ledger"],
+    prerequisites: { text: "HTTP APIs." },
   };
 }
 
@@ -223,6 +263,60 @@ describe("the v2 content model", () => {
       const t = { ...topic(), tabs: ["overview", "interview"] };
       expect(run({ topic: t }).errors).toContain(
         `${TOPIC_FILE} › tabs[1]: "interview" must be one of: "overview", "lessons", "cost", "threats", "governance", "lab", "sheets"`,
+      );
+    });
+  });
+
+  describe("overviews", () => {
+    it("are required on a live topic", () => {
+      const t = topic();
+      delete t.overview;
+      expect(run({ topic: t }).errors).toContain(
+        `${TOPIC_FILE} › overview: a live topic needs its overview`,
+      );
+    });
+
+    it("name a diagram the topic has", () => {
+      const t = topic();
+      t.overview!.diagram = "lobby";
+      expect(run({ topic: t }).errors).toContain(
+        `${TOPIC_FILE} › overview.diagram: "lobby" has no file in content/topics/payments/diagrams/`,
+      );
+    });
+
+    it("play the hero request only along the diagram's edges", () => {
+      const t = topic();
+      t.overview!.heroTrace = [{ from: "C", to: "Q", color: "cyan" }];
+      expect(run({ topic: t }).errors).toContain(
+        `${TOPIC_FILE} › overview.heroTrace[0]: no edge joins C and Q`,
+      );
+    });
+
+    it("link the second button only to one of the topic's tabs", () => {
+      const t = topic();
+      t.overview!.secondary = {
+        label: "Open the cost model",
+        tab: "cost",
+        icon: "chart",
+      };
+      expect(run({ topic: t }).errors).toContain(
+        `${TOPIC_FILE} › overview.secondary.tab: "cost" is not one of this topic's tabs`,
+      );
+    });
+
+    it("source every stat in the register", () => {
+      const t = topic();
+      t.overview!.why.stats[2]!.facts = ["no-such-fact"];
+      expect(run({ topic: t }).errors.join("\n")).toMatch(
+        /overview\.why\.stats\[2\]\.facts\[0\]/,
+      );
+    });
+
+    it("hold four stats and three highlights", () => {
+      const t = topic();
+      t.overview!.why.stats.pop();
+      expect(run({ topic: t }).errors).toContain(
+        `${TOPIC_FILE} › overview.why.stats: must have exactly 4 items, not 3`,
       );
     });
   });

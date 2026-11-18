@@ -10,6 +10,23 @@ const diagram: Diagram = {
   id: "card-dispute-agent",
   topic: "ai-agents",
   caption: "Card-dispute agent",
+  // The approved phone still's layout (design-v2/phone-stills).
+  portrait: {
+    scale: 0.5,
+    nodes: [
+      { id: "E", cx: 52, cy: 92, label: "Eval harness" },
+      { id: "M", cx: 160, cy: 80, label: "Model gateway" },
+      { id: "X", cx: 262, cy: 104, label: "Traces" },
+      { id: "G", cx: 58, cy: 210, label: "Gateway" },
+      { id: "O", cx: 158, cy: 206, label: "Orchestrator" },
+      { id: "P", cx: 258, cy: 200, label: "Policy" },
+      { id: "U", cx: 58, cy: 330, label: "Customers", below: true },
+      { id: "V", cx: 150, cy: 310, label: "Vector index" },
+      { id: "T", cx: 254, cy: 300, label: "MCP servers" },
+      { id: "H", cx: 150, cy: 384, label: "Human approval" },
+      { id: "D", cx: 256, cy: 392, label: "Core banking", below: true },
+    ],
+  },
   nodes: [
     {
       id: "X",

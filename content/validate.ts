@@ -75,6 +75,10 @@ const NOT_DISPLAY = new Set([
   "icon",
   "glyph",
   "paths2",
+  "diagram",
+  "heroTrace",
+  "layout",
+  "tab",
 ]);
 
 /** Calls back with every display string in a content object. */
@@ -198,6 +202,16 @@ export function validateContent(
         error(file, `nodes[${i}].id`, `"${n.id}" is used twice`);
       ids.add(n.id);
     });
+    if (diagram.portrait) {
+      const placed = diagram.portrait.nodes.map((n) => n.id);
+      for (const id of ids)
+        if (!placed.includes(id))
+          error(file, "portrait.nodes", `"${id}" has no place in the portrait`);
+      placed.forEach((id, i) => {
+        if (!ids.has(id))
+          error(file, `portrait.nodes[${i}].id`, `"${id}" is not a node`);
+      });
+    }
     for (const edge of Object.keys(diagram.paths2))
       for (const end of edge.split("_"))
         if (!ids.has(end))
@@ -242,6 +256,59 @@ export function validateContent(
           error(file, `edges[${i}]`, `"${e}" has no 2D path in the diagram`);
       });
     }
+  }
+
+  // Overviews -------------------------------------------------------------
+  for (const { file, topic } of topics) {
+    const o = topic.overview;
+    if (!o) {
+      if (topic.status === "live")
+        error(file, "overview", "a live topic needs its overview");
+      continue;
+    }
+    const diagram = diagramByKey.get(`${topic.id}/${o.diagram}`);
+    if (!diagram)
+      error(
+        file,
+        "overview.diagram",
+        `"${o.diagram}" has no file in content/topics/${topic.id}/diagrams/`,
+      );
+    else {
+      const edges = Object.keys(diagram.paths2);
+      o.heroTrace.forEach((hop, i) => {
+        if (!edgeOfHop(edges, hop))
+          error(
+            file,
+            `overview.heroTrace[${i}]`,
+            `no edge joins ${hop.from} and ${hop.to}`,
+          );
+      });
+    }
+    if (o.secondary && !topic.tabs.includes(o.secondary.tab))
+      error(
+        file,
+        "overview.secondary.tab",
+        `"${o.secondary.tab}" is not one of this topic's tabs`,
+      );
+    const refs: [string, string][] = [
+      ...o.why.stats.flatMap((s, i) =>
+        s.facts.map(
+          (f, j) =>
+            [`overview.why.stats[${i}].facts[${j}]`, f] as [string, string],
+        ),
+      ),
+      ...(o.brief?.facts ?? []).map(
+        (f, j) => [`overview.brief.facts[${j}]`, f] as [string, string],
+      ),
+      ...(o.currentWith ?? []).flatMap((c, i) =>
+        c.facts.map(
+          (f, j) =>
+            [`overview.currentWith[${i}].facts[${j}]`, f] as [string, string],
+        ),
+      ),
+    ];
+    for (const [field, id] of refs)
+      checkFactRef(file, field, id, topic.id, factById, error);
   }
 
   // Checkpoints -----------------------------------------------------------

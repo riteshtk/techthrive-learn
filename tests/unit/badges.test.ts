@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getDiagram, getLessons } from "@/content";
+import { getDiagram, getLessons, getTopics } from "@/content";
 import { drawDiagram } from "@/player/drawing";
 import { badgePositions, type Box } from "@/player/scene";
 import { effectiveTrace } from "@/player/trace";
@@ -54,3 +54,42 @@ describe.each(getLessons().map((l) => [`${l.topic}/${l.id}`, l] as const))(
     );
   },
 );
+
+// The overview hero, in the desktop layout and the phone portrait, whose
+// short edges need the wider search.
+describe.each(
+  getTopics()
+    .filter((t) => t.overview)
+    .map((t) => [t.id, t] as const),
+)("hero badges in %s", (_, topic) => {
+  const o = topic.overview!;
+  const diagram = getDiagram(topic.id, o.diagram)!;
+  const edges = Object.keys(diagram.paths2);
+
+  it.each([false, true])("keep off the labels (portrait: %s)", (portrait) => {
+    const drawing = drawDiagram(diagram, edges, {}, { portrait });
+    const [w, h] = drawing.size3;
+    const at = badgePositions(
+      drawing.edges3,
+      edges,
+      o.heroTrace,
+      drawing.labels3,
+      drawing.size3,
+    );
+    at.forEach((p, j) => {
+      expect(p, `hop ${j + 1} has an edge`).not.toBeNull();
+      const [x, y] = p!;
+      expect(
+        x >= R && y >= R && x <= w - R && y <= h - R,
+        `hop ${j + 1} inside the drawing`,
+      ).toBe(true);
+      for (const box of drawing.labels3)
+        expect(covers(p!, box), `hop ${j + 1}`).toBe(false);
+      at.slice(0, j).forEach((q) =>
+        expect(Math.hypot(p![0] - q![0], p![1] - q![1])).toBeGreaterThanOrEqual(
+          2 * R,
+        ),
+      );
+    });
+  });
+});

@@ -47,6 +47,10 @@ export const COLORS = [
 ] as const;
 export type ColorKey = (typeof COLORS)[number];
 
+const nodeId = () =>
+  string({ pattern: /^[A-Z]$/, patternHint: "one capital letter" });
+const color = () => oneOf(COLORS);
+
 /** A topic's sections, in the design's order (Interview is phase 2). */
 export const TOPIC_TABS = [
   "overview",
@@ -82,6 +86,10 @@ export const FactSchema = object({
   /** The primary source's name, or how an assumption or derivation is
       made. */
   source: text(200),
+  /** A short name for the source where space is tight (stat cards, fact
+      rows, a lesson's Sources tab); the full name shows on the Sources
+      page. */
+  title: optional(text(60)),
   /** Required for real facts. */
   url: optional(https()),
   readOn: date(),
@@ -113,8 +121,89 @@ export const LessonOutlineSchema = object({
   then: optional(text(80)),
   /** The mono line on the overview card. */
   cardRef: optional(text(60)),
+  /** The overview's "Start lesson n: {ctaName}". */
+  ctaName: optional(text(30)),
 });
 export type LessonOutline = Infer<typeof LessonOutlineSchema>;
+
+const HERO_ICONS = ["check", "shield", "globe", "layers", "award"] as const;
+
+/** A topic's overview page (spec 03 §3–4). Two layouts from one engine:
+    "grid" is the AI agents board (lesson cards, brief and current-with),
+    "list" the payments board (lesson rows and an aside). */
+export const OverviewSchema = object({
+  layout: oneOf(["grid", "list"] as const),
+  /** The hero's h1, with its full stop. */
+  heroTitle: text(80),
+  promise: text(400),
+  /** The diagram file the hero draws, and the request it plays. */
+  diagram: id(),
+  heroTrace: array(object({ from: nodeId(), to: nodeId(), color: color() }), {
+    min: 1,
+    max: 8,
+  }),
+  /** The second button: one of the topic's sections. */
+  secondary: optional(
+    object({ label: text(40), tab: oneOf(TOPIC_TABS), icon: text(20) }),
+  ),
+  highlights: array(object({ icon: oneOf(HERO_ICONS), text: text(60) }), {
+    length: 3,
+  }),
+  why: object({
+    label: text(40),
+    headline: text(160),
+    stats: array(
+      object({
+        value: text(30),
+        claim: text(240),
+        /** The first fact's source and read date show under the card. */
+        facts: array(id(), { min: 1 }),
+      }),
+      { length: 4 },
+    ),
+  }),
+  brief: optional(
+    object({
+      label: text(40),
+      title: text(80),
+      body: text(300),
+      items: array(object({ k: text(20), v: text(120) }), { length: 4 }),
+      note: text(200),
+      facts: array(id()),
+    }),
+  ),
+  currentWith: optional(
+    array(
+      object({
+        name: text(50),
+        value: text(40),
+        facts: array(id(), { min: 1 }),
+      }),
+      {
+        min: 1,
+        max: 14,
+      },
+    ),
+  ),
+  lessonsHeadline: optional(text(80)),
+  outcomesLabel: text(30),
+  outcomes: array(text(120), { min: 2, max: 6 }),
+  skills: optional(
+    array(
+      object({ name: text(40), level: number({ int: true, min: 1, max: 4 }) }),
+      {
+        max: 6,
+      },
+    ),
+  ),
+  prerequisites: object({
+    text: optional(text(200)),
+    items: optional(array(text(80), { max: 5 })),
+    audiences: optional(array(text(30), { max: 5 })),
+  }),
+  footer: optional(object({ line: text(60), disclaimer: text(240) })),
+});
+export type Overview = Infer<typeof OverviewSchema>;
 
 export const TopicSchema = object({
   id: id(),
@@ -133,14 +222,13 @@ export const TopicSchema = object({
   tags: array(text(30), { max: 6 }),
   tabs: array(oneOf(TOPIC_TABS), { min: 1 }),
   lessons: array(LessonOutlineSchema),
+  /** Live topics have an overview page. */
+  overview: optional(OverviewSchema),
 });
 export type Topic = Infer<typeof TopicSchema>;
 
 // Diagrams -----------------------------------------------------------------
 
-const nodeId = () =>
-  string({ pattern: /^[A-Z]$/, patternHint: "one capital letter" });
-const color = () => oneOf(COLORS);
 const px = () => number({ min: -2000, max: 2000 });
 const size = () => number({ min: 0, max: 400 });
 
@@ -205,11 +293,32 @@ export const DiagramNodeSchema = object({
 });
 export type DiagramNode = Infer<typeof DiagramNodeSchema>;
 
+/** A phone layout of the same system (approved phone still): the same
+    glyphs at a smaller scale, re-placed in a tall column, with short labels.
+    Label positions and the viewBox are computed. */
+export const PortraitSchema = object({
+  /** Glyph and plinth size against the main drawing, e.g. 0.5. */
+  scale: number({ min: 0.2, max: 1 }),
+  nodes: array(
+    object({
+      id: nodeId(),
+      cx: px(),
+      cy: px(),
+      label: text(30),
+      /** Label under the node instead of over it (the crowd). */
+      below: optional(boolean()),
+    }),
+    { min: 2 },
+  ),
+});
+export type Portrait = Infer<typeof PortraitSchema>;
+
 export const DiagramSchema = object({
   id: id(),
   topic: id(),
   /** "Card-dispute agent": the hero's title card adds "· n components". */
   caption: text(60),
+  portrait: optional(PortraitSchema),
   nodes: array(DiagramNodeSchema, { min: 2 }),
   /** 2D edge paths by edge id ("A_B"), drawn from A to B. */
   paths2: record(

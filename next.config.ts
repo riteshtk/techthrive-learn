@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
+  // The component kit (app/kit/page.kit.tsx) is a route only in e2e
+  // builds, which set KIT=1 (playwright.config.ts).
+  pageExtensions:
+    process.env.KIT === "1" ? ["kit.tsx", "tsx", "ts"] : ["tsx", "ts"],
   basePath,
   // Exposed to lib/paths.ts for links next/link doesn't handle.
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
