@@ -1,7 +1,7 @@
 // 2D diagram geometry (spec 04 §3.4, §3.6): the baked orthogonal edge
 // paths, points along them, and where hop badges sit beside an edge.
 
-import { arrowhead, type Pt } from "./iso";
+import type { Pt } from "./iso";
 
 /** "M104.0,218.0 L104.0,292.0" → its vertices. */
 export function parsePath(d: string): Pt[] {
@@ -48,16 +48,6 @@ export function stops(points: readonly Pt[]): { p: Pt; offset: number }[] {
   const cum = lengths(points);
   const total = cum[cum.length - 1] || 1;
   return points.map((p, i) => ({ p, offset: cum[i]! / total }));
-}
-
-/** Arrowheads for a 2D path: at its end pointing along the last segment,
-    and at its start pointing back along the first. */
-export function pathArrows(points: readonly Pt[]): { f: Pt[]; b: Pt[] } {
-  const n = points.length;
-  return {
-    f: arrowhead(points[n - 2]!, points[n - 1]!),
-    b: arrowhead(points[1]!, points[0]!),
-  };
 }
 
 /** Where badge k of a hop sits: beside the edge's middle, on the side of

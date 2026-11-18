@@ -284,12 +284,30 @@
     display: none;
   }
 
+  /* The topic's sections sit on one row that scrolls inside the bar, so
+     the bar stays two rows high (approved phone still). */
   .tt-topicbar {
+    gap: 8px;
     padding: 8px 16px;
   }
 
+  .tt-topicbar .tt-tsw {
+    flex: 1 1 100%;
+  }
+
+  .tt-topicbar .tt-nav-s {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    min-width: 0;
+    margin: 0 -16px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
   .tt-sep-v,
-  .tt-topicbar-spacer {
+  .tt-topicbar-spacer,
+  .tt-verified {
     display: none;
   }
 }

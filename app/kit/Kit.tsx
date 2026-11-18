@@ -70,6 +70,7 @@ export function Kit() {
           "lab",
           "sheets",
         ]}
+        active="cost"
         verifiedOn="2026-11-17"
       />
       <main className="tt-page">

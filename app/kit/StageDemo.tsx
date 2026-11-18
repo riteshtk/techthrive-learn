@@ -5,6 +5,8 @@
 // pages exist. Built for e2e runs only, like the rest of the kit.
 
 import { useMemo } from "react";
+import { DIAGRAM_ICON_PATHS } from "@/player/diagramIcons";
+import { drawDiagram } from "@/player/drawing";
 import { LESSON_TIMING, type StageConfig } from "@/player/machine";
 import {
   buildScene,
@@ -12,7 +14,8 @@ import {
   type SceneHop,
   type SceneSource,
 } from "@/player/scene";
-import { Stage, StageText } from "@/player/Stage";
+import { Stage } from "@/player/Stage";
+import { StageText } from "@/player/StageText";
 import { PlaybackControls, ViewerToolbar } from "@/player/StageControls";
 import { effectiveTrace } from "@/player/trace";
 import { useReducedMotion, useStage } from "@/player/useStage";
@@ -100,6 +103,8 @@ const SOURCE: SceneSource = {
   ],
 };
 
+const DRAWING = drawDiagram(AGENTS, SOURCE.edges, DIAGRAM_ICON_PATHS);
+
 const NAMES = new Map(AGENTS.nodes.map((n) => [n.id, n.label]));
 const nameOf = (id: string) => NAMES.get(id) ?? id;
 
@@ -128,7 +133,7 @@ export function StageDemo() {
         <ViewerToolbar state={state} dispatch={dispatch} />
         <div className="kit-stage-field">
           <Stage
-            diagram={AGENTS}
+            drawing={DRAWING}
             edges={SOURCE.edges}
             scene={scene}
             state={state}
@@ -165,7 +170,7 @@ export function StageDemo() {
         </span>
       </div>
       <StageText
-        diagram={AGENTS}
+        drawing={DRAWING}
         scene={scene}
         nameOf={nameOf}
         stepLabel={`Step ${state.step}`}

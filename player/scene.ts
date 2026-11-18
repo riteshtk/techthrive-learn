@@ -3,9 +3,10 @@
 // path and the hop badges. Pure, so the rules are unit-tested; Stage.tsx
 // only draws the result.
 
-import type { ColorKey, Diagram } from "@/content/types";
-import { badgeAt, parsePath, pointAt } from "./flat";
-import { edgeEnds, type IsoNode, type Pt } from "./iso";
+import type { ColorKey } from "@/content/types";
+import type { EdgeDrawing } from "./drawing";
+import { badgeAt, pointAt } from "./flat";
+import type { Pt } from "./iso";
 import type { StageState } from "./machine";
 import { edgeOfHop, isEdgeVisible, isPresent, type TraceLesson } from "./trace";
 
@@ -118,52 +119,35 @@ export function buildScene(
   return { nodes, edges, trace, current };
 }
 
-/** The packet's stops along a hop, in the direction of travel. 3D runs
-    straight between the drawn edge ends; 2D follows the path's corners. */
+/** The packet's stops along a hop, in the direction of travel: straight
+    between the drawn ends in 3D, round the path's corners in 2D. */
 export function packetPath(
-  diagram: Diagram,
-  iso: ReadonlyMap<string, IsoNode>,
+  lines: Readonly<Record<string, EdgeDrawing>>,
   edges: readonly string[],
   hop: { from: string; to: string },
-  view: "3d" | "2d",
 ): Pt[] {
   const edge = edgeOfHop(edges, hop);
-  if (!edge) return [];
-  if (view === "3d") {
-    const [a, b] = edge.id.split("_").map((k) => iso.get(k)!);
-    if (!a || !b) return [];
-    const ends = edgeEnds(a, b);
-    return edge.forward ? [ends.a, ends.b] : [ends.b, ends.a];
-  }
-  const points = parsePath(diagram.paths2[edge.id] ?? "");
-  return edge.forward ? points : [...points].reverse();
+  const line = edge && lines[edge.id]?.line;
+  if (!edge || !line) return [];
+  return edge.forward ? [...line] : [...line].reverse();
 }
 
 /** Each hop's badge position: beside its edge's middle, outbound and
     return hops on opposite sides, repeats spread along the edge. */
 export function badgePositions(
-  diagram: Diagram,
-  iso: ReadonlyMap<string, IsoNode>,
+  lines: Readonly<Record<string, EdgeDrawing>>,
   edges: readonly string[],
   trace: readonly { from: string; to: string }[],
-  view: "3d" | "2d",
 ): (Pt | null)[] {
   const seen = new Map<string, number>();
   return trace.map((hop) => {
     const edge = edgeOfHop(edges, hop);
-    if (!edge) return null;
+    const line = edge && lines[edge.id]?.line;
+    if (!edge || !line || line.length < 2) return null;
     const key = `${hop.from}_${hop.to}`;
     const occurrence = seen.get(key) ?? 0;
     seen.set(key, occurrence + 1);
     const count = trace.filter((h) => `${h.from}_${h.to}` === key).length;
-    let line: Pt[];
-    if (view === "3d") {
-      const [a, b] = edge.id.split("_").map((k) => iso.get(k)!);
-      if (!a || !b) return null;
-      const ends = edgeEnds(a, b);
-      line = [ends.a, ends.b];
-    } else line = parsePath(diagram.paths2[edge.id] ?? "");
-    if (line.length < 2) return null;
     return badgeAt(pointAt(line, 0.5), edge.forward, occurrence, count);
   });
 }

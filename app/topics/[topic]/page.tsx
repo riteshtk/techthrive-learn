@@ -12,13 +12,13 @@ import { Player } from "@/player/Player";
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return getTopics().map((t) => ({ id: t.id }));
+  return getTopics().map((t) => ({ topic: t.id }));
 }
 
 export async function generateMetadata({
   params,
-}: PageProps<"/topics/[id]">): Promise<Metadata> {
-  const topic = getTopic((await params).id);
+}: PageProps<"/topics/[topic]">): Promise<Metadata> {
+  const topic = getTopic((await params).topic);
   return topic
     ? pageMetadata({
         title: topic.title,
@@ -28,8 +28,10 @@ export async function generateMetadata({
     : {};
 }
 
-export default async function TopicPage({ params }: PageProps<"/topics/[id]">) {
-  const topic = getTopic((await params).id);
+export default async function TopicPage({
+  params,
+}: PageProps<"/topics/[topic]">) {
+  const topic = getTopic((await params).topic);
   if (!topic) notFound();
   const roadmap = homeRoadmapOf(topic.id);
   const position = roadmap ? roadmap.topics.indexOf(topic.id) + 1 : 0;

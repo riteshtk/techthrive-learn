@@ -46,7 +46,9 @@ export type StageConfig = {
 };
 
 export type StageAction =
-  | { type: "tick" }
+  /** canAdvance false holds Play lesson on this step for another loop
+      (its narration is still playing). */
+  | { type: "tick"; canAdvance?: boolean }
   | { type: "next" }
   | { type: "back" }
   | { type: "goto"; step: number }
@@ -63,6 +65,8 @@ export type StageAction =
   | { type: "fit" }
   | { type: "pan"; cx: number; cy: number }
   | { type: "zoomTo"; x: number; y: number }
+  /** Centre the camera on a point at a zoom (phones open on the hop). */
+  | { type: "focus"; x: number; y: number; zoom: number }
   | { type: "select"; id: string | null }
   | { type: "layer"; layer: Layer };
 
@@ -105,7 +109,8 @@ export function reduceStage(
       const n = config.hops(state.step, state.full);
       if (state.hop < n) return { ...state, hop: state.hop + 1 };
       // The loop ended: start again, or move on when playing the lesson.
-      if (!state.auto) return { ...state, hop: 0 };
+      if (!state.auto || action.canAdvance === false)
+        return { ...state, hop: 0 };
       if (state.step < config.steps)
         return { ...state, hop: 0, step: state.step + 1 };
       return { ...state, hop: 0, auto: false };
@@ -163,6 +168,13 @@ export function reduceStage(
       return {
         ...state,
         zoom: 1.6,
+        cx: clamp(0, w, action.x),
+        cy: clamp(0, h, action.y),
+      };
+    case "focus":
+      return {
+        ...state,
+        zoom: clamp(ZOOM_MIN, ZOOM_MAX, action.zoom),
         cx: clamp(0, w, action.x),
         cy: clamp(0, h, action.y),
       };

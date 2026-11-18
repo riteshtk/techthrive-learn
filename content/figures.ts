@@ -6,10 +6,11 @@
 // thousands separators and a unit stuck to it: "₹50,000", "$0.063", "90%",
 // "20k", "1.25×", "v1.0", "2027", "2026-07-28". These are not figures:
 // - small counts written bare (0–12): "6 turns", "Lesson 2", "3 questions";
-// - numbers inside a name: ASI01, LLM03, OAuth2, 2D, pass^4, gen_ai.
+// - numbers inside a name: ASI01, LLM03, OAuth2, 2D, pass^4, gen_ai, and
+//   the last four digits of a masked card (••••4417).
 
 const FIGURE =
-  /(?<![\p{L}\p{N}^_.,])(?:\d{4}-\d{2}-\d{2}(?!\d)|(?:v(?=\d))?[₹$€£]?\d(?:[\d,]*\d)?(?:\.\d+)?(?:%|×|(?:x|k|K|m|M|bn|ms|s|h)(?![\p{L}\p{N}_]))?)(?![\p{L}\p{N}_])/gu;
+  /(?<![\p{L}\p{N}^_.,•])(?:\d{4}-\d{2}-\d{2}(?!\d)|(?:v(?=\d))?[₹$€£]?\d(?:[\d,]*\d)?(?:\.\d+)?(?:%|×|(?:x|k|K|m|M|bn|ms|s|h)(?![\p{L}\p{N}_]))?)(?![\p{L}\p{N}_])/gu;
 
 /** Bare whole numbers this small are counts, not figures. */
 const SMALL = 12;

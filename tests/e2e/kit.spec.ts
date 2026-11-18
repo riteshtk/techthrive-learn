@@ -91,7 +91,12 @@ test("the topic bar names its sections and links Verified to sources", async ({
     "Sheets",
   ]);
   await expect(nav.getByRole("link", { name: "Interview" })).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Verified 17 Nov 2026" }),
-  ).toHaveAttribute("href", "/techthrive-learn/topics/kit/sources/");
+  // Phones hide the chip; Sources is linked from the overview there.
+  await expect(page.locator(".tt-verified")).toHaveAttribute(
+    "href",
+    "/techthrive-learn/topics/kit/sources/",
+  );
+  await expect(page.locator(".tt-verified")).toHaveText(
+    /verified 17 nov 2026/i,
+  );
 });

@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import type { IconName } from "@/components/ui/icons";
 import type { TopicTabId } from "@/content/types";
@@ -45,30 +42,29 @@ export function activeTopicTab(
   return best;
 }
 
-/** The bar under the top bar on every topic page (spec 01 §A8 TopicBar). */
+/** The bar under the top bar on every topic page (spec 01 §A8 TopicBar).
+    A server component: each page says which section it is in. */
 export function TopicBar({
   topicId,
   title,
   tabs,
+  active,
   verifiedOn,
 }: {
   topicId: string;
   title: string;
   tabs: readonly TopicTab[];
+  /** The section this page is in, if it has a tab. */
+  active: TopicTab | null;
   /** The oldest read date of the facts on this topic's pages. */
   verifiedOn?: string;
 }) {
-  const pathname = usePathname();
-  const active = activeTopicTab(topicId, tabs, pathname);
   return (
     <div className="tt-topicbar">
-      <Link
-        href="/topics/"
-        className="tt-tsw"
-        aria-label={`Topic: ${title}. Switch topic`}
-      >
+      <Link href="/topics/" className="tt-tsw">
         <span className="tt-lbl-s">Topic</span>
         <b>{title}</b>
+        <span className="sr-only">, switch topic</span>
         <Icon name="chevron-down" />
       </Link>
       <span className="tt-sep-v" aria-hidden="true" />

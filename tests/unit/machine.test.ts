@@ -73,6 +73,14 @@ describe("ticks", () => {
     expect([s.step, s.hop]).toEqual([2, 0]);
   });
 
+  it("wait another loop while the step's narration is still playing", () => {
+    let s = run(start(1), { type: "toggleAuto" });
+    s = run(s, { type: "tick", canAdvance: false });
+    expect([s.step, s.hop, s.auto]).toEqual([1, 0, true]);
+    s = run(s, { type: "tick", canAdvance: true });
+    expect(s.step).toBe(2);
+  });
+
   it("stop playing the lesson after the last step", () => {
     const s = run(
       start(10),
@@ -163,6 +171,11 @@ describe("camera", () => {
     expect(viewBoxOf(config, run(start(), { type: "zoomIn" }))).toBe(
       "95 56.7 760 453.6",
     );
+  });
+
+  it("focuses on a point at a zoom, within the diagram", () => {
+    const s = run(start(), { type: "focus", x: 9999, y: 100, zoom: 1.5 });
+    expect([s.zoom, s.cx, s.cy]).toEqual([1.5, 950, 100]);
   });
 
   it("zooms to a component", () => {

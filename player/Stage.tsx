@@ -2,7 +2,8 @@
 
 // The diagram stage (spec 04 §3): one SVG that draws a system in 3D
 // (isometric) or 2D, with the request hopping between its parts. It draws
-// a Scene (player/scene.ts) and sends user actions to the stage machine.
+// a Drawing made at build time (drawing.ts) in the state a Scene describes
+// (scene.ts), and sends user actions to the stage machine.
 
 import {
   useEffect,
@@ -12,25 +13,13 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { ICON_PATHS } from "@/components/ui/icons";
-import type { Diagram, DiagramNode } from "@/content/types";
-import { parsePath, pathArrows, pathOf, pointAt } from "./flat";
-import {
-  arrowhead,
-  blockFaces,
-  CROWD_HEADS,
-  cylinderParts,
-  edgeEnds,
-  glyphBlocks,
-  labelBox,
-  paintOrder,
-  PERSON_HEAD,
-  plinthFaces,
-  ringOf,
-  toPoints,
-  type IsoNode,
-  type Pt,
-} from "./iso";
+import type {
+  Drawing,
+  EdgeDrawing,
+  NodeDrawing2,
+  NodeDrawing3,
+} from "./drawing";
+import { pathOf, pointAt } from "./flat";
 import {
   viewBoxOf,
   type StageAction,
@@ -49,7 +38,7 @@ import {
 const EASE = "cubic-bezier(.45,0,.55,1)";
 
 type Props = {
-  diagram: Diagram;
+  drawing: Drawing;
   edges: readonly string[];
   scene: Scene;
   state: StageState;
@@ -66,7 +55,7 @@ type Props = {
 };
 
 export function Stage({
-  diagram,
+  drawing,
   edges,
   scene,
   state,
@@ -91,21 +80,12 @@ export function Stage({
   } | null>(null);
   const movedRef = useRef(false);
 
-  const iso = useMemo(
-    () =>
-      new Map<string, IsoNode>(
-        diagram.nodes.map((n) => [
-          n.id,
-          { id: n.id, cx: n.cx, cy: n.cy, plinth: n.plinth, glyph: n.glyph },
-        ]),
-      ),
-    [diagram],
-  );
   const looks = useMemo(
     () => new Map(scene.nodes.map((n) => [n.id, n])),
     [scene.nodes],
   );
   const { view, layers } = state;
+  const lines = view === "3d" ? drawing.edges3 : drawing.edges2;
   const flow = layers.flow;
   const current = scene.current;
 
@@ -120,7 +100,7 @@ export function Stage({
       el.style.opacity = "0";
       return;
     }
-    const path = packetPath(diagram, iso, edges, current, view);
+    const path = packetPath(lines, edges, current);
     if (path.length < 2) return;
     if (reducedMotion || typeof el.animate !== "function") {
       // No motion: the packet waits halfway along the hop.
@@ -130,38 +110,22 @@ export function Stage({
       return;
     }
     const fade = view === "3d" ? 0.12 : 0.08;
-    const corners =
-      view === "3d"
-        ? [0, 1]
-        : (() => {
-            const total = path.reduce(
-              (sum, p, i) =>
-                i
-                  ? sum +
-                    Math.hypot(p[0] - path[i - 1]![0], p[1] - path[i - 1]![1])
-                  : 0,
-              0,
-            );
-            let run = 0;
-            return path.map((p, i) => {
-              if (i)
-                run += Math.hypot(
-                  p[0] - path[i - 1]![0],
-                  p[1] - path[i - 1]![1],
-                );
-              return total ? run / total : 0;
-            });
-          })();
-    const offsets = [...new Set([...corners, fade, 1 - fade])].sort(
-      (a, b) => a - b,
+    let run = 0;
+    const lengths = path.map((p, i) =>
+      i
+        ? (run += Math.hypot(p[0] - path[i - 1]![0], p[1] - path[i - 1]![1]))
+        : 0,
     );
+    const total = run || 1;
+    const offsets = [
+      ...new Set([...lengths.map((l) => l / total), fade, 1 - fade]),
+    ].sort((a, b) => a - b);
     const keyframes = offsets.map((offset) => {
       const { p } = pointAt(path, offset);
-      const opacity = offset <= 0 || offset >= 1 ? 0 : 1;
       return {
         offset,
         transform: `translate(${p[0]}px, ${p[1]}px)`,
-        opacity,
+        opacity: offset <= 0 || offset >= 1 ? 0 : 1,
         easing: EASE,
       };
     });
@@ -249,8 +213,8 @@ export function Stage({
   };
 
   const badges = useMemo(
-    () => badgePositions(diagram, iso, edges, scene.trace, view),
-    [diagram, iso, edges, scene.trace, view],
+    () => badgePositions(lines, edges, scene.trace),
+    [lines, edges, scene.trace],
   );
 
   const rootClass = [
@@ -302,23 +266,58 @@ export function Stage({
             fill={`url(#dots-${view})`}
           />
         )}
-        {view === "3d" ? (
-          <Iso3D
-            diagram={diagram}
-            iso={iso}
-            scene={scene}
-            looks={looks}
-            nameOf={nameOf}
-            onSelect={select}
-          />
-        ) : (
-          <Flat2D
-            diagram={diagram}
-            scene={scene}
-            looks={looks}
-            nameOf={nameOf}
-            onSelect={select}
-          />
+        <Edges looks={scene.edges} lines={lines} paths={view === "2d"} />
+        <g className="nodes">
+          {view === "3d"
+            ? drawing.nodes3.map((n) => (
+                <Node3
+                  key={n.id}
+                  node={n}
+                  look={looks.get(n.id)}
+                  name={nameOf(n.id)}
+                  onSelect={select}
+                />
+              ))
+            : drawing.nodes2.map((n) => (
+                <Node2
+                  key={n.id}
+                  node={n}
+                  look={looks.get(n.id)}
+                  name={nameOf(n.id)}
+                  onSelect={select}
+                />
+              ))}
+        </g>
+        {view === "3d" && (
+          <g className="labels" aria-hidden="true">
+            {drawing.nodes3.map((n) => {
+              const look = looks.get(n.id);
+              const cls = [
+                "lb",
+                look?.ghost && "ghost",
+                look?.dim && "dim",
+                look?.selected && "sel",
+                look?.isNew && "new",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <g key={n.id} className={cls} onClick={() => select(n.id)}>
+                  <rect
+                    className="pill"
+                    x={n.label.x}
+                    y={n.label.y}
+                    width={n.label.w}
+                    height={26}
+                    rx={13}
+                  />
+                  <text x={n.label.tx} y={n.label.ty}>
+                    {n.label.text}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
         )}
         {flow && (
           <g className="badges" aria-hidden="true">
@@ -382,32 +381,82 @@ function edgeClass(e: EdgeLook): string {
     .join(" ");
 }
 
-function Arrow({
-  points,
-  color,
-  current,
+const arrowClass = (color: string | null, current: boolean) =>
+  `ah${color ? ` c-${color}` : ""}${current ? " cur" : ""}`;
+
+function Edges({
+  looks,
+  lines,
+  paths,
 }: {
-  points: Pt[];
-  color: string | null;
-  current: boolean;
+  looks: readonly EdgeLook[];
+  lines: Readonly<Record<string, EdgeDrawing>>;
+  /** 2D edges are paths with corners; 3D ones straight lines. */
+  paths: boolean;
 }) {
   return (
-    <polygon
-      className={`ah${color ? ` c-${color}` : ""}${current ? " cur" : ""}`}
-      points={toPoints(points)}
-    />
+    <>
+      <g className="edges">
+        {looks.map((look) => {
+          const line = lines[look.id]?.line;
+          if (!line || line.length < 2) return null;
+          return paths ? (
+            <path key={look.id} className={edgeClass(look)} d={pathOf(line)} />
+          ) : (
+            <line
+              key={look.id}
+              className={edgeClass(look)}
+              x1={line[0]![0]}
+              y1={line[0]![1]}
+              x2={line[1]![0]}
+              y2={line[1]![1]}
+            />
+          );
+        })}
+      </g>
+      <g className="arrows" aria-hidden="true">
+        {looks.map((look) => {
+          const drawn = lines[look.id];
+          if (!drawn || !look.visible) return null;
+          return (
+            <g key={look.id}>
+              {look.forward && (
+                <polygon
+                  className={arrowClass(
+                    look.forward.color,
+                    look.forward.current,
+                  )}
+                  points={drawn.forward}
+                />
+              )}
+              {look.backward && (
+                <polygon
+                  className={arrowClass(
+                    look.backward.color,
+                    look.backward.current,
+                  )}
+                  points={drawn.backward}
+                />
+              )}
+            </g>
+          );
+        })}
+      </g>
+    </>
   );
 }
 
 /** A node as a keyboard-reachable button. */
 function NodeButton({
-  node,
+  id,
+  color,
   look,
   name,
   onSelect,
   children,
 }: {
-  node: DiagramNode;
+  id: string;
+  color: string;
   look: NodeLook | undefined;
   name: string;
   onSelect: (id: string) => void;
@@ -417,16 +466,16 @@ function NodeButton({
   return (
     <g
       className={nodeClass(look)}
-      style={{ color: `var(--${node.color})` }}
+      style={{ color: `var(--${color})` }}
       role="button"
       tabIndex={ghost ? -1 : 0}
       aria-label={`${name}${ghost ? " (not built yet)" : ""}: show details`}
       aria-pressed={look?.selected ?? false}
-      onClick={() => onSelect(node.id)}
+      onClick={() => onSelect(id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onSelect(node.id);
+          onSelect(id);
         }
       }}
     >
@@ -435,331 +484,131 @@ function NodeButton({
   );
 }
 
-function Iso3D({
-  diagram,
-  iso,
-  scene,
-  looks,
-  nameOf,
+function Node3({
+  node,
+  look,
+  name,
   onSelect,
 }: {
-  diagram: Diagram;
-  iso: Map<string, IsoNode>;
-  scene: Scene;
-  looks: Map<string, NodeLook>;
-  nameOf: (id: string) => string;
+  node: NodeDrawing3;
+  look: NodeLook | undefined;
+  name: string;
   onSelect: (id: string) => void;
 }) {
-  const byId = new Map(diagram.nodes.map((n) => [n.id, n]));
-  const lines = scene.edges.map((e) => {
-    const [a, b] = e.id.split("_").map((k) => iso.get(k)!);
-    return { look: e, ends: a && b ? edgeEnds(a, b) : null };
-  });
-  return (
-    <>
-      <g className="edges">
-        {lines.map(({ look, ends }) =>
-          ends ? (
-            <line
-              key={look.id}
-              className={edgeClass(look)}
-              x1={ends.a[0]}
-              y1={ends.a[1]}
-              x2={ends.b[0]}
-              y2={ends.b[1]}
-            />
-          ) : null,
-        )}
-      </g>
-      <g className="arrows" aria-hidden="true">
-        {lines.map(({ look, ends }) =>
-          ends && look.visible ? (
-            <g key={look.id}>
-              {look.forward && (
-                <Arrow
-                  points={arrowhead(ends.a, ends.b)}
-                  color={look.forward.color}
-                  current={look.forward.current}
-                />
-              )}
-              {look.backward && (
-                <Arrow
-                  points={arrowhead(ends.b, ends.a)}
-                  color={look.backward.color}
-                  current={look.backward.current}
-                />
-              )}
-            </g>
-          ) : null,
-        )}
-      </g>
-      <g className="nodes">
-        {paintOrder([...iso.values()]).map((n) => {
-          const node = byId.get(n.id)!;
-          const plinth = plinthFaces(n);
-          return (
-            <NodeButton
-              key={n.id}
-              node={node}
-              look={looks.get(n.id)}
-              name={nameOf(n.id)}
-              onSelect={onSelect}
-            >
-              <polygon className="ring" points={toPoints(ringOf(n))} />
-              <g className="body">
-                {plinth.sides.map((side, i) => (
-                  <polygon key={i} className="slab" points={toPoints(side)} />
-                ))}
-                <polygon className="plate" points={toPoints(plinth.top)} />
-                <Glyph node={n} />
-              </g>
-            </NodeButton>
-          );
-        })}
-      </g>
-      <g className="labels">
-        {diagram.nodes.map((node) => {
-          const look = looks.get(node.id);
-          const box = labelBox(iso.get(node.id)!, {
-            id: node.id,
-            text: node.label,
-            y: node.labelY,
-          });
-          return (
-            <g
-              key={node.id}
-              className={`lb${look?.ghost ? " ghost" : ""}${look?.dim ? " dim" : ""}${look?.selected ? " sel" : ""}${look?.isNew ? " new" : ""}`}
-              onClick={() => onSelect(node.id)}
-              aria-hidden="true"
-            >
-              <rect
-                className="pill"
-                x={box.x}
-                y={box.y}
-                width={box.w}
-                height={box.h}
-                rx={13}
-              />
-              <text x={box.textX} y={box.textY}>
-                {node.label}
-              </text>
-            </g>
-          );
-        })}
-      </g>
-    </>
-  );
-}
-
-function Glyph({ node }: { node: IsoNode }) {
   const g = node.glyph;
-  if (g.type === "crowd" || g.type === "person") {
-    const heads = g.type === "crowd" ? CROWD_HEADS : [PERSON_HEAD];
-    const solo = g.type === "person";
-    return (
-      <g className={`figures${solo ? " solo" : ""}`}>
-        {heads.map(([hx, hy], i) => (
-          <g key={i}>
-            <rect
-              className="fig-body"
-              x={node.cx + hx - 3.8}
-              y={node.cy + hy + 4.1}
-              width={7.6}
-              height={10.8}
-              rx={3.8}
-            />
-            <circle
-              className="fig-head"
-              cx={node.cx + hx}
-              cy={node.cy + hy}
-              r={3.4}
+  return (
+    <NodeButton
+      id={node.id}
+      color={node.color}
+      look={look}
+      name={name}
+      onSelect={onSelect}
+    >
+      <polygon className="ring" points={node.ring} />
+      <g className="body">
+        {node.slabs.map((side, i) => (
+          <polygon key={i} className="slab" points={side} />
+        ))}
+        <polygon className="plate" points={node.plate} />
+        {g.kind === "blocks" ? (
+          <g className="glyph">
+            {g.faces.map((f, i) => (
+              <polygon
+                key={i}
+                className={f.shade ? "shade" : "face"}
+                style={f.shade ? { fillOpacity: f.shade } : undefined}
+                points={f.points}
+              />
+            ))}
+          </g>
+        ) : g.kind === "cylinder" ? (
+          <g className="glyph">
+            <path className="face" d={g.body} />
+            <path className="shade" d={g.body} style={{ fillOpacity: 0.45 }} />
+            {g.bands.map((d, i) => (
+              <path key={i} className="band" d={d} />
+            ))}
+            <ellipse
+              className="face"
+              cx={g.top.cx}
+              cy={g.top.cy}
+              rx={g.top.rx}
+              ry={g.top.ry}
             />
           </g>
-        ))}
-      </g>
-    );
-  }
-  if (g.type === "cylinder") {
-    const c = cylinderParts(node.cx, node.cy, g.rx, g.h, g.bands);
-    return (
-      <g className="glyph">
-        <path className="face" d={c.body} />
-        <path className="shade" d={c.body} style={{ fillOpacity: 0.45 }} />
-        {c.bands.map((d, i) => (
-          <path key={i} className="band" d={d} />
-        ))}
-        <ellipse
-          className="face"
-          cx={c.top.cx}
-          cy={c.top.cy}
-          rx={c.top.rx}
-          ry={c.top.ry}
-        />
-      </g>
-    );
-  }
-  // Blocks: back to front, each as left, shade, right, shade, top.
-  const blocks = glyphBlocks(node);
-  return (
-    <g className="glyph">
-      {blocks.map((block, i) =>
-        blockFaces(block.x, block.y, block.b, block.H).map((face, j) => (
-          <polygon
-            key={`${i}-${j}`}
-            className={face.shade ? "shade" : "face"}
-            style={face.shade ? { fillOpacity: face.shade } : undefined}
-            points={toPoints(face.points)}
-          />
-        )),
-      )}
-    </g>
-  );
-}
-
-function Flat2D({
-  diagram,
-  scene,
-  looks,
-  nameOf,
-  onSelect,
-}: {
-  diagram: Diagram;
-  scene: Scene;
-  looks: Map<string, NodeLook>;
-  nameOf: (id: string) => string;
-  onSelect: (id: string) => void;
-}) {
-  const paths = scene.edges.map((e) => ({
-    look: e,
-    points: parsePath(diagram.paths2[e.id] ?? ""),
-  }));
-  return (
-    <>
-      <g className="edges">
-        {paths.map(({ look, points }) =>
-          points.length > 1 ? (
-            <path
-              key={look.id}
-              className={edgeClass(look)}
-              d={pathOf(points)}
-            />
-          ) : null,
+        ) : (
+          <g className={`figures${g.solo ? " solo" : ""}`}>
+            {g.heads.map(([hx, hy], i) => (
+              <g key={i}>
+                <rect
+                  className="fig-body"
+                  x={hx - 3.8}
+                  y={hy + 4.1}
+                  width={7.6}
+                  height={10.8}
+                  rx={3.8}
+                />
+                <circle className="fig-head" cx={hx} cy={hy} r={3.4} />
+              </g>
+            ))}
+          </g>
         )}
       </g>
-      <g className="arrows" aria-hidden="true">
-        {paths.map(({ look, points }) => {
-          if (points.length < 2 || !look.visible) return null;
-          const heads = pathArrows(points);
-          return (
-            <g key={look.id}>
-              {look.forward && (
-                <Arrow
-                  points={heads.f}
-                  color={look.forward.color}
-                  current={look.forward.current}
-                />
-              )}
-              {look.backward && (
-                <Arrow
-                  points={heads.b}
-                  color={look.backward.color}
-                  current={look.backward.current}
-                />
-              )}
-            </g>
-          );
-        })}
-      </g>
-      <g className="nodes">
-        {diagram.nodes.map((node) => {
-          const [x, y, w, h] = node.box2;
-          const cy = y + h / 2;
-          return (
-            <NodeButton
-              key={node.id}
-              node={node}
-              look={looks.get(node.id)}
-              name={nameOf(node.id)}
-              onSelect={onSelect}
-            >
-              <rect
-                className="ring"
-                x={x - 5}
-                y={y - 5}
-                width={w + 10}
-                height={h + 10}
-                rx={16}
-              />
-              <g className="body">
-                <rect className="bx" x={x} y={y} width={w} height={h} rx={12} />
-                <rect
-                  className="tile"
-                  x={x + 11}
-                  y={cy - 16}
-                  width={32}
-                  height={32}
-                  rx={9}
-                />
-                <path
-                  className="icon"
-                  d={ICON_PATHS[node.icon]}
-                  transform={`translate(${x + 18} ${cy - 9}) scale(.75)`}
-                />
-                <text className="name2" x={x + 52} y={cy - 2}>
-                  {node.name2}
-                </text>
-                <text className="sub2" x={x + 52} y={cy + 13}>
-                  {node.sub2}
-                </text>
-              </g>
-            </NodeButton>
-          );
-        })}
-      </g>
-    </>
+    </NodeButton>
   );
 }
 
-/** A text version of the diagram (PRD design rule): what is built at this
-    step, and the request's hops in order. */
-export function StageText({
-  diagram,
-  scene,
-  nameOf,
-  stepLabel,
+function Node2({
+  node,
+  look,
+  name,
+  onSelect,
 }: {
-  diagram: Diagram;
-  scene: Scene;
-  nameOf: (id: string) => string;
-  stepLabel: string;
+  node: NodeDrawing2;
+  look: NodeLook | undefined;
+  name: string;
+  onSelect: (id: string) => void;
 }) {
-  const built = diagram.nodes.filter(
-    (n) => !scene.nodes.find((l) => l.id === n.id)?.ghost,
-  );
+  const [x, y, w, h] = node.box;
+  const cy = y + h / 2;
   return (
-    <details className="tt-stage-text">
-      <summary>Text version of the diagram</summary>
-      <p className="tt-body-s">
-        {stepLabel}: {built.length} of {diagram.nodes.length} parts built.
-      </p>
-      <ul>
-        {built.map((n) => (
-          <li key={n.id}>
-            {n.name2} <span className="tt-faint">· {n.sub2}</span>
-          </li>
-        ))}
-      </ul>
-      {scene.trace.length > 0 ? (
-        <ol>
-          {scene.trace.map((h, i) => (
-            <li key={i}>
-              {nameOf(h.from)} → {nameOf(h.to)}: {h.text}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="tt-body-s">No request moves in this step.</p>
-      )}
-    </details>
+    <NodeButton
+      id={node.id}
+      color={node.color}
+      look={look}
+      name={name}
+      onSelect={onSelect}
+    >
+      <rect
+        className="ring"
+        x={x - 5}
+        y={y - 5}
+        width={w + 10}
+        height={h + 10}
+        rx={16}
+      />
+      <g className="body">
+        <rect className="bx" x={x} y={y} width={w} height={h} rx={12} />
+        <rect
+          className="tile"
+          x={x + 11}
+          y={cy - 16}
+          width={32}
+          height={32}
+          rx={9}
+        />
+        <path
+          className="icon"
+          d={node.icon}
+          transform={`translate(${x + 18} ${cy - 9}) scale(.75)`}
+        />
+        <text className="name2" x={x + 52} y={cy - 2}>
+          {node.name}
+        </text>
+        <text className="sub2" x={x + 52} y={cy + 13}>
+          {node.sub}
+        </text>
+      </g>
+    </NodeButton>
   );
 }

@@ -8,6 +8,8 @@ import {
   lessonFiles,
   topicFiles,
 } from "../content/.generated/index";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { formatIssue } from "../content/schema";
 import { validateContent } from "../content/validate";
 import {
@@ -28,6 +30,29 @@ const { issues, content } = validateContent(
   today,
 );
 const v1Issues = validateV1({ topics: v1TopicFiles, roadmaps: roadmapFiles });
+
+// Narration: one recording per lesson step, at
+// public/audio/<topic>/<lesson>/<NN>.mp3 (PRD P5). Missing audio is a
+// warning while lessons are being recorded; REQUIRE_NARRATION=1 (Gate 1)
+// makes it an error.
+const requireNarration = process.env.REQUIRE_NARRATION === "1";
+for (const lesson of content.lessons) {
+  const missing = lesson.steps
+    .map((_, i) => String(i + 1).padStart(2, "0"))
+    .filter(
+      (nn) =>
+        !existsSync(
+          join("public", "audio", lesson.topic, lesson.id, `${nn}.mp3`),
+        ),
+    );
+  if (missing.length > 0)
+    issues.push({
+      file: `content/topics/${lesson.topic}/lessons/${lesson.id}.ts`,
+      field: "steps",
+      message: `narration audio missing for step ${missing.map(Number).join(", ")} (public/audio/${lesson.topic}/${lesson.id}/NN.mp3)`,
+      level: requireNarration ? "error" : "warning",
+    });
+}
 
 const errors = [...issues.filter((i) => i.level !== "warning"), ...v1Issues];
 const warnings = issues.filter((i) => i.level === "warning");

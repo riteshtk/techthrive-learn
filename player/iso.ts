@@ -291,7 +291,7 @@ export function fitViewBox(
 }
 
 /** The point "zoom to it" centres on: the node lifted 21 px. */
-export function focusPoint(node: IsoNode): Pt {
+export function focusPoint(node: { cx: number; cy: number }): Pt {
   return [Math.round(node.cx), Math.round(node.cy - 21)];
 }
 

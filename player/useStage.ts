@@ -3,6 +3,7 @@
 import {
   useEffect,
   useReducer,
+  useRef,
   useSyncExternalStore,
   type Dispatch,
 } from "react";
@@ -38,8 +39,16 @@ export function useReducedMotion(): boolean {
 export function useStage(
   config: StageConfig,
   timing: Timing,
-  options: { step?: number } = {},
+  options: {
+    step?: number;
+    /** Asked at the end of each loop while playing the lesson. */
+    canAdvance?: () => boolean;
+  } = {},
 ): [StageState, Dispatch<StageAction>] {
+  const canAdvance = useRef(options.canAdvance);
+  useEffect(() => {
+    canAdvance.current = options.canAdvance;
+  });
   const [state, dispatch] = useReducer(
     (s: StageState, a: StageAction) => reduceStage(config, s, a),
     undefined,
@@ -56,7 +65,14 @@ export function useStage(
   const delay = delayMs(config, state, timing);
   useEffect(() => {
     if (delay === null) return;
-    const timer = setTimeout(() => dispatch({ type: "tick" }), delay);
+    const timer = setTimeout(
+      () =>
+        dispatch({
+          type: "tick",
+          canAdvance: canAdvance.current ? canAdvance.current() : true,
+        }),
+      delay,
+    );
     return () => clearTimeout(timer);
   }, [delay, state.hop, state.step, state.full, state.auto]);
 

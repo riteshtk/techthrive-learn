@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Diagram } from "@/content/types";
-import type { IsoNode } from "@/player/iso";
+import { drawDiagram } from "@/player/drawing";
 import { initStage, type StageConfig } from "@/player/machine";
 import {
   badgePositions,
@@ -72,13 +72,10 @@ function scene(source: SceneSource, step = 1, hopIndex = 0) {
   );
 }
 
-const isoOf = (d: Diagram) =>
-  new Map<string, IsoNode>(
-    d.nodes.map((n) => [
-      n.id,
-      { id: n.id, cx: n.cx, cy: n.cy, plinth: n.plinth, glyph: n.glyph },
-    ]),
-  );
+const linesOf = (d: Diagram, view: "3d" | "2d") => {
+  const drawing = drawDiagram(d, Object.keys(d.paths2), {});
+  return view === "3d" ? drawing.edges3 : drawing.edges2;
+};
 
 describe("edges styled from the hero trace (spec 03 §7.5)", () => {
   it("AI agents", () => {
@@ -185,25 +182,19 @@ describe("node states (spec 04 §2.2)", () => {
 
 describe("packets and badges", () => {
   it("run a 3D packet straight between the drawn edge ends", () => {
-    const path = packetPath(
-      AGENTS,
-      isoOf(AGENTS),
-      Object.keys(AGENTS.paths2),
-      { from: "G", to: "U" },
-      "3d",
-    );
+    const path = packetPath(linesOf(AGENTS, "3d"), Object.keys(AGENTS.paths2), {
+      from: "G",
+      to: "U",
+    });
     expect(path[0]![0]).toBeCloseTo(283.4, 0);
     expect(path[1]![0]).toBeCloseTo(223.2, 1);
   });
 
   it("run a 2D packet round the path's corners, in the hop's direction", () => {
-    const path = packetPath(
-      AGENTS,
-      isoOf(AGENTS),
-      Object.keys(AGENTS.paths2),
-      { from: "P", to: "O" },
-      "2d",
-    );
+    const path = packetPath(linesOf(AGENTS, "2d"), Object.keys(AGENTS.paths2), {
+      from: "P",
+      to: "O",
+    });
     expect(path).toEqual([
       [532, 190],
       [484, 190],
@@ -219,11 +210,9 @@ describe("packets and badges", () => {
       { from: "S", to: "P" },
     ];
     const [out1, back, out2] = badgePositions(
-      PAYMENTS,
-      isoOf(PAYMENTS),
+      linesOf(PAYMENTS, "2d"),
       Object.keys(PAYMENTS.paths2),
       trace,
-      "2d",
     );
     // S_P runs left to right at y 320: outbound above or below, return opposite.
     expect(Math.sign(out1![1] - 320)).toBe(-Math.sign(back![1] - 320));
