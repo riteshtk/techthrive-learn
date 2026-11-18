@@ -138,9 +138,19 @@ export function Stage({
       fill: "both",
     });
     if (!state.playing) animRef.current.pause();
-    // A new hop, step, view or speed starts a fresh flight.
+    // A new hop, step, view or speed starts a fresh flight. The hop is
+    // keyed by its ends, not its identity, which a re-render can renew.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, view, flow, state.step, state.hop, state.speed, reducedMotion]);
+  }, [
+    current?.from,
+    current?.to,
+    view,
+    flow,
+    state.step,
+    state.hop,
+    state.speed,
+    reducedMotion,
+  ]);
 
   useEffect(() => {
     const anim = animRef.current;
@@ -171,6 +181,12 @@ export function Stage({
   const onPointerMove = (e: PointerEvent<SVGSVGElement>) => {
     const d = drag.current;
     if (!d) return;
+    // Released outside the diagram before the drag began: no pointerup
+    // reached us, so stop here rather than pan on hover.
+    if (e.buttons === 0) {
+      drag.current = null;
+      return;
+    }
     const dx = e.clientX - d.x;
     const dy = e.clientY - d.y;
     if (!d.moved && Math.abs(dx) + Math.abs(dy) < 5) return;

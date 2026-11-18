@@ -40,11 +40,20 @@ describe("lesson progress", () => {
     });
   });
 
-  it("is done once the last step is reached, and stays done", () => {
-    let s = visitStep(EMPTY_LEARNING, KEY, 10, 10, T0);
+  it("is done on reaching the last step from the one before, and stays done", () => {
+    let s = visitStep(EMPTY_LEARNING, KEY, 9, 10, T0);
+    s = visitStep(s, KEY, 10, 10, T0);
     expect(s.lessons[KEY]?.doneAt).toBe(T0);
     s = visitStep(s, KEY, 3, 10, T1);
     expect(s.lessons[KEY]?.doneAt).toBe(T0);
+  });
+
+  it("isn't done after a deep link straight to the last step", () => {
+    let s = visitStep(EMPTY_LEARNING, KEY, 10, 10, T0);
+    expect(s.lessons[KEY]?.doneAt).toBeUndefined();
+    s = visitStep(s, KEY, 4, 10, T1);
+    s = visitStep(s, KEY, 10, 10, T1);
+    expect(s.lessons[KEY]?.doneAt).toBeUndefined();
   });
 
   it("returns the same object when nothing changes", () => {

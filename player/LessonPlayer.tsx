@@ -112,14 +112,22 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
     [nodeById],
   );
 
-  const scene = buildScene(source, state, (s, full) =>
-    effectiveTrace(source, s, full),
+  const { step: at, full, hop, selected: picked } = state;
+  const scene = useMemo(
+    () => buildScene(source, state, (s, f) => effectiveTrace(source, s, f)),
+    // Keyed on what buildScene reads; the rest of the state (pan, zoom,
+    // speed) changes often.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [source, at, full, hop, picked],
   );
   const words = hopWords(scene, state.hop, shortOf, lesson.emptyTraceText);
 
   // ?step: read once after mount (pages are static), then kept in the
   // address as the learner moves. Without one, resume where they were.
+  // The step mount asked for; until the player reaches it, nothing is
+  // written back, so the address and progress never flash step 1.
   const started = useRef(false);
+  const arriving = useRef<number | null>(null);
   useEffect(() => {
     const asked = Number(new URLSearchParams(location.search).get("step"));
     const saved = learningStore.get().lessons[key]?.step;
@@ -128,11 +136,16 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
         ? asked
         : (saved ?? 1);
     if (first !== 1) dispatch({ type: "goto", step: first });
+    arriving.current = first;
     started.current = true;
   }, [dispatch, key, total]);
 
   useEffect(() => {
     if (!started.current) return;
+    if (arriving.current !== null) {
+      if (state.step !== arriving.current) return;
+      arriving.current = null;
+    }
     const url = new URL(location.href);
     url.searchParams.set("step", String(state.step));
     history.replaceState(history.state, "", url);
@@ -496,7 +509,15 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
                   ref={audioRef}
                   src={audio}
                   preload="none"
+                  // Paused, failed or finished: Play lesson mustn't wait
+                  // for an "ended" that will never come.
                   onEnded={() => {
+                    audioDone.current = true;
+                  }}
+                  onPause={() => {
+                    audioDone.current = true;
+                  }}
+                  onError={() => {
                     audioDone.current = true;
                   }}
                 />

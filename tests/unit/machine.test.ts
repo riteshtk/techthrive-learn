@@ -77,6 +77,9 @@ describe("ticks", () => {
     let s = run(start(1), { type: "toggleAuto" });
     s = run(s, { type: "tick", canAdvance: false });
     expect([s.step, s.hop, s.auto]).toEqual([1, 0, true]);
+    // A step with no hops changes nothing else, so the finished loop is
+    // counted: that is what re-arms the timer for the next one.
+    expect(s.loops).toBe(1);
     s = run(s, { type: "tick", canAdvance: true });
     expect(s.step).toBe(2);
   });

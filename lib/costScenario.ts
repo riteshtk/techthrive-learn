@@ -175,7 +175,10 @@ export function costReport(i: CostInputs): CostReport {
   }));
 
   const monthOn = (key: ModelKey) =>
-    usd(total(parts(key, i, cached))) * i.turns * i.conversations * 30;
+    usd(total(parts(key, i, cached))) *
+    i.turns *
+    i.conversations *
+    DAYS_PER_MONTH;
   const base = monthOn(i.model);
   const compare = MODEL_KEYS.map((key) => ({
     key,

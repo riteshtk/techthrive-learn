@@ -110,3 +110,16 @@ test("has no axe violations in either theme, and no sideways scroll", async ({
     ),
   ).toBeLessThanOrEqual(0);
 });
+
+test("ignores a ?j= that isn't a filter, even an object key", async ({
+  page,
+}) => {
+  const errors: Error[] = [];
+  page.on("pageerror", (e) => errors.push(e));
+  await page.goto(`${PAGE}?j=toString`);
+  await expect(page.getByRole("button", { name: /^All/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(errors).toEqual([]);
+});

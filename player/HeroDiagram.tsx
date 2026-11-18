@@ -99,8 +99,13 @@ export function HeroDiagram({
   useEffect(() => {
     dispatch({ type: "fit" });
   }, [drawing, dispatch]);
-  const scene = buildScene(source, state, (s, full) =>
-    effectiveTrace(source, s, full),
+  const { step: at, full, hop, selected: picked } = state;
+  const scene = useMemo(
+    () => buildScene(source, state, (s, f) => effectiveTrace(source, s, f)),
+    // Keyed on what buildScene reads; the rest of the state (pan, zoom,
+    // speed) changes often.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [source, at, full, hop, picked],
   );
   const nameOf = (id: string) => data.names[id] ?? id;
   const trace = data.trace

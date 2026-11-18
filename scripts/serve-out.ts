@@ -14,7 +14,32 @@ const types: Record<string, string> = {
   ".png": "image/png",
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
+  ".mp3": "audio/mpeg",
 };
+
+/**
+ * The bytes a Range header asks for, as GitHub Pages honours it: one
+ * "bytes=start-end", "bytes=start-" or "bytes=-suffix". null for no
+ * header or one we don't serve (send the whole file); "unsatisfiable"
+ * when it starts past the end. Safari needs ranges to play audio: without
+ * them it treats a file as a live stream and never reaches its end.
+ */
+export function byteRange(
+  header: string | undefined,
+  size: number,
+): { start: number; end: number } | "unsatisfiable" | null {
+  const m = /^bytes=(\d*)-(\d*)$/.exec(header ?? "");
+  if (!m || (m[1] === "" && m[2] === "")) return null;
+  if (m[1] === "") {
+    const suffix = Number(m[2]);
+    if (suffix === 0) return "unsatisfiable";
+    return { start: Math.max(0, size - suffix), end: size - 1 };
+  }
+  const start = Number(m[1]);
+  const end = m[2] === "" ? size - 1 : Math.min(Number(m[2]), size - 1);
+  if (start >= size || end < start) return "unsatisfiable";
+  return { start, end };
+}
 
 /**
  * The file in `root` a request path names, or undefined for anything that
@@ -47,9 +72,30 @@ function send(
   res: import("node:http").ServerResponse,
   status: number,
   file: string,
+  range?: string,
 ) {
+  const size = statSync(file).size;
+  const type = types[extname(file)] ?? "application/octet-stream";
+  const want = status === 200 ? byteRange(range, size) : null;
+  if (want === "unsatisfiable") {
+    res.writeHead(416, { "content-range": `bytes */${size}` });
+    res.end();
+    return;
+  }
+  if (want) {
+    res.writeHead(206, {
+      "content-type": type,
+      "accept-ranges": "bytes",
+      "content-range": `bytes ${want.start}-${want.end}/${size}`,
+      "content-length": want.end - want.start + 1,
+    });
+    createReadStream(file, want).pipe(res);
+    return;
+  }
   res.writeHead(status, {
-    "content-type": types[extname(file)] ?? "application/octet-stream",
+    "content-type": type,
+    "accept-ranges": "bytes",
+    "content-length": size,
   });
   createReadStream(file).pipe(res);
 }
@@ -62,7 +108,7 @@ if (import.meta.main) {
   createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     const file = resolveFile(url.pathname, root, basePath);
-    if (file) send(res, 200, file);
+    if (file) send(res, 200, file, req.headers.range);
     else send(res, 404, join(root, "404.html"));
   }).listen(port, () => {
     console.log(`Serving out/ at http://localhost:${port}${basePath}/`);

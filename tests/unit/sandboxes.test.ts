@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { conversationCost, turnCost, usd } from "@/lib/costModel";
-import { HAIKU_5_5, SONNET_5_5 } from "@/lib/claudePrices";
+import { usd } from "@/lib/costModel";
+import { costReport, DEFAULT_INPUTS } from "@/lib/costScenario";
 import { defaultsOf, SANDBOXES } from "@/player/sandboxes";
 
 const run = (
@@ -97,32 +97,26 @@ describe("the payments sandbox, with the design's own numbers", () => {
 });
 
 describe("the cost formula", () => {
-  const shape = {
-    prefixTokens: 6000,
-    freshInputTokens: 2500,
-    outputTokens: 350,
-  };
-
   it("prices one Sonnet 5.5 turn at the defaults at $0.01054", () => {
-    expect(turnCost(SONNET_5_5, shape, { on: true, hitRate: 0.9 })).toBeCloseTo(
-      0.01054,
-      10,
-    );
+    expect(costReport(DEFAULT_INPUTS).perTurn).toBeCloseTo(0.01054, 10);
   });
 
   it("routes a share of turns to the cheaper model", () => {
-    const all = conversationCost({
-      main: SONNET_5_5,
-      routed: HAIKU_5_5,
-      routedShare: 1,
-      turns: 1,
-      shape,
-      cache: { on: true, hitRate: 0.9 },
-    });
-    expect(all).toBeCloseTo(
-      turnCost(HAIKU_5_5, shape, { on: true, hitRate: 0.9 }),
+    expect(costReport({ ...DEFAULT_INPUTS, route: 100 }).perTurn).toBeCloseTo(
+      costReport({ ...DEFAULT_INPUTS, model: "haiku" }).perTurn,
       12,
     );
+  });
+
+  it("the sandbox shows the cost model tool's numbers", () => {
+    const tool = costReport({ ...DEFAULT_INPUTS, hit: 60, route: 30 });
+    const out = SANDBOXES["agent-cost"].compute({
+      ...defaultsOf(SANDBOXES["agent-cost"]),
+      hit: 60,
+      route: 30,
+    });
+    expect(out.tiles[0].value).toBe(usd(tool.perConversation, 3));
+    expect(out.result.value).toBe(usd(tool.perMonth, 0));
   });
 
   it("formats dollars", () => {

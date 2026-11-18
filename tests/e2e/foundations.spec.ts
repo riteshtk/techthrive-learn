@@ -143,3 +143,36 @@ test("the overview, course and a lesson have no axe violations", async ({
     ).toEqual([]);
   }
 });
+
+// Step 1 of each Foundations lesson has no hops and a narration longer
+// than its rest, so Play lesson must keep checking until the line ends.
+test("Play lesson waits for the narration, then moves on", async ({ page }) => {
+  await page.goto("topics/foundations/lessons/agent-loop/");
+  await expect(stepLabel(page)).toHaveText("Step 1 / 7");
+  await page.getByRole("button", { name: "Play lesson" }).click();
+  await expect(stepLabel(page)).toHaveText("Step 2 / 7", { timeout: 12_000 });
+});
+
+test("Play lesson moves on after the narration is paused", async ({ page }) => {
+  await page.goto("topics/foundations/lessons/agent-loop/");
+  await expect(stepLabel(page)).toHaveText("Step 1 / 7");
+  await page.getByRole("button", { name: "Play lesson" }).click();
+  // Pause once the line is really playing, well before it ends.
+  const pausedMidway = await page.evaluate(
+    () =>
+      new Promise<boolean>((done) => {
+        const audio = document.querySelector("audio")!;
+        const pause = () => {
+          if (audio.currentTime < 0.2) return;
+          audio.removeEventListener("timeupdate", pause);
+          document
+            .querySelector<HTMLButtonElement>(".tt-narration-play")!
+            .click();
+          done(audio.paused && !audio.ended);
+        };
+        audio.addEventListener("timeupdate", pause);
+      }),
+  );
+  expect(pausedMidway).toBe(true);
+  await expect(stepLabel(page)).toHaveText("Step 2 / 7", { timeout: 12_000 });
+});

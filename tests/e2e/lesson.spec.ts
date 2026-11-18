@@ -283,3 +283,97 @@ test.describe("component details", () => {
     await page.keyboard.press("Escape");
   });
 });
+
+test.describe("review fixes", () => {
+  const path = LESSONS[0].path;
+
+  test("arriving at the last step from saved progress completes the lesson", async ({
+    page,
+  }) => {
+    // Saved at step 9: the mount must go straight to 10, never write step 1
+    // in between, so this arrival counts as finishing the lesson.
+    await page.addInitScript(() => {
+      const at = "2026-11-18T08:00:00.000Z";
+      localStorage.setItem(
+        "ttl-learn:progress:v2",
+        JSON.stringify({
+          lessons: {
+            "ai-agents/agent-anatomy": {
+              step: 9,
+              maxStep: 9,
+              startedAt: at,
+              updatedAt: at,
+            },
+          },
+          checkpoints: {},
+        }),
+      );
+    });
+    await page.goto(`${path}?step=10`);
+    await expect(stepLabel(page)).toHaveText("Step 10 / 10");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem("ttl-learn:progress:v2")!).lessons[
+              "ai-agents/agent-anatomy"
+            ],
+        ),
+      )
+      .toMatchObject({ step: 10, maxStep: 10, doneAt: expect.any(String) });
+  });
+
+  test("a deep link straight to the last step doesn't complete the lesson", async ({
+    page,
+  }) => {
+    await page.goto(`${path}?step=10`);
+    await expect(stepLabel(page)).toHaveText("Step 10 / 10");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem("ttl-learn:progress:v2") ?? "{}")
+              .lessons?.["ai-agents/agent-anatomy"],
+        ),
+      )
+      .toMatchObject({ step: 10 });
+    expect(
+      await page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem("ttl-learn:progress:v2")!).lessons[
+            "ai-agents/agent-anatomy"
+          ].doneAt,
+      ),
+    ).toBeUndefined();
+  });
+
+  test("the open sandbox stops rendering once its numbers are shown", async ({
+    page,
+  }) => {
+    // React's scheduler posts a message for each render it schedules; a
+    // render loop posts thousands a second.
+    await page.addInitScript(() => {
+      const w = window as unknown as { posts: number };
+      w.posts = 0;
+      const post = MessagePort.prototype.postMessage;
+      MessagePort.prototype.postMessage = function (
+        this: MessagePort,
+        ...args: unknown[]
+      ) {
+        w.posts++;
+        return (post as (...a: unknown[]) => void).apply(this, args);
+      } as typeof post;
+    });
+    await page.goto(`${path}?step=10`);
+    await page.getByRole("button", { name: "Sandbox" }).click();
+    await expect(
+      page.getByRole("list", { name: "This step in numbers" }),
+    ).toContainText("$0.063");
+    const posts = () =>
+      page.evaluate(() => (window as unknown as { posts: number }).posts);
+    await page.waitForTimeout(300);
+    const before = await posts();
+    await page.waitForTimeout(1000);
+    expect((await posts()) - before).toBeLessThan(20);
+  });
+});

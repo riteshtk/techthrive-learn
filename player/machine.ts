@@ -22,6 +22,9 @@ export type StageState = {
   step: number;
   /** 0…n: hop < n plays that hop; hop === n is the rest at the end. */
   hop: number;
+  /** Loops finished on this step: each one re-arms the timer, even on a
+      step with no hops, where hop alone never changes. */
+  loops: number;
   playing: boolean;
   /** "Play lesson": after each full loop, go to the next step. */
   auto: boolean;
@@ -79,6 +82,7 @@ export function initStage(
   return {
     step: clampStep(config, options.step ?? 1),
     hop: 0,
+    loops: 0,
     playing: options.playing ?? true,
     auto: false,
     speed: 1,
@@ -110,7 +114,7 @@ export function reduceStage(
       if (state.hop < n) return { ...state, hop: state.hop + 1 };
       // The loop ended: start again, or move on when playing the lesson.
       if (!state.auto || action.canAdvance === false)
-        return { ...state, hop: 0 };
+        return { ...state, hop: 0, loops: state.loops + 1 };
       if (state.step < config.steps)
         return { ...state, hop: 0, step: state.step + 1 };
       return { ...state, hop: 0, auto: false };

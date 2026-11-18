@@ -77,7 +77,7 @@ export function useStage(
       delay,
     );
     return () => clearTimeout(timer);
-  }, [delay, state.hop, state.step, state.full, state.auto]);
+  }, [delay, state.hop, state.loops, state.step, state.full, state.auto]);
 
   useEffect(() => {
     const onHidden = () => {

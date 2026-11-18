@@ -3,7 +3,7 @@
 // Loaded only when the learner opens the sandbox, so its formulas and
 // prices don't count against the lesson page's JavaScript budget.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "@/lib/dates";
 import { CLAUDE_PRICES_READ_ON } from "@/lib/claudePrices";
 import {
@@ -25,11 +25,13 @@ export default function SandboxPanel({
 }) {
   const sandbox = SANDBOXES[kind];
   const [values, setValues] = useState(() => defaultsOf(sandbox));
-  const out = sandbox.compute(values);
+  const out = useMemo(() => sandbox.compute(values), [sandbox, values]);
 
+  // Only when the outputs change: the parent re-renders on every tiles
+  // update, so passing them on each render would loop forever.
   useEffect(() => {
     onTiles(out.tiles);
-  });
+  }, [out, onTiles]);
   useEffect(() => () => onTiles(null), [onTiles]);
 
   const set = (id: string, v: number | boolean) =>

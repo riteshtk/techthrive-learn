@@ -125,7 +125,11 @@ export function visitStep(
   const before = state.lessons[key];
   if (before?.step === step && before.maxStep >= step) return state;
   const maxStep = Math.max(before?.maxStep ?? 0, step);
-  const doneAt = before?.doneAt ?? (maxStep >= total ? now : undefined);
+  // Done on arriving at the last step from the one before it, so a deep
+  // link straight to the end doesn't complete a lesson never gone through.
+  const doneAt =
+    before?.doneAt ??
+    (step === total && before?.step === total - 1 ? now : undefined);
   return {
     ...state,
     lessons: {

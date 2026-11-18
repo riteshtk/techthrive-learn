@@ -31,7 +31,7 @@ export function GovernanceView({ data }: { data: Governance }) {
 
   useEffect(() => {
     const asked = new URLSearchParams(location.search).get("j");
-    if (asked && asked in FILTERS)
+    if (asked && Object.hasOwn(FILTERS, asked))
       queueMicrotask(() => setFilter(asked as FilterId));
     mounted.current = true;
   }, []);

@@ -3,8 +3,8 @@
 // kind; the formulas and teaching inputs live here, and every figure they
 // show is in the facts register.
 
-import { conversationCost, usd } from "@/lib/costModel";
-import { HAIKU_5_5, SONNET_5_5 } from "@/lib/claudePrices";
+import { usd } from "@/lib/costModel";
+import { costReport, DEFAULT_INPUTS } from "@/lib/costScenario";
 import type { ColorKey } from "@/content/types";
 
 export type SandboxInput =
@@ -81,15 +81,17 @@ const agentCost: SandboxModule = {
     const cacheOn = values.cache !== false;
     const hit = Number(values.hit);
     const route = Number(values.route);
-    const perConv = conversationCost({
-      main: SONNET_5_5,
-      routed: HAIKU_5_5,
-      routedShare: route / 100,
-      turns: 6,
-      shape: { prefixTokens: 6000, freshInputTokens: 2500, outputTokens: 350 },
-      cache: { on: cacheOn, hitRate: hit / 100 },
+    // The cost model tool's formula, on its brief's defaults (Sonnet 5.5,
+    // the footnote's turn shape), so the two never disagree.
+    const report = costReport({
+      ...DEFAULT_INPUTS,
+      conversations: conv,
+      caching: cacheOn,
+      hit,
+      route,
     });
-    const perDay = perConv * conv;
+    const perConv = report.perConversation;
+    const perDay = report.perDay;
     return {
       tiles: [
         { label: "Cost / conversation", value: usd(perConv, 3), tone: "text" },
@@ -101,7 +103,11 @@ const agentCost: SandboxModule = {
         },
         { label: "On Haiku 5.5", value: pct(route), tone: "text" },
       ],
-      result: { label: "Per month", value: usd(perDay * 30, 0), tone: "text" },
+      result: {
+        label: "Per month",
+        value: usd(report.perMonth, 0),
+        tone: "text",
+      },
     };
   },
 };

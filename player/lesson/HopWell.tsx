@@ -31,9 +31,7 @@ export function HopWell({
             <span className="tt-key" style={{ color }} aria-hidden="true" />
             {words.tag}
           </p>
-          <p className="tt-hoptext" aria-live="polite">
-            {words.text}
-          </p>
+          <p className="tt-hoptext">{words.text}</p>
         </div>
         <PlaybackControls state={state} dispatch={dispatch} />
       </div>
