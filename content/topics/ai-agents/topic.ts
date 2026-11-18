@@ -182,7 +182,11 @@ export default {
           value: "2 Dec 2027",
           claim:
             "EU AI Act high-risk duties for Annex III systems, which include credit scoring, after the Digital Omnibus delay.",
-          facts: ["annex-iii-high-risk-date", "digital-omnibus-in-force"],
+          facts: [
+            "annex-iii-high-risk-date",
+            "digital-omnibus-in-force",
+            "eu-ai-act-annex-iii-credit",
+          ],
         },
       ],
     },

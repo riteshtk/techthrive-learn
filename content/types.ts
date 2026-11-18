@@ -319,6 +319,10 @@ export const DiagramSchema = object({
   /** "Card-dispute agent": the hero's title card adds "· n components". */
   caption: text(60),
   portrait: optional(PortraitSchema),
+  /** The 2D board's size; the lesson boards are 960 × 500. */
+  size2: optional(
+    tuple(number({ min: 100, max: 2000 }), number({ min: 100, max: 2000 })),
+  ),
   nodes: array(DiagramNodeSchema, { min: 2 }),
   /** 2D edge paths by edge id ("A_B"), drawn from A to B. */
   paths2: record(
@@ -527,8 +531,97 @@ export const ThreatsSchema = object({
 });
 export type Threats = Infer<typeof ThreatsSchema>;
 
+export const JURISDICTIONS = ["IN", "EU", "UK", "NIST", "OWASP"] as const;
+
+/** Governance (spec 05 §4): dated events, penalty ceilings, two
+    frameworks' principles, and a crosswalk of controls to regimes. */
+export const GovernanceSchema = object({
+  topic: id(),
+  intro: text(300),
+  events: array(
+    object({
+      date: date(),
+      /** Shown as "Nov 2025" when the source gives only the month. */
+      precision: oneOf(["day", "month"] as const),
+      jurisdiction: oneOf(JURISDICTIONS),
+      title: text(60),
+      description: text(200),
+      facts: array(id(), { min: 1 }),
+    }),
+    { min: 1, max: 30 },
+  ),
+  penalties: object({
+    title: text(60),
+    rows: array(object({ label: text(60), value: text(30) }), {
+      min: 1,
+      max: 4,
+    }),
+    note: text(240),
+    facts: array(id(), { min: 1 }),
+  }),
+  frameworks: array(
+    object({
+      title: text(60),
+      items: array(text(60), { min: 1, max: 14 }),
+      subhead: optional(text(60)),
+      note: text(240),
+      facts: array(id(), { min: 1 }),
+    }),
+    { min: 1, max: 3 },
+  ),
+  crosswalk: object({
+    title: text(80),
+    note: text(80),
+    columns: tuple(text(30), text(30), text(30), text(30), text(30), text(30)),
+    rows: array(
+      object({
+        control: text(60),
+        cells: tuple(text(160), text(160), text(160), text(160), text(160)),
+      }),
+      { min: 1, max: 10 },
+    ),
+    facts: array(id(), { min: 1 }),
+  }),
+});
+export type Governance = Infer<typeof GovernanceSchema>;
+
+/** The design lab, explore only (spec 05 §2, PRD P12): a reference
+    diagram, the request it carries, and a detail for every component.
+    Building and the AI review are phase 2. */
+export const LabSchema = object({
+  topic: id(),
+  title: text(80),
+  goal: text(60),
+  intro: text(300),
+  diagram: id(),
+  trace: array(object({ from: nodeId(), to: nodeId(), color: color() }), {
+    min: 1,
+    max: 8,
+  }),
+  /** Telemetry parts, drawn below the main board on phones. */
+  telemetry: array(nodeId()),
+  details: array(
+    object({
+      node: nodeId(),
+      role: text(240),
+      settings: array(object({ k: text(40), v: text(60) }), { max: 4 }),
+      watch: text(240),
+      /** Threat-model risks this part carries, e.g. ASI03. */
+      risks: array(riskId(), { max: 3 }),
+      facts: array(id()),
+    }),
+    { min: 1, max: 20 },
+  ),
+  /** Set when the details were checked against their sources and the
+      creator approved them. */
+  approved: boolean(),
+});
+export type Lab = Infer<typeof LabSchema>;
+
 export const ToolSchema = tagged("kind", {
   threats: ThreatsSchema,
+  governance: GovernanceSchema,
+  lab: LabSchema,
 });
 export type Tool = Infer<typeof ToolSchema>;
 export type ToolKind = Tool["kind"];

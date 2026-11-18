@@ -286,7 +286,7 @@ export function drawDiagram(
     labels3: nodes3.map((n) => [n.label.x, n.label.y, n.label.w, 26] as const),
     boxes2: diagram.nodes.map((n) => [...n.box2] as const),
     size3,
-    size2: [960, 500],
+    size2: diagram.size2 ? [...diagram.size2] : [960, 500],
     nodes3,
     nodes2: diagram.nodes.map((n) => ({
       id: n.id,

@@ -57,6 +57,13 @@ function baseName(file: string): string {
     learner reads. */
 const NOT_DISPLAY = new Set([
   "id",
+  "node",
+  "telemetry",
+  "diagram",
+  "size2",
+  "date",
+  "precision",
+  "jurisdiction",
   "topic",
   "lesson",
   "from",
@@ -382,7 +389,7 @@ export function validateContent(
     const topic = topicById.get(tool.topic);
     if (topic && !topic.tabs.includes(tool.kind))
       error(file, "kind", `the topic has no "${tool.kind}" tab`);
-    checkTool(file, tool, factById, error);
+    checkTool(file, tool, factById, diagramByKey, error);
   }
 
   // Figures: every one on screen is in the register -----------------------
@@ -431,6 +438,7 @@ function checkTool(
   file: string,
   tool: Tool,
   factById: Map<string, Fact>,
+  diagrams: Map<string, Diagram>,
   error: (file: string, field: string, message: string) => void,
 ) {
   const ref = (field: string, id: string) =>
@@ -467,6 +475,56 @@ function checkTool(
         r.facts.forEach((f, j) => ref(`risks[${i}].facts[${j}]`, f));
       });
       tool.related.facts.forEach((f, j) => ref(`related.facts[${j}]`, f));
+      break;
+    }
+    case "lab": {
+      const diagram = diagrams.get(`${tool.topic}/${tool.diagram}`);
+      if (!diagram) {
+        error(
+          file,
+          "diagram",
+          `"${tool.diagram}" has no file in content/topics/${tool.topic}/diagrams/`,
+        );
+        break;
+      }
+      const ids = new Set(diagram.nodes.map((n) => n.id));
+      const edges = Object.keys(diagram.paths2);
+      tool.trace.forEach((hop, i) => {
+        if (!edgeOfHop(edges, hop))
+          error(file, `trace[${i}]`, `no edge joins ${hop.from} and ${hop.to}`);
+      });
+      tool.telemetry.forEach((n, i) => {
+        if (!ids.has(n))
+          error(file, `telemetry[${i}]`, `"${n}" is not in the diagram`);
+      });
+      const detailed = new Set(tool.details.map((d) => d.node));
+      for (const n of ids)
+        if (!detailed.has(n)) error(file, "details", `"${n}" has no detail`);
+      tool.details.forEach((d, i) => {
+        if (!ids.has(d.node))
+          error(
+            file,
+            `details[${i}].node`,
+            `"${d.node}" is not in the diagram`,
+          );
+        d.facts.forEach((f, j) => ref(`details[${i}].facts[${j}]`, f));
+      });
+      break;
+    }
+    case "governance": {
+      tool.events.forEach((e, i) => {
+        if (!isRealDate(e.date))
+          error(file, `events[${i}].date`, `${e.date} is not a real date`);
+        const prev = tool.events[i - 1];
+        if (prev && prev.date > e.date)
+          error(file, `events[${i}].date`, "events must be in date order");
+        e.facts.forEach((f, j) => ref(`events[${i}].facts[${j}]`, f));
+      });
+      tool.penalties.facts.forEach((f, j) => ref(`penalties.facts[${j}]`, f));
+      tool.frameworks.forEach((fw, i) =>
+        fw.facts.forEach((f, j) => ref(`frameworks[${i}].facts[${j}]`, f)),
+      );
+      tool.crosswalk.facts.forEach((f, j) => ref(`crosswalk.facts[${j}]`, f));
       break;
     }
   }

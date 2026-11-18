@@ -10,6 +10,8 @@ export type Use = { label: string; href: string };
 
 const TOOL_LABEL: Record<Tool["kind"], string> = {
   threats: "Threat model",
+  governance: "Governance",
+  lab: "Design lab",
 };
 
 export type SourceRow = {
@@ -83,6 +85,18 @@ export function usesOf(
       case "threats":
         for (const r of tool.risks) for (const id of r.facts) add(id, use);
         for (const id of tool.related.facts) add(id, use);
+        break;
+      case "lab":
+        for (const d of tool.details) for (const id of d.facts) add(id, use);
+        break;
+      case "governance":
+        for (const id of [
+          ...tool.events.flatMap((e) => e.facts),
+          ...tool.penalties.facts,
+          ...tool.frameworks.flatMap((f) => f.facts),
+          ...tool.crosswalk.facts,
+        ])
+          add(id, use);
         break;
     }
   }
