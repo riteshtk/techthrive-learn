@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchDocuments } from "@/content";
+import { searchDocuments } from "@/content/v1";
 import {
   parseSearchIndex,
   resultHref,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DiagramEdge, DiagramNode } from "@/content/types";
-import { getTopics } from "@/content";
+import type { DiagramEdge, DiagramNode } from "@/content/v1/types";
+import { getTopics } from "@/content/v1";
 import {
   BOX_H,
   LABEL_SIZE,

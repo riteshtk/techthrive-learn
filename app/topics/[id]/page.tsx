@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTopic, getTopics, homeRoadmapOf } from "@/content";
+import { getTopic, getTopics, homeRoadmapOf } from "@/content/v1";
 import { Icon } from "@/components/Icon";
 import { formatDate } from "@/lib/dates";
 import { pageMetadata } from "@/lib/metadata";

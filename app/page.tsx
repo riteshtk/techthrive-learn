@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandImage } from "@/components/BrandImage";
 import { ProgressCount } from "@/components/ProgressCount";
 import { ResetProgress } from "@/components/ResetProgress";
-import { getRoadmaps, roadmapTopics } from "@/content";
+import { getRoadmaps, roadmapTopics } from "@/content/v1";
 import { levelLabel } from "@/lib/roadmap";
 
 export default function Home() {

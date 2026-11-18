@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getRoadmap, getTopics, homeRoadmapOf, roadmapTopics } from "@/content";
+import {
+  getRoadmap,
+  getTopics,
+  homeRoadmapOf,
+  roadmapTopics,
+} from "@/content/v1";
 
 describe("content index", () => {
   it("loads every topic file", () => {

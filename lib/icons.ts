@@ -1,6 +1,6 @@
 // One small set of line icons on a 16 × 16 grid, drawn with a 1.5 stroke.
 // Used for diagram blocks (content/types.ts NODE_ICONS) and the interface.
-import type { NodeIcon } from "@/content/types";
+import type { NodeIcon } from "@/content/v1/types";
 
 const ring = (r: number) =>
   `M${8 - r} 8a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;

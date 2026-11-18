@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ContinueLink } from "@/components/ContinueLink";
 import { DoneTick } from "@/components/DoneTick";
 import { UndoDone } from "@/components/UndoDone";
-import { getRoadmap, getRoadmaps, roadmapTopics } from "@/content";
+import { getRoadmap, getRoadmaps, roadmapTopics } from "@/content/v1";
 import { pageMetadata } from "@/lib/metadata";
 import { levelLabel } from "@/lib/roadmap";
 

@@ -6,7 +6,7 @@
 // the stage border), so phones draw it at slightly over one CSS pixel per
 // unit: blocks are at least 72 px wide and labels at least 12 px.
 
-import type { DiagramEdge, DiagramNode } from "@/content/types";
+import type { DiagramEdge, DiagramNode } from "@/content/v1/types";
 
 export const VIEW_W = 320;
 export const MIN_BOX_W = 72;

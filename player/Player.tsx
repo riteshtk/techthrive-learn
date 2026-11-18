@@ -12,7 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
-import type { Step } from "@/content/types";
+import type { Step } from "@/content/v1/types";
 import { doneNotice } from "@/lib/doneNotice";
 import { stepRequest } from "@/lib/stepRequest";
 import { progressStore } from "@/lib/useProgress";

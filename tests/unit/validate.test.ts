@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { roadmapFiles, topicFiles } from "@/content/.generated";
-import { formatIssue, validateContent } from "@/content/validate";
+import { roadmapFiles, topicFiles } from "@/content/v1/.generated";
+import { formatIssue, validateContent } from "@/content/v1/validate";
 
 // Fixtures are untyped on purpose: each test breaks them in a different way.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,7 +121,7 @@ describe("content checks", () => {
     expect(check(t)).toEqual([
       `${FILE} › id: "Other_Topic" must be kebab-case`,
       `${FILE} › id: "Other_Topic" must match the file name "sample"`,
-      `${ROADMAP_FILE} › topics[0]: "sample" is not a topic; add content/topics/sample.ts or fix the id`,
+      `${ROADMAP_FILE} › topics[0]: "sample" is not a topic; add content/v1/topics/sample.ts or fix the id`,
     ]);
   });
 
@@ -333,7 +333,7 @@ describe("content checks", () => {
     const r = roadmap();
     r.topics = ["sample", "caching"];
     expect(check(topic(), r)).toEqual([
-      `${ROADMAP_FILE} › topics[1]: "caching" is not a topic; add content/topics/caching.ts or fix the id`,
+      `${ROADMAP_FILE} › topics[1]: "caching" is not a topic; add content/v1/topics/caching.ts or fix the id`,
     ]);
   });
 
@@ -346,7 +346,7 @@ describe("content checks", () => {
   it("don't crash on a file that exports the wrong thing", () => {
     expect(check("oops")).toEqual([
       `${FILE} › default export: must be a topic object`,
-      `${ROADMAP_FILE} › topics[0]: "sample" is not a topic; add content/topics/sample.ts or fix the id`,
+      `${ROADMAP_FILE} › topics[0]: "sample" is not a topic; add content/v1/topics/sample.ts or fix the id`,
     ]);
   });
 });

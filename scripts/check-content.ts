@@ -1,7 +1,7 @@
 // Fails the build and `npm test` with a clear message, naming the file and
 // field, when a roadmap or topic file breaks a content rule (PRD F9).
-import { roadmapFiles, topicFiles } from "../content/.generated/index";
-import { formatIssue, validateContent } from "../content/validate";
+import { roadmapFiles, topicFiles } from "../content/v1/.generated/index";
+import { formatIssue, validateContent } from "../content/v1/validate";
 
 const issues = validateContent({ topics: topicFiles, roadmaps: roadmapFiles });
 

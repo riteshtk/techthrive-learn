@@ -9,7 +9,7 @@ import {
   edgesCrossingNodes,
   layoutDiagram,
   wrapLabel,
-} from "../player/geometry";
+} from "../../player/geometry";
 import { NODE_ICONS, type DiagramEdge, type DiagramNode } from "./types";
 
 export type Issue = { file: string; field: string; message: string };
@@ -422,7 +422,7 @@ export function validateContent({ topics, roadmaps }: Input): Issue[] {
         if (typeof t !== "string" || !topicIds.has(t))
           add(
             `topics[${i}]`,
-            `"${String(t)}" is not a topic; add content/topics/${String(t)}.ts or fix the id`,
+            `"${String(t)}" is not a topic; add content/v1/topics/${String(t)}.ts or fix the id`,
           );
         else if (seen.has(t)) add(`topics[${i}]`, `"${t}" is listed twice`);
         if (typeof t === "string") seen.add(t);
