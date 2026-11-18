@@ -26,7 +26,7 @@ export default {
     ASI01: "Agent Goal Hijack",
     ASI02: "Tool Misuse and Exploitation",
     ASI03: "Identity and Privilege Abuse",
-    ASI06: "Memory and Context Poisoning",
+    ASI06: "Memory & Context Poisoning",
     ASI08: "Cascading Failures",
     ASI09: "Human-Agent Trust Exploitation",
     ASI10: "Rogue Agents",
@@ -389,7 +389,7 @@ export default {
       ],
       callout: {
         kind: "watch",
-        text: "ASI06, Memory and Context Poisoning: gate writes to memory, tag provenance, and never share an index across tenants.",
+        text: "ASI06, Memory & Context Poisoning: gate writes to memory, tag provenance, and never share an index across tenants.",
       },
       metrics: ["5 / 9", "2 · capped", "—", "—"],
       facts: [

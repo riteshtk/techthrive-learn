@@ -42,6 +42,7 @@ const topics: Entry[] = [];
 const lessons: Entry[] = [];
 const checkpoints: Entry[] = [];
 const diagrams: Entry[] = [];
+const tools: Entry[] = [];
 for (const id of folders("content/topics")) {
   if (existsSync(join(root, "content/topics", id, "topic.ts")))
     topics.push({ file: `content/topics/${id}/topic.ts`, name: id });
@@ -49,6 +50,8 @@ for (const id of folders("content/topics")) {
     lessons.push({ file: `content/topics/${id}/lessons/${l}.ts`, name: l });
   for (const d of tsFiles(`content/topics/${id}/diagrams`))
     diagrams.push({ file: `content/topics/${id}/diagrams/${d}.ts`, name: d });
+  for (const t of tsFiles(`content/topics/${id}/tools`))
+    tools.push({ file: `content/topics/${id}/tools/${t}.ts`, name: t });
   for (const c of tsFiles(`content/topics/${id}/checkpoints`))
     checkpoints.push({
       file: `content/topics/${id}/checkpoints/${c}.ts`,
@@ -71,6 +74,7 @@ write("content", [
   ...lessons.map(importOf("l")),
   ...checkpoints.map(importOf("c")),
   ...diagrams.map(importOf("d")),
+  ...tools.map(importOf("x")),
   ...facts.map(importOf("f")),
   "",
   "// Each file's default export, unchecked: content/validate.ts checks it.",
@@ -88,6 +92,9 @@ write("content", [
   "];",
   "export const factFiles: { file: string; data: unknown }[] = [",
   ...listOf("f", facts),
+  "];",
+  "export const toolFiles: { file: string; data: unknown }[] = [",
+  ...listOf("x", tools),
   "];",
   "",
 ]);

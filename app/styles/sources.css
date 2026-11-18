@@ -77,6 +77,13 @@
   text-underline-offset: 3px;
 }
 
+/* Stacked links keep a 24 px target (WCAG 2.5.8). */
+.tt-src-used a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
 .tt-src-source a:hover,
 .tt-src-used a:hover {
   text-decoration-color: currentColor;
@@ -93,7 +100,7 @@
 .tt-src-used ul {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;

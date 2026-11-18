@@ -3,10 +3,14 @@
 // use it. Nothing here is typed by hand: counts, groups, rows and "used on"
 // all come from the register and the content that cites it.
 
-import type { Checkpoint, Fact, Lesson, Topic } from "@/content/types";
+import type { Checkpoint, Fact, Lesson, Tool, Topic } from "@/content/types";
 import { PRICE_FACTS } from "./claudePrices";
 
 export type Use = { label: string; href: string };
+
+const TOOL_LABEL: Record<Tool["kind"], string> = {
+  threats: "Threat model",
+};
 
 export type SourceRow = {
   fact: Fact;
@@ -32,12 +36,14 @@ export function hostOf(url: string): string {
 /**
  * Where each fact appears: the overview (stats, brief, current-with), the
  * first lesson step whose Sources tab lists it, checkpoints whose
- * explanations rely on it, and the cost model (its rates).
+ * explanations rely on it, the cost model (its rates) and the topic's
+ * other tools.
  */
 export function usesOf(
   topic: Topic,
   lessons: readonly Lesson[],
   checkpoints: readonly Checkpoint[],
+  tools: readonly Tool[] = [],
 ): Map<string, Use[]> {
   const uses = new Map<string, Use[]>();
   const add = (id: string, use: Use) => {
@@ -71,6 +77,15 @@ export function usesOf(
   if (topic.tabs.includes("cost"))
     for (const id of PRICE_FACTS)
       add(id, { label: "Cost model", href: `${base}cost/` });
+  for (const tool of tools) {
+    const use = { label: TOOL_LABEL[tool.kind], href: `${base}${tool.kind}/` };
+    switch (tool.kind) {
+      case "threats":
+        for (const r of tool.risks) for (const id of r.facts) add(id, use);
+        for (const id of tool.related.facts) add(id, use);
+        break;
+    }
+  }
   for (const checkpoint of checkpoints) {
     const n = number(checkpoint.lesson);
     for (const q of checkpoint.questions)

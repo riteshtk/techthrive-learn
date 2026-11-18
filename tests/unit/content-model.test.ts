@@ -17,6 +17,41 @@ const FACT_FILE = "content/facts/payments.ts";
 const DIAGRAM_FILE = "content/topics/payments/diagrams/checkout.ts";
 const TODAY = "2026-11-18";
 
+const THREATS_FILE = "content/topics/payments/tools/threats.ts";
+
+function threats() {
+  return {
+    kind: "threats",
+    topic: "payments",
+    intro: "Risks applied to checkout.",
+    components: [
+      { id: "api", name: "API", short: "API" },
+      { id: "ledger", name: "Ledger", short: "Ledger" },
+    ],
+    risks: [
+      {
+        id: "ASI02",
+        name: "Tool Misuse and Exploitation",
+        status: "mitigated",
+        related: "LLM03",
+        description: "An approved tool used in a harmful way.",
+        scene: "A retry charges twice.",
+        controls: ["Idempotency keys"],
+        test: "Replay a request; one charge.",
+        owner: "Payments",
+        components: ["api", "ledger"],
+        facts: ["daily-payments"],
+      },
+    ],
+    related: {
+      title: "Related list",
+      note: "Changes since last year",
+      items: [{ id: "LLM01", name: "Prompt Injection", was: 1 }],
+      facts: ["daily-payments"],
+    },
+  };
+}
+
 function topic(): Topic {
   return {
     id: "payments",
@@ -203,6 +238,8 @@ type Parts = {
   lesson?: unknown;
   checkpoint?: unknown;
   facts?: unknown;
+  /** A tool file at content/topics/payments/tools/threats.ts. */
+  threats?: unknown;
 };
 
 function run(parts: Parts = {}) {
@@ -214,6 +251,7 @@ function run(parts: Parts = {}) {
     ],
     diagrams: [{ file: DIAGRAM_FILE, data: parts.diagram ?? diagram() }],
     facts: [{ file: FACT_FILE, data: parts.facts ?? [fact()] }],
+    tools: parts.threats ? [{ file: THREATS_FILE, data: parts.threats }] : [],
   };
   const { issues } = validateContent(input, TODAY);
   return {
@@ -264,6 +302,42 @@ describe("the v2 content model", () => {
       expect(run({ topic: t }).errors).toContain(
         `${TOPIC_FILE} › tabs[1]: "interview" must be one of: "overview", "lessons", "cost", "threats", "governance", "lab", "sheets"`,
       );
+    });
+  });
+
+  describe("tools", () => {
+    const withTab = () => ({
+      ...topic(),
+      tabs: ["overview", "lessons", "threats"],
+    });
+
+    it("accept a valid threat model on a topic with that tab", () => {
+      expect(run({ topic: withTab(), threats: threats() }).errors).toEqual([]);
+    });
+
+    it("need the topic to have the tool's tab", () => {
+      expect(run({ threats: threats() }).errors).toContain(
+        `${THREATS_FILE} › kind: the topic has no "threats" tab`,
+      );
+    });
+
+    it("place risks only on the listed components", () => {
+      const x = threats();
+      x.risks[0]!.components = ["api", "vault"];
+      expect(run({ topic: withTab(), threats: x }).errors).toContain(
+        `${THREATS_FILE} › risks[0].components[1]: "vault" is not one of the components`,
+      );
+    });
+
+    it("source every risk in the register, and check its figures", () => {
+      const x = threats();
+      x.risks[0]!.facts = ["no-such-fact"];
+      x.risks[0]!.scene = "A retry charges ₹999 twice.";
+      const errors = run({ topic: withTab(), threats: x }).errors.join("\n");
+      expect(errors).toMatch(
+        /risks\[0\]\.facts\[0\]: "no-such-fact" is not in the facts register/,
+      );
+      expect(errors).toMatch(/risks\[0\]\.scene: the figure "₹999"/);
     });
   });
 
@@ -546,6 +620,7 @@ describe("the v2 content model", () => {
           checkpoints: [],
           diagrams: [{ file: DIAGRAM_FILE, data: diagram() }],
           facts: [{ file: FACT_FILE, data: [fact({ topics: ["agents"] })] }],
+          tools: [],
         },
         TODAY,
       );

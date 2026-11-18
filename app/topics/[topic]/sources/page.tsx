@@ -9,6 +9,7 @@ import {
   getFacts,
   getLessons,
   getTopic,
+  getTools,
   getTopics,
   oldestReadOn,
 } from "@/content";
@@ -53,7 +54,8 @@ export default async function SourcesPage({
     .map((l) => getCheckpoint(topic.id, l.id))
     .filter((c): c is Checkpoint => !!c);
   const facts = getFacts(topic.id);
-  const page = sourcesPage(facts, usesOf(topic, lessons, checkpoints));
+  const uses = usesOf(topic, lessons, checkpoints, getTools(topic.id));
+  const page = sourcesPage(facts, uses);
 
   return (
     <>

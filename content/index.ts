@@ -6,10 +6,19 @@ import {
   diagramFiles,
   factFiles,
   lessonFiles,
+  toolFiles,
   topicFiles,
 } from "./.generated";
 import { formatIssue } from "./schema";
-import type { Checkpoint, Diagram, Fact, Lesson, Topic } from "./types";
+import type {
+  Checkpoint,
+  Diagram,
+  Fact,
+  Lesson,
+  Tool,
+  ToolKind,
+  Topic,
+} from "./types";
 import { validateContent, type Content } from "./validate";
 
 let cached: Content | undefined;
@@ -24,6 +33,7 @@ function content(): Content {
       checkpoints: checkpointFiles,
       diagrams: diagramFiles,
       facts: factFiles,
+      tools: toolFiles,
     },
     "0000-01-01",
   );
@@ -73,6 +83,22 @@ export function getDiagram(
 ): Diagram | undefined {
   return content().diagrams.find(
     (d) => d.topic === topicId && d.id === diagramId,
+  );
+}
+
+/** All of a topic's tool data. */
+export function getTools(topicId: string): Tool[] {
+  return content().tools.filter((t) => t.topic === topicId);
+}
+
+/** A topic's tool data, if it has that tool. */
+export function getTool<K extends ToolKind>(
+  topicId: string,
+  kind: K,
+): Extract<Tool, { kind: K }> | undefined {
+  return content().tools.find(
+    (t): t is Extract<Tool, { kind: K }> =>
+      t.topic === topicId && t.kind === kind,
   );
 }
 

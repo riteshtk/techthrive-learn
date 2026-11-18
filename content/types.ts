@@ -471,3 +471,64 @@ export const CheckpointSchema = object({
   approved: boolean(),
 });
 export type Checkpoint = Infer<typeof CheckpointSchema>;
+
+// Topic tools ---------------------------------------------------------------
+// content/topics/<topic>/tools/<kind>.ts: the data behind a topic's tool
+// pages (spec 05). One file per tool; `kind` names the tab it fills.
+
+const RISK_ID = /^[A-Z]{3}\d{2}$/;
+const riskId = () =>
+  string({ pattern: RISK_ID, patternHint: "an id like ASI03 or LLM08" });
+
+/** The threat model (spec 05 §3): a list's risks applied to the topic's
+    system, the components each lands on, and a related list's order. */
+export const ThreatsSchema = object({
+  topic: id(),
+  intro: text(300),
+  /** The matrix columns: the system's parts. */
+  components: array(object({ id: id(), name: text(40), short: text(14) }), {
+    min: 1,
+    max: 12,
+  }),
+  risks: array(
+    object({
+      id: riskId(),
+      /** As the source has it. */
+      name: text(60),
+      status: oneOf(["mitigated", "partial", "open"] as const),
+      /** Our mapping to the related list, e.g. "LLM05 · LLM09", or "—". */
+      related: text(30),
+      description: text(300),
+      scene: text(300),
+      controls: array(text(160), { min: 1, max: 5 }),
+      test: text(200),
+      owner: text(60),
+      components: array(id(), { min: 1 }),
+      facts: array(id(), { min: 1 }),
+    }),
+    { min: 1, max: 12 },
+  ),
+  related: object({
+    title: text(60),
+    note: text(80),
+    items: array(
+      object({
+        id: riskId(),
+        name: text(60),
+        /** Last edition's rank, if the entry was in it. */
+        was: optional(number({ int: true, min: 1, max: 10 })),
+        /** Last edition's name, if it changed. */
+        wasName: optional(text(60)),
+      }),
+      { min: 1, max: 10 },
+    ),
+    facts: array(id(), { min: 1 }),
+  }),
+});
+export type Threats = Infer<typeof ThreatsSchema>;
+
+export const ToolSchema = tagged("kind", {
+  threats: ThreatsSchema,
+});
+export type Tool = Infer<typeof ToolSchema>;
+export type ToolKind = Tool["kind"];

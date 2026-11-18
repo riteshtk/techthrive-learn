@@ -6,6 +6,7 @@ import {
   diagramFiles,
   factFiles,
   lessonFiles,
+  toolFiles,
   topicFiles,
 } from "../content/.generated/index";
 import { existsSync } from "node:fs";
@@ -26,6 +27,7 @@ const { issues, content } = validateContent(
     checkpoints: checkpointFiles,
     diagrams: diagramFiles,
     facts: factFiles,
+    tools: toolFiles,
   },
   today,
 );
@@ -67,7 +69,7 @@ if (errors.length > 0) {
 console.log(
   `Content check passed: ${content.topics.length} topics, ` +
     `${content.lessons.length} lessons, ${content.checkpoints.length} checkpoints, ` +
-    `${content.facts.length} facts` +
+    `${content.facts.length} facts, ${content.tools.length} tools` +
     (warnings.length ? `, ${warnings.length} warning(s)` : "") +
     ` (v1: ${v1TopicFiles.length} topics, ${roadmapFiles.length} roadmaps).`,
 );

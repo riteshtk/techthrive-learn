@@ -3,6 +3,7 @@ import {
   getCheckpoint,
   getFacts,
   getLessons,
+  getTools,
   getTopic,
   getTopics,
 } from "@/content";
@@ -23,7 +24,7 @@ describe.each(
     .map((l) => getCheckpoint(id, l.id))
     .filter((c): c is Checkpoint => !!c);
   const facts = getFacts(id);
-  const uses = usesOf(topic, lessons, checkpoints);
+  const uses = usesOf(topic, lessons, checkpoints, getTools(id));
   const page = sourcesPage(facts, uses);
   const rows = page.groups.flatMap((g) => g.rows);
 
@@ -66,6 +67,11 @@ describe.each(
       expect(uses.get("opus-5-5-cache-prices")).toContainEqual({
         label: "Cost model",
         href: `/topics/${id}/cost/`,
+      });
+    if (topic.tabs.includes("threats"))
+      expect(uses.get("owasp-asi05-unexpected-code-execution")).toContainEqual({
+        label: "Threat model",
+        href: `/topics/${id}/threats/`,
       });
     // One use per lesson: the first step that lists the fact.
     for (const list of uses.values()) {

@@ -17,6 +17,8 @@ import {
   type Fact,
   type Lesson,
   type Topic,
+  ToolSchema,
+  type Tool,
 } from "./types";
 
 export type ContentFile = { file: string; data: unknown };
@@ -27,6 +29,8 @@ export type ContentInput = {
   checkpoints: ContentFile[];
   diagrams: ContentFile[];
   facts: ContentFile[];
+  /** Topic tools (content/topics/<topic>/tools/<kind>.ts). */
+  tools: ContentFile[];
 };
 
 /** The checked content, for pages and the search index. */
@@ -36,6 +40,7 @@ export type Content = {
   checkpoints: Checkpoint[];
   diagrams: Diagram[];
   facts: Fact[];
+  tools: Tool[];
 };
 
 /** content/topics/<topic>/… → the topic folder's name. */
@@ -124,6 +129,10 @@ export function validateContent(
   for (const { file, data } of input.diagrams)
     if (checkFile(DiagramSchema, file, data, issues))
       diagrams.push({ file, diagram: data });
+  const tools: { file: string; tool: Tool }[] = [];
+  for (const { file, data } of input.tools)
+    if (checkFile(ToolSchema, file, data, issues))
+      tools.push({ file, tool: data });
   const facts: { file: string; field: string; fact: Fact }[] = [];
   for (const { file, data } of input.facts)
     if (checkFile(FactFileSchema, file, data, issues))
@@ -364,6 +373,18 @@ export function validateContent(
     });
   }
 
+  // Tools -----------------------------------------------------------------
+  for (const { file, tool } of tools) {
+    if (topicFolder(file) !== tool.topic)
+      error(file, "topic", `must be "${topicFolder(file)}", its folder`);
+    if (baseName(file) !== tool.kind)
+      error(file, "kind", `must be "${baseName(file)}", the file name`);
+    const topic = topicById.get(tool.topic);
+    if (topic && !topic.tabs.includes(tool.kind))
+      error(file, "kind", `the topic has no "${tool.kind}" tab`);
+    checkTool(file, tool, factById, error);
+  }
+
   // Figures: every one on screen is in the register -----------------------
   const keysByTopic = new Map<string, Set<string>>();
   for (const fact of factById.values())
@@ -390,6 +411,7 @@ export function validateContent(
     checkFigures(file, checkpoint.topic, checkpoint);
   for (const { file, diagram } of diagrams)
     checkFigures(file, diagram.topic, diagram);
+  for (const { file, tool } of tools) checkFigures(file, tool.topic, tool);
 
   return {
     issues,
@@ -399,8 +421,55 @@ export function validateContent(
       checkpoints: checkpoints.map((c) => c.checkpoint),
       diagrams: diagrams.map((d) => d.diagram),
       facts: [...factById.values()],
+      tools: tools.map((t) => t.tool),
     },
   };
+}
+
+/** The links inside one tool's data. */
+function checkTool(
+  file: string,
+  tool: Tool,
+  factById: Map<string, Fact>,
+  error: (file: string, field: string, message: string) => void,
+) {
+  const ref = (field: string, id: string) =>
+    checkFactRef(file, field, id, tool.topic, factById, error);
+  const unique = (field: string, ids: string[]) =>
+    ids.forEach((id, i) => {
+      if (ids.indexOf(id) !== i)
+        error(file, `${field}[${i}].id`, `"${id}" is used twice`);
+    });
+  switch (tool.kind) {
+    case "threats": {
+      const parts = new Set(tool.components.map((c) => c.id));
+      unique(
+        "components",
+        tool.components.map((c) => c.id),
+      );
+      unique(
+        "risks",
+        tool.risks.map((r) => r.id),
+      );
+      unique(
+        "related.items",
+        tool.related.items.map((r) => r.id),
+      );
+      tool.risks.forEach((r, i) => {
+        r.components.forEach((c, j) => {
+          if (!parts.has(c))
+            error(
+              file,
+              `risks[${i}].components[${j}]`,
+              `"${c}" is not one of the components`,
+            );
+        });
+        r.facts.forEach((f, j) => ref(`risks[${i}].facts[${j}]`, f));
+      });
+      tool.related.facts.forEach((f, j) => ref(`related.facts[${j}]`, f));
+      break;
+    }
+  }
 }
 
 function checkFactRef(
