@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import type { IconName } from "@/components/ui/icons";
+import type { TopicTabId } from "@/content/types";
 import { formatDate } from "@/lib/dates";
 
-/** The sections a topic can have, in the design's order. Interview arrives
-    in phase 2 and is not offered until then (no dead links). */
+/** How each of a topic's sections (content/types.ts TOPIC_TABS) shows in
+    the bar. Interview arrives in phase 2 and isn't offered until then. */
 export const TOPIC_TABS = {
   overview: { label: "Overview", icon: "home", path: "" },
   lessons: { label: "Lessons", icon: "book", path: "lessons/" },
@@ -17,11 +18,11 @@ export const TOPIC_TABS = {
   lab: { label: "Lab", icon: "grid", path: "lab/" },
   sheets: { label: "Sheets", icon: "sheet", path: "sheets/" },
 } as const satisfies Record<
-  string,
+  TopicTabId,
   { label: string; icon: IconName; path: string }
 >;
 
-export type TopicTab = keyof typeof TOPIC_TABS;
+export type TopicTab = TopicTabId;
 
 /** Which tab a path is in: the longest tab path that prefixes it. Lessons
     and checkpoints count as Lessons; sources has no tab. */
