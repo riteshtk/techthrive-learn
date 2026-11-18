@@ -38,7 +38,23 @@ export type HeroData = {
   links: Record<string, string>;
 };
 
-export function HeroDiagram({ data }: { data: HeroData }) {
+export function HeroDiagram({
+  data,
+  onSelect,
+  selected,
+  initialView,
+  nodeAction = "open the lesson step that adds it",
+}: {
+  data: HeroData;
+  /** Picking a part selects it here and tells the page (the design lab),
+      instead of opening its lesson step. */
+  onSelect?: (id: string) => void;
+  /** The part shown as selected, when the page owns the selection. */
+  selected?: string;
+  /** The view to open in: the lab opens in 2D, as designed. */
+  initialView?: "2d" | "3d";
+  nodeAction?: string;
+}) {
   const router = useRouter();
   const phone = useSyncExternalStore(
     subscribePhone,
@@ -69,7 +85,14 @@ export function HeroDiagram({ data }: { data: HeroData }) {
     }),
     [source, drawing],
   );
-  const [state, dispatch] = useStage(config, OVERVIEW_TIMING);
+  const [state, dispatch] = useStage(config, OVERVIEW_TIMING, {
+    view: initialView,
+  });
+  // A page-owned selection: keep the stage's in step with it.
+  useEffect(() => {
+    if (selected !== undefined && selected !== state.selected)
+      dispatch({ type: "select", id: selected });
+  }, [selected, state.selected, dispatch]);
   const reduced = useReducedMotion();
   // The camera centres on the drawing in use: refit when phone width swaps
   // the portrait layout in or out.
@@ -123,6 +146,10 @@ export function HeroDiagram({ data }: { data: HeroData }) {
           scene={scene}
           state={state}
           dispatch={(a) => {
+            if (a.type === "select" && onSelect) {
+              if (a.id) onSelect(a.id);
+              return;
+            }
             if (a.type === "select" && a.id) {
               const href = data.links[a.id];
               if (href) router.push(href);
@@ -134,7 +161,7 @@ export function HeroDiagram({ data }: { data: HeroData }) {
           timing={OVERVIEW_TIMING}
           label={`${data.caption} with ${data.components} components. A request travels: ${trace}`}
           nameOf={nameOf}
-          nodeAction="open the lesson step that adds it"
+          nodeAction={nodeAction}
           reducedMotion={reduced}
         />
       </div>

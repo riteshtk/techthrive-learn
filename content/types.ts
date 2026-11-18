@@ -313,6 +313,14 @@ export const PortraitSchema = object({
 });
 export type Portrait = Infer<typeof PortraitSchema>;
 
+const edgeKey = () =>
+  string({ pattern: /^[A-Z]_[A-Z]$/, patternHint: 'an edge id like "A_B"' });
+const path2 = () =>
+  string({
+    pattern: /^M[\d.,\sL]+$/,
+    patternHint: "an SVG path of straight segments (M…L…)",
+  });
+
 export const DiagramSchema = object({
   id: id(),
   topic: id(),
@@ -325,11 +333,25 @@ export const DiagramSchema = object({
   ),
   nodes: array(DiagramNodeSchema, { min: 2 }),
   /** 2D edge paths by edge id ("A_B"), drawn from A to B. */
-  paths2: record(
-    string({ pattern: /^[A-Z]_[A-Z]$/, patternHint: 'an edge id like "A_B"' }),
-    string({
-      pattern: /^M[\d.,\sL]+$/,
-      patternHint: "an SVG path of straight segments (M…L…)",
+  paths2: record(edgeKey(), path2()),
+  /** A phone layout for the 2D board (the approved still), if the
+      design's board doesn't fit a phone. */
+  portrait2: optional(
+    object({
+      size: tuple(
+        number({ min: 100, max: 2000 }),
+        number({ min: 100, max: 2000 }),
+      ),
+      boxes: record(
+        nodeId(),
+        tuple(
+          px(),
+          px(),
+          number({ min: 40, max: 400 }),
+          number({ min: 20, max: 200 }),
+        ),
+      ),
+      paths: record(edgeKey(), path2()),
     }),
   ),
 });

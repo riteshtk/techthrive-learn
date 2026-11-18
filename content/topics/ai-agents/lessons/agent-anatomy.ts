@@ -161,7 +161,7 @@ export default {
       name: "Traces · OTel",
       short: "Traces",
       addedAt: 9,
-      what: "One trace per conversation: an invoke_agent span with chat and execute_tool spans under it.",
+      what: "One trace per turn, linked by gen_ai.conversation.id: an invoke_agent span with chat and execute_tool spans under it.",
       points: [
         "gen_ai.usage.input_tokens and cache-read tokens on every model call",
         "MCP server spans join through traceparent",

@@ -57,6 +57,7 @@ function baseName(file: string): string {
     learner reads. */
 const NOT_DISPLAY = new Set([
   "id",
+  "portrait2",
   "node",
   "telemetry",
   "diagram",
@@ -227,6 +228,23 @@ export function validateContent(
         if (!ids.has(id))
           error(file, `portrait.nodes[${i}].id`, `"${id}" is not a node`);
       });
+    }
+    if (diagram.portrait2) {
+      const { boxes, paths } = diagram.portrait2;
+      for (const id of ids)
+        if (!boxes[id])
+          error(
+            file,
+            "portrait2.boxes",
+            `"${id}" has no box on the phone board`,
+          );
+      for (const edge of Object.keys(diagram.paths2))
+        if (!paths[edge])
+          error(
+            file,
+            "portrait2.paths",
+            `"${edge}" has no path on the phone board`,
+          );
     }
     for (const edge of Object.keys(diagram.paths2))
       for (const end of edge.split("_"))

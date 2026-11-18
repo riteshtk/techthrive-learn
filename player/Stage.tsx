@@ -586,12 +586,14 @@ function Node2({
 }) {
   const [x, y, w, h] = node.box;
   const cy = y + h / 2;
+  // The name starts with the box's visible words (WCAG 2.5.3).
+  const visible = `${node.name} ${node.sub}`;
   return (
     <NodeButton
       id={node.id}
       color={node.color}
       look={look}
-      name={name}
+      name={name === node.name ? visible : `${visible}, ${name}`}
       action={action}
       onSelect={onSelect}
     >
@@ -621,7 +623,10 @@ function Node2({
         <text className="name2" x={x + 52} y={cy - 2}>
           {node.name}
         </text>
+        {/* The leading space keeps the two lines apart in the text a
+            screen reader reads (SVG drops it when drawing). */}
         <text className="sub2" x={x + 52} y={cy + 13}>
+          {" "}
           {node.sub}
         </text>
       </g>

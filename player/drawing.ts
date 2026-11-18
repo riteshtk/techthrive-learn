@@ -174,7 +174,8 @@ function glyphTop(n: IsoNode, glyph: GlyphDrawing): number {
  * Draws a diagram for the stage. With `portrait`, the 3D view is the
  * diagram's phone layout (the approved still) instead of the design's:
  * the same glyphs at the portrait's scale, labels placed over (or under)
- * each glyph and the viewBox fitted to them. 2D is the same either way.
+ * each glyph and the viewBox fitted to them; and the 2D board is its
+ * phone board (portrait2), if it has one.
  */
 export function drawDiagram(
   diagram: Diagram,
@@ -184,6 +185,9 @@ export function drawDiagram(
   options: { portrait?: boolean } = {},
 ): Drawing {
   const portrait = options.portrait ? diagram.portrait : undefined;
+  const board2 = options.portrait ? diagram.portrait2 : undefined;
+  const box2 = (n: Diagram["nodes"][number]) =>
+    [...(board2?.boxes[n.id] ?? n.box2)] as [number, number, number, number];
   const scale = portrait?.scale ?? 1;
   const iso = new Map<string, IsoNode>(
     diagram.nodes.map((n) => {
@@ -271,7 +275,7 @@ export function drawDiagram(
         backward: toPoints(arrowhead(ends.b, ends.a)),
       };
     }
-    const points = parsePath(diagram.paths2[id] ?? "");
+    const points = parsePath(board2?.paths[id] ?? diagram.paths2[id] ?? "");
     if (points.length > 1) {
       const heads = pathArrows(points);
       edges2[id] = {
@@ -284,14 +288,18 @@ export function drawDiagram(
 
   return {
     labels3: nodes3.map((n) => [n.label.x, n.label.y, n.label.w, 26] as const),
-    boxes2: diagram.nodes.map((n) => [...n.box2] as const),
+    boxes2: diagram.nodes.map((n) => box2(n)),
     size3,
-    size2: diagram.size2 ? [...diagram.size2] : [960, 500],
+    size2: board2
+      ? [...board2.size]
+      : diagram.size2
+        ? [...diagram.size2]
+        : [960, 500],
     nodes3,
     nodes2: diagram.nodes.map((n) => ({
       id: n.id,
       color: n.color,
-      box: [...n.box2],
+      box: box2(n),
       icon: icons[n.icon] ?? "",
       name: n.name2,
       sub: n.sub2,

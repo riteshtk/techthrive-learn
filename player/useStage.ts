@@ -15,6 +15,7 @@ import {
   type StageConfig,
   type StageState,
   type Timing,
+  type View,
 } from "./machine";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
@@ -41,6 +42,8 @@ export function useStage(
   timing: Timing,
   options: {
     step?: number;
+    /** The view to open in; 3D unless said. */
+    view?: View;
     /** Asked at the end of each loop while playing the lesson. */
     canAdvance?: () => boolean;
   } = {},
@@ -52,7 +55,7 @@ export function useStage(
   const [state, dispatch] = useReducer(
     (s: StageState, a: StageAction) => reduceStage(config, s, a),
     undefined,
-    () => initStage(config, { step: options.step }),
+    () => initStage(config, { step: options.step, view: options.view }),
   );
 
   // Reduced motion is only known after mount: pause once if it's on.

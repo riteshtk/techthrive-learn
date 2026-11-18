@@ -1,0 +1,211 @@
+/* The design lab, explore only (spec 05 §2). */
+.tt-lab-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 28px 48px;
+}
+
+.tt-lab-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.tt-lab-title {
+  display: flex;
+  flex: 1 1 420px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tt-lab-title h1,
+.tt-lab-title p {
+  margin: 0;
+}
+
+.tt-sq {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--raised);
+}
+
+.tt-lab-links {
+  display: flex;
+  gap: 8px;
+}
+
+.tt-lab-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.tt-lab-board {
+  display: flex;
+  flex: 999 1 620px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tt-lab-board .tt-hero-card {
+  height: 600px;
+}
+
+/* The page header names the board, so the hero's title card goes. */
+.tt-lab-board .tt-hero-title {
+  display: none;
+}
+
+.tt-lab-hint {
+  margin: 0;
+}
+
+.tt-lab-detail {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 440px;
+  padding: 22px;
+}
+
+.tt-lab-detail h2,
+.tt-lab-detail p {
+  margin: 0;
+}
+
+.tt-lab-role {
+  color: var(--text);
+}
+
+.tt-lab-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.tt-lab-settings div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tt-lab-settings dt {
+  color: var(--text);
+}
+
+.tt-lab-settings dd {
+  margin: 0;
+  font-size: 12px;
+  text-align: right;
+}
+
+.tt-lab-watch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+.tt-lab-watch .tt-body-s {
+  color: var(--text);
+}
+
+.tt-lab-risks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-lab-risks .tt-chip {
+  min-height: 28px;
+}
+
+.tt-lab-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 640px;
+  padding: 18px;
+}
+
+.tt-lab-cap-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tt-lab-cap-head h2 {
+  margin: 0;
+}
+
+.tt-lab-cap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.tt-lab-cap-grid dd {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+
+.tt-lab-cap a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .tt-lab-page {
+    padding: 20px 16px 40px;
+  }
+
+  /* The phone board (328 × 774) at about full width. */
+  .tt-lab-board .tt-hero-card {
+    height: 860px;
+  }
+
+  .tt-lab-board .tt-hero-controls {
+    top: 14px;
+  }
+
+  .tt-lab-board .tt-hero-view {
+    inset: 64px 4px 4px;
+  }
+
+  .tt-lab-links {
+    flex: 1 1 100%;
+  }
+
+  .tt-lab-links .tt-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .tt-lab-detail {
+    max-width: none;
+  }
+
+  .tt-lab-cap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

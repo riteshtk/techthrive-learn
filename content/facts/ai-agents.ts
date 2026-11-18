@@ -1139,6 +1139,21 @@ export default [
     topics: ["ai-agents"],
   },
   {
+    id: "otel-genai-conversation-id",
+    value: "gen_ai.conversation.id",
+    claim:
+      "The OpenTelemetry GenAI conventions define gen_ai.conversation.id, the unique identifier for a conversation (session, thread), used to correlate its messages; its stability is Development.",
+    kind: "real",
+    source: "OpenTelemetry semantic conventions for GenAI",
+    url: "https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/registry/attributes/gen-ai.md",
+    title: "OpenTelemetry GenAI conventions",
+    readOn: "2026-11-18",
+    recheckBy: "2027-01-18",
+    owner: "Tech & Thrive",
+    group: "Evaluation and observability",
+    topics: ["ai-agents"],
+  },
+  {
     id: "otel-genai-operations",
     value: "invoke_agent, chat, execute_tool",
     claim:
