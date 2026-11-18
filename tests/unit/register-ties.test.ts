@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { getFacts } from "@/content";
 import { figureKey, figureKeys, figuresIn } from "@/content/figures";
-import { HAIKU_5_5, SONNET_5_5 } from "@/lib/claudePrices";
+import {
+  BATCH_DISCOUNT,
+  LONG_PROMPT_TOKENS,
+  MIN_CACHE_PREFIX,
+  MODELS,
+  PRICE_FACTS,
+  TOOL_USE_OVERHEAD,
+  US_ONLY_MULTIPLIER,
+} from "@/lib/claudePrices";
 import { SANDBOXES } from "@/player/sandboxes";
 
 // Figures that live in code rather than content files must still be in
@@ -21,14 +29,35 @@ describe("Claude prices", () => {
     .map((f) => f.value)
     .join(" | ");
 
-  it.each([
-    ["Sonnet 5.5", SONNET_5_5],
-    ["Haiku 5.5", HAIKU_5_5],
-  ] as const)("%s prices are the register's", (_, prices) => {
-    for (const price of Object.values(prices)) {
-      const keys = figuresIn(values).map(figureKey);
+  const keys = figuresIn(values).map(figureKey);
+
+  it.each(
+    Object.values(MODELS).flatMap((m) => [
+      [m.name, m.prices] as const,
+      ...(m.long
+        ? [[`${m.name} over the long-prompt threshold`, m.long] as const]
+        : []),
+    ]),
+  )("%s prices are the register's", (_, prices) => {
+    for (const price of Object.values(prices))
       expect(keys, `${price}`).toContain(figureKey(priceText(price)));
-    }
+  });
+
+  it("names real register records as its sources", () => {
+    const ids = new Set(getFacts("ai-agents").map((f) => f.id));
+    for (const id of PRICE_FACTS) expect(ids.has(id), id).toBe(true);
+  });
+
+  it("the multipliers and token counts are the register's", () => {
+    for (const fig of [
+      `${BATCH_DISCOUNT * 100}%`,
+      `${US_ONLY_MULTIPLIER}×`,
+      `${TOOL_USE_OVERHEAD} tokens`,
+      `${MIN_CACHE_PREFIX} tokens`,
+      LONG_PROMPT_TOKENS.toLocaleString("en-US"),
+    ])
+      for (const k of figuresIn(fig).map(figureKey))
+        expect(keys, fig).toContain(k);
   });
 });
 

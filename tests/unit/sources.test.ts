@@ -62,6 +62,11 @@ describe.each(
       label: `Lesson ${n} · step ${i + 1}`,
       href: `/topics/${id}/lessons/${lesson.id}/?step=${i + 1}`,
     });
+    if (topic.tabs.includes("cost"))
+      expect(uses.get("opus-5-5-cache-prices")).toContainEqual({
+        label: "Cost model",
+        href: `/topics/${id}/cost/`,
+      });
     // One use per lesson: the first step that lists the fact.
     for (const list of uses.values()) {
       const hrefs = list.map((u) => u.href.split("?")[0]);

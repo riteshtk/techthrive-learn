@@ -4,6 +4,7 @@
 // all come from the register and the content that cites it.
 
 import type { Checkpoint, Fact, Lesson, Topic } from "@/content/types";
+import { PRICE_FACTS } from "./claudePrices";
 
 export type Use = { label: string; href: string };
 
@@ -30,9 +31,8 @@ export function hostOf(url: string): string {
 
 /**
  * Where each fact appears: the overview (stats, brief, current-with), the
- * first lesson step whose Sources tab lists it, and checkpoints whose
- * explanations rely on it. Facts the topic shows elsewhere (tools, from
- * P9 on) get their uses as those pages land.
+ * first lesson step whose Sources tab lists it, checkpoints whose
+ * explanations rely on it, and the cost model (its rates).
  */
 export function usesOf(
   topic: Topic,
@@ -68,6 +68,9 @@ export function usesOf(
           });
     });
   }
+  if (topic.tabs.includes("cost"))
+    for (const id of PRICE_FACTS)
+      add(id, { label: "Cost model", href: `${base}cost/` });
   for (const checkpoint of checkpoints) {
     const n = number(checkpoint.lesson);
     for (const q of checkpoint.questions)
