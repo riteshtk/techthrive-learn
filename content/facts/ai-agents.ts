@@ -1067,6 +1067,20 @@ export default [
     topics: ["ai-agents"],
   },
   {
+    id: "pass-hat-k-worked-example",
+    value:
+      "8 runs, 6 passed: pass^4 = C(6,4) ÷ C(8,4) = 15 ÷ 70 ≈ 0.21; pass@4 = 1.0",
+    claim:
+      "For 8 runs with 6 passes, pass^4 = C(6,4) ÷ C(8,4) = 15 ÷ 70 ≈ 0.21, while pass@4 = 1.0: a worked example of τ-bench's definitions.",
+    kind: "derived",
+    source: "Computed from τ-bench's pass^k definition",
+    readOn: "2026-11-18",
+    recheckBy: "2027-11-18",
+    owner: "Tech & Thrive",
+    group: "Derived figures",
+    topics: ["ai-agents"],
+  },
+  {
     id: "mcp-current-version",
     value: "2026-07-28",
     claim: "2026-07-28 is the current MCP protocol revision.",

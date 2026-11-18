@@ -1,0 +1,154 @@
+/* The review screen (spec 05 §8): a phone-first column, centred at about
+   480 px on wider screens, with the ratings in the thumb zone. */
+.tt-rv-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 28px 16px calc(40px + env(safe-area-inset-bottom));
+}
+
+.tt-rv-page header p,
+.tt-rv-page header h1 {
+  margin: 0;
+}
+
+.tt-rv-h1 {
+  margin-top: 8px !important;
+  font-size: 34px;
+}
+
+.tt-rv-page header .tt-body-s {
+  margin-top: 6px !important;
+}
+
+.tt-rv-start {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+}
+
+.tt-rv-start h2,
+.tt-rv-start p {
+  margin: 0;
+}
+
+.tt-rv-big {
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  font-size: 15px;
+}
+
+.tt-rv {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tt-rv-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tt-rv-progress .tt-bar {
+  flex: 1;
+}
+
+.tt-rv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.tt-rv-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 320px;
+  padding: 26px 22px;
+  border-radius: 26px;
+}
+
+.tt-rv-card p,
+.tt-rv-q {
+  margin: 0;
+}
+
+.tt-rv-q {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.tt-rv-a {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.tt-rv-rates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tt-rv-rate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  background: var(--raised-2);
+  color: var(--text);
+  text-align: left;
+}
+
+.tt-rv-rate:hover {
+  border-color: var(--line-3);
+}
+
+.tt-rv-keys {
+  margin: 0;
+}
+
+.tt-rv-wait {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .tt-rv-keys {
+    display: none;
+  }
+
+  /* Keep the ratings in reach without scrolling. */
+  .tt-rv-page {
+    gap: 14px;
+    padding-top: 18px;
+  }
+
+  .tt-rv-h1 {
+    font-size: 26px;
+  }
+
+  .tt-rv-page header .tt-body-s {
+    display: none;
+  }
+
+  .tt-rv-card {
+    min-height: 0;
+    padding: 20px 18px;
+  }
+
+  .tt-rv-q {
+    font-size: 21px;
+  }
+}
