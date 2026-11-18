@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { expect, test, type Page } from "./fixtures";
 
 test.describe("theme toggle", () => {
   test("switches theme, swaps the logo and remembers the choice", async ({
@@ -7,7 +7,9 @@ test.describe("theme toggle", () => {
     await page.goto("./");
     const toggle = page.getByTestId("theme-toggle");
     await expect(toggle).toHaveAccessibleName("Switch to light theme");
-    const logo = page.getByRole("img", { name: "Tech & Thrive" });
+    const logo = page
+      .getByRole("link", { name: "Tech & Thrive Learn: home" })
+      .locator("img:visible");
     await expect(logo).toHaveAttribute("src", /on-dark\.svg$/);
 
     await toggle.click();
@@ -38,54 +40,53 @@ test.describe("theme toggle", () => {
   });
 });
 
-test.describe("course drawer", () => {
-  test("lists each roadmap's topics with progress", async ({ page }) => {
-    await page.addInitScript(() =>
-      localStorage.setItem(
-        "ttl-learn:progress:v1",
-        JSON.stringify({ done: ["rag"] }),
-      ),
+test.describe("top bar", () => {
+  test("marks the section you are in", async ({ page }) => {
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await page.goto("./");
+    await expect(nav.getByRole("link", { name: "Home" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
     await page.goto("topics/rag/");
-    await page.getByRole("button", { name: "Open the course menu" }).click();
-    const drawer = page.getByRole("dialog", { name: "Roadmaps" });
-    await expect(drawer).toBeVisible();
-    await expect(
-      drawer.getByTestId("drawer-count-ai-system-design"),
-    ).toHaveText("1/3");
-    const links = drawer.getByRole("listitem");
-    await expect(links).toHaveCount(3);
-    await expect(
-      drawer.getByRole("link", { name: /RAG: answers from your documents/ }),
-    ).toHaveAttribute("aria-current", "page");
-
-    await drawer.getByRole("link", { name: /The agent loop/ }).click();
-    await expect(page).toHaveURL(/\/topics\/agent-loop\//);
-    await expect(drawer).toBeHidden();
+    await expect(nav.getByRole("link", { name: "Learn" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(nav.getByRole("link", { name: "Home" })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 
-  test("closes with Escape and keeps focus inside while open", async ({
-    page,
-  }) => {
+  test("shows the compact lockup in both themes", async ({ page }) => {
     await page.goto("./");
-    await page.getByRole("button", { name: "Open the course menu" }).click();
-    const drawer = page.getByRole("dialog", { name: "Roadmaps" });
-    await expect(drawer).toBeVisible();
-    for (let i = 0; i < 8; i++) {
-      await page.keyboard.press("Tab");
-      // The page behind is inert: focus stays in the drawer, or leaves the
-      // page for the browser's own controls (reported as <body>).
-      const where = await page.evaluate(() => {
-        const el = document.activeElement;
-        if (!el || el === document.body) return "browser";
-        return el.closest("dialog") ? "drawer" : el.outerHTML.slice(0, 80);
-      });
-      expect(["drawer", "browser"]).toContain(where);
+    const home = page.getByRole("link", { name: "Tech & Thrive Learn: home" });
+    const visible = home.locator("img:visible");
+    await expect(visible).toHaveAttribute(
+      "src",
+      /lockup-compact_on-dark\.svg$/,
+    );
+    await page.getByTestId("theme-toggle").click();
+    await expect(visible).toHaveAttribute(
+      "src",
+      /lockup-compact_on-light\.svg$/,
+    );
+  });
+
+  test("never scrolls sideways", async ({ page }) => {
+    for (const path of ["./", "topics/rag/", "roadmaps/ai-system-design/"]) {
+      await page.goto(path);
+      const overflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      expect(overflow, path).toBeLessThanOrEqual(0);
     }
-    await page.keyboard.press("Escape");
-    await expect(drawer).toBeHidden();
   });
 });
+
+const dialogOf = (page: Page) => page.getByRole("dialog", { name: "Search" });
 
 test.describe("search", () => {
   test("Ctrl+K opens it and Enter opens the step that matches", async ({
@@ -93,41 +94,40 @@ test.describe("search", () => {
   }) => {
     await page.goto("./");
     await page.keyboard.press("Control+k");
-    const dialog = page.getByRole("dialog", { name: "Search topics" });
+    const dialog = dialogOf(page);
     await expect(dialog).toBeVisible();
     const input = dialog.getByRole("combobox");
     await expect(input).toBeFocused();
-    await input.fill("temperature");
-    const option = dialog.getByRole("option");
-    await expect(option).toHaveCount(1);
-    await expect(option).toContainText("How an LLM answers");
-    await expect(option).toContainText("Step 4: Pick one token");
+    await input.fill("lower temperature");
+    const option = dialog.getByRole("option").first();
+    await expect(option).toContainText("Pick one token");
+    await expect(option).toContainText("How an LLM answers · step 4");
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/topics\/how-an-llm-answers\/\?step=4$/);
     await expect(page.getByTestId("counter")).toHaveText("4 of 7");
   });
 
-  test("a step in the topic already open moves the player there", async ({
+  test("a step in the page already open moves the player there", async ({
     page,
   }) => {
     await page.goto("topics/how-an-llm-answers/?step=2");
     await expect(page.getByTestId("counter")).toHaveText("2 of 7");
     await page.keyboard.press("Control+k");
-    await page.getByRole("combobox").fill("temperature");
+    await dialogOf(page).getByRole("combobox").fill("lower temperature");
+    await expect(dialogOf(page).getByRole("option").first()).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/topics\/how-an-llm-answers\/\?step=4$/);
     await expect(page.getByTestId("counter")).toHaveText("4 of 7");
   });
 
-  test("arrow keys move through results; / also opens search", async ({
-    page,
-  }) => {
+  test("/ opens it and arrow keys move through results", async ({ page }) => {
     await page.goto("./");
     await page.keyboard.press("/");
-    const dialog = page.getByRole("dialog", { name: "Search topics" });
+    const dialog = dialogOf(page);
     await expect(dialog).toBeVisible();
+    await dialog.getByRole("combobox").fill("model");
     const options = dialog.getByRole("option");
-    await expect(options).toHaveCount(3);
+    await expect(options.nth(1)).toBeVisible();
     await expect(options.nth(0)).toHaveAttribute("aria-selected", "true");
     await page.keyboard.press("ArrowDown");
     await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
@@ -135,10 +135,54 @@ test.describe("search", () => {
     await expect(dialog).toBeHidden();
   });
 
-  test("says when nothing matches", async ({ page }) => {
+  test("the button opens it and it says when nothing matches", async ({
+    page,
+  }) => {
     await page.goto("./");
-    await page.getByRole("button", { name: /Search topics/ }).click();
-    await page.getByRole("combobox").fill("kubernetes");
-    await expect(page.getByText("No topics match “kubernetes”.")).toBeVisible();
+    await page
+      .getByRole("button", { name: "Search topics, lessons, facts" })
+      .click();
+    const dialog = dialogOf(page);
+    await dialog.getByRole("combobox").fill("zebra crossing");
+    await expect(dialog.getByRole("status")).toHaveText(
+      "Nothing matches “zebra crossing”.",
+    );
+  });
+});
+
+// Issue #4: the index is a file fetched when search first opens, not data
+// in every page.
+test.describe("search index on demand", () => {
+  test("no page carries other topics' step text", async ({ request }) => {
+    const home = await (await request.get("./")).text();
+    expect(home).not.toContain("likeliest tokens");
+    const rag = await (await request.get("topics/rag/")).text();
+    expect(rag).not.toContain("likeliest tokens");
+    const llm = await (await request.get("topics/how-an-llm-answers/")).text();
+    expect(llm).toContain("likeliest tokens");
+  });
+
+  test("the index is fetched once, when search first opens", async ({
+    page,
+  }) => {
+    const fetched: string[] = [];
+    page.on("request", (r) => {
+      if (r.url().includes("search-index.json")) fetched.push(r.url());
+    });
+    await page.goto("./");
+    await page.waitForLoadState("networkidle");
+    expect(fetched).toEqual([]);
+
+    await page.keyboard.press("Control+k");
+    await dialogOf(page).getByRole("combobox").fill("rag");
+    await expect(dialogOf(page).getByRole("option").first()).toBeVisible();
+    expect(fetched).toHaveLength(1);
+    expect(fetched[0]).toMatch(/\/techthrive-learn\/search-index\.json$/);
+
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Control+k");
+    await dialogOf(page).getByRole("combobox").fill("agent");
+    await expect(dialogOf(page).getByRole("option").first()).toBeVisible();
+    expect(fetched).toHaveLength(1);
   });
 });

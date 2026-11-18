@@ -73,3 +73,25 @@ test("the theme choice holds across reloads and pages", async ({ page }) => {
   await page.goto("./");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
+
+test("the topic bar names its sections and links Verified to sources", async ({
+  page,
+}) => {
+  await page.goto("kit/");
+  const nav = page.getByRole("navigation", {
+    name: "Production AI agents sections",
+  });
+  await expect(nav.getByRole("link")).toHaveText([
+    "Overview",
+    "Lessons",
+    "Cost",
+    "Threats",
+    "Governance",
+    "Lab",
+    "Sheets",
+  ]);
+  await expect(nav.getByRole("link", { name: "Interview" })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Verified 17 Nov 2026" }),
+  ).toHaveAttribute("href", "/techthrive-learn/topics/kit/sources/");
+});

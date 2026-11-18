@@ -30,6 +30,11 @@ export const ICON_PATHS = {
   globe:
     "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z",
   layers: "M12 3l9 5-9 5-9-5zM3 13l9 5 9-5",
+  award: "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14l-1.5 7 5-3 5 3-1.5-7",
+  "bar-chart": "M4 20V10M10 20V4M16 20v-7M21 20H3",
+  grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM16.5 13v7M13 16.5h7",
+  sheet:
+    "M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M9 13h6M9 17h6",
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

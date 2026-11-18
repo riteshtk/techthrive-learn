@@ -43,16 +43,18 @@ test.describe("home", () => {
     request,
   }) => {
     await page.goto("./");
-    const lockup = page.getByRole("img", { name: "Tech & Thrive" });
+    const lockup = page
+      .getByRole("link", { name: "Tech & Thrive Learn: home" })
+      .locator("img:visible");
     await expect(lockup).toBeVisible();
     await expect(lockup).toHaveAttribute(
       "src",
-      /^\/techthrive-learn\/brand\/lockup-horizontal_on-(dark|light)\.svg$/,
+      /^\/techthrive-learn\/brand\/lockup-compact_on-dark\.svg$/,
     );
     const svg = await (
-      await request.get("brand/lockup-horizontal_on-dark.svg")
+      await request.get("brand/lockup-compact_on-dark.svg")
     ).text();
-    expect(svg).toContain('viewBox="0 0 1342.86 300"');
+    expect(svg).toContain('viewBox="0 0 1338.69 300"');
     await expect(page.locator(".hero-mark img:visible")).toBeVisible();
   });
 

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { AppShell } from "@/components/AppShell";
-import { navRoadmaps, searchEntries } from "@/content";
+import { TopBar } from "@/components/shell/TopBar";
 import { pageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/metadata";
 import { withBase } from "@/lib/paths";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/components.css";
+import "./styles/shell.css";
 import "./globals.css";
 
 // Downloaded at build time and served from this site: no third-party requests.
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
-        <AppShell roadmaps={navRoadmaps()} search={searchEntries()} />
+        <TopBar />
         {children}
       </body>
     </html>

@@ -1,0 +1,295 @@
+/* The app shell: top bar, nav, search and the per-topic bar (spec 01 §A8). */
+
+.tt-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--h-topbar);
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.tt-brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.tt-brand .brand-image img {
+  height: 26px;
+}
+
+.tt-prod {
+  padding-left: 12px;
+  border-left: 1px solid var(--line-2);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.tt-topbar-spacer {
+  flex: 1 1 20px;
+}
+
+.tt-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.tt-navlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--h-nav);
+  padding: 0 13px;
+  border-radius: var(--r-pill);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tt-navlink:hover,
+.tt-navlink[aria-current="page"] {
+  color: var(--text);
+  background: var(--raised-2);
+}
+
+.tt-navlink[aria-current="page"] {
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.tt-nav-s {
+  margin-left: 0;
+}
+
+.tt-nav-s .tt-navlink {
+  height: var(--h-subnav);
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* The search trigger */
+.tt-srch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 250px;
+  height: var(--h-nav);
+  padding: 0 8px 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+  color: var(--faint);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tt-srch:hover {
+  border-color: var(--line-3);
+  color: var(--muted);
+}
+
+.tt-srch-kbd {
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-6);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* The search dialog. The design has none; this follows its popover. */
+.tt-search {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 96px));
+  margin: 72px auto auto;
+  padding: 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-20);
+  background: var(--raised);
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
+}
+
+.tt-search[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tt-search::backdrop {
+  background: var(--scrim);
+}
+
+.tt-search-field input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.tt-search-results {
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tt-search-results li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-12);
+  cursor: pointer;
+}
+
+.tt-search-results li[aria-selected="true"] {
+  background: var(--raised-2);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.tt-search-kind {
+  flex: none;
+  width: 52px;
+}
+
+.tt-search-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tt-search-title {
+  font-size: var(--fs-title-row-15);
+  font-weight: 600;
+}
+
+.tt-search-context {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-body-13);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-search-status {
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: var(--fs-body-13-5);
+}
+
+.tt-search-status:empty {
+  display: none;
+}
+
+/* The per-topic bar */
+.tt-topicbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  min-height: var(--h-topicbar);
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--raised);
+}
+
+.tt-tsw {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--h-nav);
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-12);
+  background: var(--surface);
+}
+
+.tt-tsw:hover {
+  border-color: var(--line-3);
+}
+
+.tt-tsw b {
+  font-size: var(--fs-body-13-5);
+  font-weight: 700;
+}
+
+.tt-sep-v {
+  width: 1px;
+  height: 22px;
+  background: var(--line-2);
+}
+
+.tt-topicbar-spacer {
+  flex: 1 1 10px;
+}
+
+.tt-verified {
+  text-transform: uppercase;
+}
+
+.tt-verified:hover {
+  border-color: var(--line-3);
+  color: var(--text);
+}
+
+/* Phones: the nav gets its own row and search becomes an icon. */
+@media (max-width: 720px) {
+  .tt-topbar {
+    gap: 8px 12px;
+    padding: 10px 16px;
+  }
+
+  .tt-topbar .tt-nav {
+    order: 1;
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .tt-topbar .tt-navlink {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .tt-srch {
+    justify-content: center;
+    min-width: 0;
+    width: var(--h-control-sm);
+    height: var(--h-control-sm);
+    padding: 0;
+  }
+
+  /* The label stays as the button's name, just not on screen. */
+  .tt-srch-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tt-srch-kbd {
+    display: none;
+  }
+
+  .tt-topicbar {
+    padding: 8px 16px;
+  }
+
+  .tt-sep-v,
+  .tt-topicbar-spacer {
+    display: none;
+  }
+}
