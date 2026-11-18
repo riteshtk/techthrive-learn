@@ -5,7 +5,6 @@
 // topics are shown as planned and are never links.
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { FilterGroup, StatusPill, TextInput } from "@/components/ui/controls";
 import {
   filterCatalog,
@@ -16,6 +15,7 @@ import {
   type Filters,
   type StatusFilter,
 } from "@/lib/catalog";
+import { useQueryState } from "@/lib/useQueryState";
 
 export function CatalogView({
   entries,
@@ -24,21 +24,11 @@ export function CatalogView({
   entries: CatalogEntry[];
   domains: readonly string[];
 }) {
-  const [f, setF] = useState<Filters>(NO_FILTERS);
-  const mounted = useRef(false);
-  useEffect(() => {
-    const asked = filtersFromQuery(location.search, domains);
-    queueMicrotask(() => setF(asked));
-    mounted.current = true;
-  }, [domains]);
-  useEffect(() => {
-    if (!mounted.current) return;
-    history.replaceState(
-      history.state,
-      "",
-      `${location.pathname}${filtersToQuery(f)}`,
-    );
-  }, [f]);
+  const [f, setF] = useQueryState<Filters>(
+    NO_FILTERS,
+    (search) => filtersFromQuery(search, domains),
+    filtersToQuery,
+  );
 
   const shown = filterCatalog(entries, f);
   const live = entries.filter((e) => e.status === "live").length;

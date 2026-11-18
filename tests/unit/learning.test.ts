@@ -112,6 +112,43 @@ describe("the browser store", () => {
     ]);
   });
 
+  it("sees what another tab saved while nothing here was listening", () => {
+    const storage = memoryStorage();
+    const changed: (() => void)[] = [];
+    const watched = createBrowserStore({
+      key: LEARNING_KEY,
+      parse: parseLearning,
+      empty: EMPTY_LEARNING,
+      getStorage: () => storage,
+      watch: (_key, onChange) => {
+        changed.push(onChange);
+        return () => void changed.splice(changed.indexOf(onChange), 1);
+      },
+    });
+    const other = make(() => storage);
+    // Home subscribes and reads, then the learner leaves it.
+    watched.subscribe(() => {})();
+    expect(watched.get().lessons[KEY]).toBeUndefined();
+    other.update((s) => visitStep(s, KEY, 5, 10, T0));
+    expect(changed).toEqual([]);
+    expect(watched.get().lessons[KEY]?.step).toBe(5);
+    // Read with no subscriber at all, then subscribed again.
+    other.update((s) => visitStep(s, KEY, 6, 10, T1));
+    watched.subscribe(() => {});
+    expect(watched.get().lessons[KEY]?.step).toBe(6);
+  });
+
+  it("returns the same value until what's stored changes", () => {
+    const storage = memoryStorage();
+    const store = make(() => storage);
+    store.update((s) => visitStep(s, KEY, 2, 10, T0));
+    const first = store.get();
+    expect(store.get()).toBe(first);
+    make(() => storage).update((s) => visitStep(s, KEY, 3, 10, T1));
+    expect(store.get()).not.toBe(first);
+    expect(store.get()).toBe(store.get());
+  });
+
   it("keeps working in memory when storage throws or is full", () => {
     const blocked = make(() => {
       throw new Error("blocked");

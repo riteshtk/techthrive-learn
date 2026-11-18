@@ -12,7 +12,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { SegmentedTabs, tabPanelProps } from "@/components/ui/SegmentedTabs";
@@ -27,7 +26,7 @@ import { buildScene, hopWords, type SceneSource } from "./scene";
 import { Stage } from "./Stage";
 import { ViewerToolbar } from "./StageControls";
 import { effectiveTrace } from "./trace";
-import { useReducedMotion, useStage } from "./useStage";
+import { isPhone, usePhone, useReducedMotion, useStage } from "./useStage";
 
 // Loaded when first opened, to keep the page in its JavaScript budget.
 const SandboxPanel = dynamic(() => import("./lesson/SandboxPanel"), {
@@ -43,13 +42,6 @@ const NodeDetail = dynamic(
 );
 
 type Progress = typeof import("@/lib/learning");
-
-const PHONE = "(max-width: 720px)";
-const subscribePhone = (cb: () => void) => {
-  const q = window.matchMedia(PHONE);
-  q.addEventListener("change", cb);
-  return () => q.removeEventListener("change", cb);
-};
 
 type Tab = "explain" | "sources";
 
@@ -92,11 +84,7 @@ export function LessonPlayer({
     canAdvance: () => audioDone.current,
   });
   const reduced = useReducedMotion();
-  const phone = useSyncExternalStore(
-    subscribePhone,
-    () => window.matchMedia(PHONE).matches,
-    () => false,
-  );
+  const phone = usePhone();
 
   const [tab, setTab] = useState<Tab>("explain");
   const [wide, setWide] = useState(false);
@@ -155,11 +143,12 @@ export function LessonPlayer({
   useEffect(() => {
     if (!progress || !key) return;
     const asked = Number(new URLSearchParams(location.search).get("step"));
+    // A saved step can be past the end if the lesson has since lost steps.
     const saved = progress.learningStore.get().lessons[key]?.step;
     const first =
       Number.isInteger(asked) && asked >= 1 && asked <= total
         ? asked
-        : (saved ?? 1);
+        : Math.min(saved ?? 1, total);
     if (first !== 1) dispatch({ type: "goto", step: first });
     arriving.current = first;
     started.current = true;
@@ -205,7 +194,7 @@ export function LessonPlayer({
     const at = target ? drawing.focus3[target] : undefined;
     if (!at) return;
     const timer = setTimeout(() => {
-      if (!window.matchMedia(PHONE).matches) return;
+      if (!isPhone()) return;
       phoneZoomed.current = true;
       dispatch({ type: "focus", x: at[0], y: at[1], zoom: 1.5 });
     }, 150);
@@ -222,9 +211,13 @@ export function LessonPlayer({
   ]);
 
   // Narration: while playing the lesson, each step's recorded line plays.
+  // A line left behind can still report back late (its play() rejected,
+  // a pause from the source changing); that mustn't end the new one.
   const audio = data.audio[state.step - 1] ?? null;
+  const line = useRef(0);
   useEffect(() => {
     const el = audioRef.current;
+    const at = ++line.current;
     audioDone.current = true;
     if (!el || !audio || !state.auto) {
       el?.pause();
@@ -233,7 +226,7 @@ export function LessonPlayer({
     audioDone.current = false;
     el.currentTime = 0;
     el.play().catch(() => {
-      audioDone.current = true;
+      if (line.current === at) audioDone.current = true;
     });
   }, [audio, state.auto, state.step]);
 
@@ -498,8 +491,8 @@ export function LessonPlayer({
                   onEnded={() => {
                     audioDone.current = true;
                   }}
-                  onPause={() => {
-                    audioDone.current = true;
+                  onPause={(e) => {
+                    if (e.currentTarget.paused) audioDone.current = true;
                   }}
                   onError={() => {
                     audioDone.current = true;

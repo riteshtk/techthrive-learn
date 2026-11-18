@@ -7,7 +7,7 @@
 // approved still.
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo } from "react";
 import type { ColorKey } from "@/content/types";
 import type { Drawing } from "./drawing";
 import { OVERVIEW_TIMING, type StageConfig } from "./machine";
@@ -15,14 +15,7 @@ import { buildScene, type SceneSource } from "./scene";
 import { Stage } from "./Stage";
 import { Switch } from "./Switch";
 import { effectiveTrace } from "./trace";
-import { useReducedMotion, useStage } from "./useStage";
-
-const PHONE = "(max-width: 720px)";
-const subscribePhone = (cb: () => void) => {
-  const q = window.matchMedia(PHONE);
-  q.addEventListener("change", cb);
-  return () => q.removeEventListener("change", cb);
-};
+import { usePhone, useReducedMotion, useStage } from "./useStage";
 
 export type HeroData = {
   caption: string;
@@ -56,11 +49,7 @@ export function HeroDiagram({
   nodeAction?: string;
 }) {
   const router = useRouter();
-  const phone = useSyncExternalStore(
-    subscribePhone,
-    () => window.matchMedia(PHONE).matches,
-    () => false,
-  );
+  const phone = usePhone();
   const drawing = phone && data.portrait ? data.portrait : data.drawing;
 
   const source: SceneSource = useMemo(

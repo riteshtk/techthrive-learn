@@ -5,33 +5,26 @@
 // matrix is a real table, turned on its side on phones (approved still).
 // ?risk=ASI03 picks a risk, read after mount so the page stays static.
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent } from "react";
 import { Icon } from "@/components/ui/Icon";
 import type { Threats } from "@/content/types";
 import { rankChange, STATUS } from "@/lib/threats";
+import { useQueryState } from "@/lib/useQueryState";
 
 type Risk = Threats["risks"][number];
 
 const DEFAULT = "ASI03";
 
 export function ThreatModel({ data }: { data: Threats }) {
-  const [sel, setSel] = useState(DEFAULT);
-  const mounted = useRef(false);
+  const [sel, setSel] = useQueryState(
+    DEFAULT,
+    (search) => {
+      const asked = new URLSearchParams(search).get("risk");
+      return asked && data.risks.some((r) => r.id === asked) ? asked : DEFAULT;
+    },
+    (risk) => (risk === DEFAULT ? "" : `?${new URLSearchParams({ risk })}`),
+  );
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  useEffect(() => {
-    const asked = new URLSearchParams(location.search).get("risk");
-    if (asked && data.risks.some((r) => r.id === asked))
-      queueMicrotask(() => setSel(asked));
-    mounted.current = true;
-  }, [data]);
-  useEffect(() => {
-    if (!mounted.current) return;
-    const url = new URL(location.href);
-    if (sel === DEFAULT) url.searchParams.delete("risk");
-    else url.searchParams.set("risk", sel);
-    history.replaceState(history.state, "", url);
-  }, [sel]);
 
   const index = Math.max(
     0,

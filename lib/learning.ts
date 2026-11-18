@@ -4,6 +4,8 @@
 
 import {
   createBrowserStore,
+  isIso,
+  isStoreKey,
   localStorageOf,
   watchOtherTabs,
 } from "./browserStore";
@@ -41,8 +43,6 @@ export const EMPTY_LEARNING: Learning = { lessons: {}, checkpoints: {} };
 export const lessonKey = (topic: string, lesson: string) =>
   `${topic}/${lesson}`;
 
-const isIso = (v: unknown): v is string =>
-  typeof v === "string" && !Number.isNaN(Date.parse(v));
 const isStep = (v: unknown): v is number =>
   typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 50;
 
@@ -53,7 +53,7 @@ export function parseLearning(raw: unknown): Learning {
   const givenCp = (raw as { checkpoints?: unknown }).checkpoints;
   if (typeof givenCp === "object" && givenCp !== null)
     for (const [key, v] of Object.entries(givenCp)) {
-      if (!/^[a-z0-9-]+\/[a-z0-9-]+$/.test(key)) continue;
+      if (!isStoreKey(key)) continue;
       const answers = (v as { answers?: unknown })?.answers;
       if (typeof answers !== "object" || answers === null) continue;
       const kept: Record<string, OptionId> = {};
@@ -73,7 +73,7 @@ export function parseLearning(raw: unknown): Learning {
   const given = (raw as { lessons?: unknown }).lessons;
   if (typeof given === "object" && given !== null)
     for (const [key, v] of Object.entries(given)) {
-      if (!/^[a-z0-9-]+\/[a-z0-9-]+$/.test(key)) continue;
+      if (!isStoreKey(key)) continue;
       if (typeof v !== "object" || v === null) continue;
       const p = v as Record<string, unknown>;
       if (!isStep(p.step) || !isStep(p.maxStep)) continue;

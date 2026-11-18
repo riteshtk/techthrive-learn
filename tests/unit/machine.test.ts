@@ -125,6 +125,20 @@ describe("controls", () => {
     expect(run(s, { type: "hop", hop: 99 }).hop).toBe(4);
   });
 
+  it("Replay restarts the hop in flight, even the first one", () => {
+    const s = start(5);
+    // hop stays 0, so only the restart count tells the timer and packet.
+    expect(run(s, { type: "replay" }).flights).toBe(s.flights + 1);
+    expect(run(s, { type: "hop", hop: 0 }).flights).toBe(s.flights + 1);
+    const auto = run(s, { type: "toggleAuto" });
+    expect(auto.flights).toBe(s.flights + 1);
+    // Leaving Play lesson lets the hop carry on.
+    expect(run(auto, { type: "toggleAuto" }).flights).toBe(auto.flights);
+    expect(run(s, { type: "pause" }, { type: "togglePlay" }).flights).toBe(
+      s.flights,
+    );
+  });
+
   it("Build-up and Full system restart the request, keeping the step", () => {
     const s = run(start(5), { type: "tick" }, { type: "full", full: true });
     expect([s.full, s.hop, s.step]).toEqual([true, 0, 5]);

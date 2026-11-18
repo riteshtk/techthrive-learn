@@ -138,7 +138,7 @@ export function Stage({
       fill: "both",
     });
     if (!state.playing) animRef.current.pause();
-    // A new hop, step, view or speed starts a fresh flight. The hop is
+    // A new hop, step, view or speed, or a restart, starts a fresh flight. The hop is
     // keyed by its ends, not its identity, which a re-render can renew.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -148,6 +148,7 @@ export function Stage({
     flow,
     state.step,
     state.hop,
+    state.flights,
     state.speed,
     reducedMotion,
   ]);

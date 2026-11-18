@@ -5,10 +5,11 @@
 // the current date in India, placed after mount so the page stays static.
 // ?j=in|eu|uk|vol picks a filter.
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { FilterGroup } from "@/components/ui/controls";
 import type { Governance } from "@/content/types";
 import { formatDate } from "@/lib/dates";
+import { useQueryState } from "@/lib/useQueryState";
 import {
   FILTERS,
   JURISDICTION_LABEL,
@@ -21,27 +22,21 @@ import {
 const noop = () => () => {};
 
 export function GovernanceView({ data }: { data: Governance }) {
-  const [filter, setFilter] = useState<FilterId>("all");
-  const mounted = useRef(false);
+  const [filter, setFilter] = useQueryState<FilterId>(
+    "all",
+    (search) => {
+      const asked = new URLSearchParams(search).get("j");
+      return asked && Object.hasOwn(FILTERS, asked)
+        ? (asked as FilterId)
+        : "all";
+    },
+    (j) => (j === "all" ? "" : `?${new URLSearchParams({ j })}`),
+  );
   const today = useSyncExternalStore(
     noop,
     () => todayIn("Asia/Kolkata"),
     () => null,
   );
-
-  useEffect(() => {
-    const asked = new URLSearchParams(location.search).get("j");
-    if (asked && Object.hasOwn(FILTERS, asked))
-      queueMicrotask(() => setFilter(asked as FilterId));
-    mounted.current = true;
-  }, []);
-  useEffect(() => {
-    if (!mounted.current) return;
-    const url = new URL(location.href);
-    if (filter === "all") url.searchParams.delete("j");
-    else url.searchParams.set("j", filter);
-    history.replaceState(history.state, "", url);
-  }, [filter]);
 
   const { rows, count } = timeline(data.events, filter, today);
 

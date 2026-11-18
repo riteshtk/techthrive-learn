@@ -4,6 +4,8 @@
 
 import {
   createBrowserStore,
+  isIso,
+  isStoreKey,
   localStorageOf,
   watchOtherTabs,
 } from "./browserStore";
@@ -15,8 +17,6 @@ export type ReviewSchedule = Record<string, CardState>;
 
 export const EMPTY_SCHEDULE: ReviewSchedule = {};
 
-const isIso = (v: unknown): v is string =>
-  typeof v === "string" && !Number.isNaN(Date.parse(v));
 const isNum = (v: unknown, min: number, max: number): v is number =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 
@@ -26,7 +26,7 @@ export function parseSchedule(raw: unknown): ReviewSchedule {
     return EMPTY_SCHEDULE;
   const out: ReviewSchedule = {};
   for (const [id, v] of Object.entries(raw)) {
-    if (!/^[a-z0-9-]+\/[a-z0-9-]+$/.test(id)) continue;
+    if (!isStoreKey(id)) continue;
     const c = v as Partial<CardState>;
     if (
       (c.phase === "learning" || c.phase === "review") &&

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { newCard, rate } from "@/lib/fsrs";
+import { parseLearning } from "@/lib/learning";
 import { dueCount, parseSchedule } from "@/lib/review";
 
 // The review schedule in the browser (PRD P14).
@@ -35,5 +36,29 @@ describe("due cards", () => {
         new Date(NOW.getTime() + 120_000),
       ),
     ).toBe(2);
+  });
+});
+
+describe("store keys", () => {
+  it("progress and the schedule take the same topic/id keys", () => {
+    const keys = ["payments/idem-1", "no-slash", "A/b", "a/b/c", "a/ b", "a/"];
+    const card = rate(newCard(NOW), 3, NOW);
+    const step = {
+      step: 1,
+      maxStep: 1,
+      startedAt: NOW.toISOString(),
+      updatedAt: NOW.toISOString(),
+    };
+    const kept = Object.keys(
+      parseSchedule(Object.fromEntries(keys.map((k) => [k, card]))),
+    );
+    expect(kept).toEqual(["payments/idem-1"]);
+    expect(
+      Object.keys(
+        parseLearning({
+          lessons: Object.fromEntries(keys.map((k) => [k, step])),
+        }).lessons,
+      ),
+    ).toEqual(kept);
   });
 });

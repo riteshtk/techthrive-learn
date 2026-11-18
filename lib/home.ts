@@ -55,8 +55,15 @@ export function inProgress(
   return lessons
     .flatMap((l) => {
       const p = learning.lessons[l.key];
+      // A saved step can be past the end if the lesson has since lost steps.
       return p && !p.doneAt
-        ? [{ lesson: l, step: p.step, at: p.updatedAt }]
+        ? [
+            {
+              lesson: l,
+              step: Math.min(p.step, l.steps.length),
+              at: p.updatedAt,
+            },
+          ]
         : [];
     })
     .sort((a, b) => b.at.localeCompare(a.at))

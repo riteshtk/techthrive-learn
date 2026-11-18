@@ -35,6 +35,26 @@ export function useReducedMotion(): boolean {
   );
 }
 
+const PHONE = "(max-width: 720px)";
+
+function subscribePhone(callback: () => void) {
+  const query = window.matchMedia(PHONE);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+/** True at phone width (the CSS breakpoint). False on the server. */
+export function usePhone(): boolean {
+  return useSyncExternalStore(
+    subscribePhone,
+    () => window.matchMedia(PHONE).matches,
+    () => false,
+  );
+}
+
+/** Whether the page is at phone width right now, outside React. */
+export const isPhone = () => window.matchMedia(PHONE).matches;
+
 /** The stage machine with its hop timer. It pauses when the tab is
     hidden, and starts paused when the learner asks for less motion. */
 export function useStage(
@@ -64,20 +84,39 @@ export function useStage(
     if (reduced) dispatch({ type: "pause" });
   }, [reduced]);
 
-  // The hop timer: every change that matters restarts the countdown.
+  // The hop timer. A new hop, loop, step or speed, or a restart, starts
+  // the countdown afresh; a pause keeps what's left of it, as the packet
+  // keeps its place in the flight.
   const delay = delayMs(config, state, timing);
+  const flight = [
+    state.step,
+    state.full,
+    state.hop,
+    state.loops,
+    state.flights,
+    state.speed,
+  ].join();
+  const left = useRef<{ flight: string; ms: number } | null>(null);
   useEffect(() => {
     if (delay === null) return;
+    const ms = left.current?.flight === flight ? left.current.ms : delay;
+    const armed = performance.now();
     const timer = setTimeout(
       () =>
         dispatch({
           type: "tick",
           canAdvance: canAdvance.current ? canAdvance.current() : true,
         }),
-      delay,
+      ms,
     );
-    return () => clearTimeout(timer);
-  }, [delay, state.hop, state.loops, state.step, state.full, state.auto]);
+    return () => {
+      clearTimeout(timer);
+      left.current = {
+        flight,
+        ms: Math.max(0, ms - (performance.now() - armed)),
+      };
+    };
+  }, [delay, flight]);
 
   useEffect(() => {
     const onHidden = () => {

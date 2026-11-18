@@ -390,3 +390,92 @@ test.describe("review fixes", () => {
     expect((await posts()) - before).toBeLessThan(20);
   });
 });
+
+test.describe("resuming and narration", () => {
+  const PAYMENTS = "topics/payments/lessons/move-money-exactly-once/";
+  const KEY = "payments/move-money-exactly-once";
+
+  test("a saved step past the end opens the last step, and moving still saves", async ({
+    page,
+  }) => {
+    // Stored before the lesson lost steps.
+    await page.addInitScript(
+      (key) =>
+        localStorage.setItem(
+          "ttl-learn:progress:v2",
+          JSON.stringify({
+            lessons: {
+              [key]: {
+                step: 12,
+                maxStep: 12,
+                startedAt: "2026-11-17T09:00:00.000Z",
+                updatedAt: "2026-11-17T09:20:00.000Z",
+              },
+            },
+            checkpoints: {},
+          }),
+        ),
+      KEY,
+    );
+    await page.goto(PAYMENTS);
+    await expect(stepLabel(page)).toHaveText("Step 10 / 10");
+    await page.getByRole("button", { name: "Back", exact: true }).click();
+    await expect(stepLabel(page)).toHaveText("Step 9 / 10");
+    await expect(page).toHaveURL(/\?step=9$/);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) =>
+            JSON.parse(localStorage.getItem("ttl-learn:progress:v2")!).lessons[
+              key
+            ].step,
+          KEY,
+        ),
+      )
+      .toBe(9);
+  });
+
+  test("Play lesson waits for this step's line, whatever the last one reports late", async ({
+    page,
+  }) => {
+    // play() stays pending until the test settles it, as with
+    // preload="none" on a slow network.
+    await page.addInitScript(() => {
+      const w = window as unknown as { plays: ((e: Error) => void)[] };
+      w.plays = [];
+      HTMLMediaElement.prototype.play = () =>
+        new Promise<void>((_, reject) => void w.plays.push(reject));
+    });
+    await page.goto(`${PAYMENTS}?step=1`);
+    await page
+      .getByRole("group", { name: "Speed" })
+      .getByRole("button", { name: "2×" })
+      .click();
+    await page.getByRole("button", { name: "Play lesson" }).click();
+    await page.keyboard.press("ArrowRight");
+    await expect(stepLabel(page)).toHaveText("Step 2 / 10");
+    const plays = () =>
+      page.evaluate(
+        () => (window as unknown as { plays: unknown[] }).plays.length,
+      );
+    await expect.poll(plays).toBe(2);
+    // Step 1's play() is aborted after step 2's has started.
+    await page.evaluate(() =>
+      (window as unknown as { plays: ((e: Error) => void)[] }).plays[0]!(
+        new DOMException("The play() request was interrupted", "AbortError"),
+      ),
+    );
+    const hops = await page
+      .getByRole("list", { name: "Request sequence for this step" })
+      .getByRole("listitem")
+      .count();
+    // A whole loop at 2× and some: step 2's line is still unfinished.
+    await page.waitForTimeout(hops * 850 + 650 + 1000);
+    await expect(stepLabel(page)).toHaveText("Step 2 / 10");
+    // Once it ends, the lesson moves on.
+    await page.locator("audio").dispatchEvent("ended");
+    await expect(stepLabel(page)).toHaveText("Step 3 / 10", {
+      timeout: hops * 850 + 650 + 1000,
+    });
+  });
+});

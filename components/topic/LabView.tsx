@@ -6,8 +6,8 @@
 // review are phase 2, so nothing here is flagged as a finding.
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import type { Lab } from "@/content/types";
+import { useQueryState } from "@/lib/useQueryState";
 import type { HeroData } from "@/player/HeroDiagram";
 import { LazyHeroDiagram as HeroDiagram } from "@/player/LazyPlayers";
 
@@ -22,20 +22,14 @@ export function LabView({
   lab: Lab;
   hero: HeroData;
 }) {
-  const [part, setPart] = useState<string>("O");
-  const mounted = useRef(false);
-  useEffect(() => {
-    const asked = new URLSearchParams(location.search).get("part");
-    if (asked && lab.details.some((d) => d.node === asked))
-      queueMicrotask(() => setPart(asked));
-    mounted.current = true;
-  }, [lab]);
-  useEffect(() => {
-    if (!mounted.current) return;
-    const url = new URL(location.href);
-    url.searchParams.set("part", part);
-    history.replaceState(history.state, "", url);
-  }, [part]);
+  const [part, setPart] = useQueryState(
+    "O",
+    (search) => {
+      const asked = new URLSearchParams(search).get("part");
+      return asked && lab.details.some((d) => d.node === asked) ? asked : "O";
+    },
+    (p) => `?${new URLSearchParams({ part: p })}`,
+  );
 
   const d: Detail = lab.details.find((x) => x.node === part) ?? lab.details[0]!;
   const name = hero.names[d.node] ?? d.node;

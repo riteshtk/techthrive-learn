@@ -94,6 +94,22 @@ describe("continue learning", () => {
       ["a/x", 2],
     ]);
   });
+
+  it("resumes at the last step when the saved one is past the end", () => {
+    const short = {
+      key: "a/x",
+      topicTitle: "a",
+      n: 1,
+      title: "x",
+      href: "/",
+      steps: ["s1", "s2", "s3"],
+    };
+    const learning: Learning = {
+      ...EMPTY_LEARNING,
+      lessons: { "a/x": lesson(9, "2026-11-17T08:00:00.000Z") },
+    };
+    expect(inProgress([short], learning)[0]?.step).toBe(3);
+  });
 });
 
 describe("the header", () => {

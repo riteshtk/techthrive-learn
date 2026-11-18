@@ -32,6 +32,43 @@ test.describe("diagram engine", () => {
     await expect(tag).toHaveText(held!);
   });
 
+  test("resuming finishes the paused hop, not a whole new one", async ({
+    page,
+  }) => {
+    await page.goto("kit/");
+    const tag = page.getByTestId("hop-tag");
+    const play = page.getByTestId("stage-play");
+    await expect(tag).toHaveText(/^Hop 2 of 6/, { timeout: 2500 });
+    // Pause 1.2 s into the 1.7 s hop, wait, then play again.
+    await page.waitForTimeout(1200);
+    await play.click();
+    await page.waitForTimeout(1000);
+    await expect(tag).toHaveText(/^Hop 2 of 6/);
+    await play.click();
+    // About half a second of it is left, not another 1.7 s.
+    await expect(tag).toHaveText(/^Hop 3 of 6/, { timeout: 1100 });
+  });
+
+  test("Replay restarts the first hop even when it's already playing", async ({
+    page,
+  }) => {
+    await page.goto("kit/");
+    const tag = page.getByTestId("hop-tag");
+    const replay = page.getByRole("button", { name: "Replay the request" });
+    await expect(tag).toHaveText(/^Hop 1 of 6/);
+    await page.waitForTimeout(1200);
+    await replay.click();
+    const flown = await page.evaluate(
+      () =>
+        document.querySelector(".tt-stage .packet")!.getAnimations()[0]!
+          .currentTime as number,
+    );
+    expect(flown).toBeLessThan(400);
+    await page.waitForTimeout(1000);
+    await expect(tag).toHaveText(/^Hop 1 of 6/);
+    await expect(tag).toHaveText(/^Hop 2 of 6/, { timeout: 1500 });
+  });
+
   test("speed changes how long a hop lasts", async ({ page }) => {
     await page.goto("kit/");
     await page

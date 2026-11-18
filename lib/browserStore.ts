@@ -26,21 +26,33 @@ export function createBrowserStore<T>(options: {
   const { key, parse, empty, getStorage, watch } = options;
   const listeners = new Set<() => void>();
   let value: T | null = null;
+  // The stored text `value` was read from. Every get compares it with
+  // storage, so a change another tab made while nothing here was
+  // subscribed is still seen.
+  let text: string | null = null;
   // False once a write fails: storage then lags memory and isn't reread.
   let stored = true;
   let unwatch: (() => void) | undefined;
 
-  function read(): T {
+  function readText(): string | null {
     try {
-      const raw = getStorage()?.getItem(key) ?? null;
-      return raw === null ? empty : parse(JSON.parse(raw));
+      return getStorage()?.getItem(key) ?? null;
     } catch {
-      return empty;
+      return null;
     }
   }
 
   function get(): T {
-    value ??= read();
+    if (value !== null && !stored) return value;
+    const now = readText();
+    if (value === null || now !== text) {
+      text = now;
+      try {
+        value = now === null ? empty : parse(JSON.parse(now));
+      } catch {
+        value = empty;
+      }
+    }
     return value;
   }
 
@@ -48,8 +60,10 @@ export function createBrowserStore<T>(options: {
     value = next;
     try {
       const storage = getStorage();
-      storage?.setItem(key, JSON.stringify(next));
+      const json = JSON.stringify(next);
+      storage?.setItem(key, json);
       stored = storage !== undefined;
+      text = json;
     } catch {
       stored = false;
     }
@@ -59,26 +73,25 @@ export function createBrowserStore<T>(options: {
   return {
     get,
     update(change) {
-      if (stored) value = null;
       save(change(get()));
     },
     reset() {
       try {
         getStorage()?.removeItem(key);
+        stored = true;
+        text = null;
       } catch {
         // Blocked: clearing memory is enough for this visit.
+        stored = false;
       }
       value = empty;
-      stored = true;
       listeners.forEach((l) => l());
     },
     subscribe(listener) {
       listeners.add(listener);
       if (listeners.size === 1 && watch)
         unwatch = watch(key, () => {
-          if (!stored) return;
-          value = null;
-          listeners.forEach((l) => l());
+          if (stored) listeners.forEach((l) => l());
         });
       return () => {
         listeners.delete(listener);
@@ -90,6 +103,13 @@ export function createBrowserStore<T>(options: {
     },
   };
 }
+
+/** An ISO date and time, as the stores keep them. */
+export const isIso = (v: unknown): v is string =>
+  typeof v === "string" && !Number.isNaN(Date.parse(v));
+
+/** A "topic/id" key, as progress and the review schedule are keyed. */
+export const isStoreKey = (k: string) => /^[a-z0-9-]+\/[a-z0-9-]+$/.test(k);
 
 /** The browser's localStorage, and the storage event for other tabs. */
 export const localStorageOf = () =>

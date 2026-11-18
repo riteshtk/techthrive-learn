@@ -4,15 +4,7 @@
 // input changes; the inputs live in the query so a scenario can be linked
 // (read after mount, so the page stays static).
 
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { Range } from "@/components/ui/controls";
 import {
@@ -23,6 +15,7 @@ import {
   type ModelKey,
 } from "@/lib/claudePrices";
 import { money, rate, tokensShort } from "@/lib/costModel";
+import { useQueryState } from "@/lib/useQueryState";
 import {
   costReport,
   DEFAULT_INPUTS,
@@ -40,13 +33,6 @@ const n = (v: number) => v.toLocaleString("en-US");
 const pct = (share: number) => `${Math.round(share * 100)}%`;
 
 const SEGMENTS = ["seg-green", "seg-amber", "seg-blue", "seg-ink"] as const;
-
-type Action =
-  | { type: "set"; patch: Partial<CostInputs> }
-  | { type: "load"; inputs: CostInputs };
-
-const reduce = (state: CostInputs, a: Action): CostInputs =>
-  a.type === "load" ? a.inputs : { ...state, ...a.patch };
 
 function Slider({
   field,
@@ -99,21 +85,13 @@ function Slider({
 }
 
 export function CostModel({ readOn }: { readOn: string }) {
-  const [inputs, dispatch] = useReducer(reduce, DEFAULT_INPUTS);
-  const ready = useRef(false);
+  const [inputs, setInputs, ready] = useQueryState(
+    DEFAULT_INPUTS,
+    inputsFromQuery,
+    inputsToQuery,
+  );
   const set = <K extends keyof CostInputs>(k: K, v: CostInputs[K]) =>
-    dispatch({ type: "set", patch: { [k]: v } });
-
-  // ?query → inputs once mounted; inputs → ?query after that.
-  useEffect(() => {
-    dispatch({ type: "load", inputs: inputsFromQuery(window.location.search) });
-    ready.current = true;
-  }, []);
-  useEffect(() => {
-    if (!ready.current) return;
-    const url = `${window.location.pathname}${inputsToQuery(inputs)}`;
-    window.history.replaceState(window.history.state, "", url);
-  }, [inputs]);
+    setInputs((i) => ({ ...i, [k]: v }));
 
   const r = useMemo(() => costReport(inputs), [inputs]);
   const i = inputs;
@@ -121,7 +99,7 @@ export function CostModel({ readOn }: { readOn: string }) {
   // One polite summary, half a second after the last change.
   const [said, setSaid] = useState("");
   useEffect(() => {
-    if (!ready.current) return;
+    if (!ready) return;
     const t = setTimeout(
       () =>
         setSaid(
@@ -130,7 +108,7 @@ export function CostModel({ readOn }: { readOn: string }) {
       500,
     );
     return () => clearTimeout(t);
-  }, [r]);
+  }, [r, ready]);
 
   const saves = r.cachingSaves;
   const savesPct = r.uncachedMonth > 0 ? saves / r.uncachedMonth : 0;
@@ -304,7 +282,7 @@ export function CostModel({ readOn }: { readOn: string }) {
         <button
           type="button"
           className="tt-btn tt-btn-sm"
-          onClick={() => dispatch({ type: "load", inputs: DEFAULT_INPUTS })}
+          onClick={() => setInputs(DEFAULT_INPUTS)}
         >
           <Icon name="repeat" />
           Reset to the card-dispute brief

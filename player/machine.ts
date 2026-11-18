@@ -25,6 +25,10 @@ export type StageState = {
   /** Loops finished on this step: each one re-arms the timer, even on a
       step with no hops, where hop alone never changes. */
   loops: number;
+  /** Counts restarts of the hop in place (Replay, picking a hop, starting
+      Play lesson), so its timer and packet start over even when hop
+      itself doesn't change. */
+  flights: number;
   playing: boolean;
   /** "Play lesson": after each full loop, go to the next step. */
   auto: boolean;
@@ -83,6 +87,7 @@ export function initStage(
     step: clampStep(config, options.step ?? 1),
     hop: 0,
     loops: 0,
+    flights: 0,
     playing: options.playing ?? true,
     auto: false,
     speed: 1,
@@ -130,17 +135,22 @@ export function reduceStage(
         ...state,
         auto: !state.auto,
         playing: true,
-        hop: state.auto ? state.hop : 0,
+        ...(state.auto ? {} : { hop: 0, flights: state.flights + 1 }),
       };
     case "togglePlay":
       return { ...state, playing: !state.playing };
     case "pause":
       return { ...state, playing: false };
     case "replay":
-      return { ...state, hop: 0, playing: true };
+      return { ...state, hop: 0, playing: true, flights: state.flights + 1 };
     case "hop": {
       const n = config.hops(state.step, state.full);
-      return { ...state, hop: clamp(0, n, action.hop), playing: true };
+      return {
+        ...state,
+        hop: clamp(0, n, action.hop),
+        playing: true,
+        flights: state.flights + 1,
+      };
     }
     case "speed":
       return { ...state, speed: action.speed };
