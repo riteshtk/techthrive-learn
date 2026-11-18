@@ -143,6 +143,18 @@ test.describe("keyboard and memory", () => {
   }) => {
     await page.goto(`${path}?step=5`);
     await expect(stepLabel(page)).toHaveText("Step 5 / 10");
+    // Saved just after that render; reload only once it is.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            Object.values(
+              JSON.parse(localStorage.getItem("ttl-learn:progress:v2") ?? "{}")
+                .lessons ?? {},
+            ) as { step: number }[],
+        ),
+      )
+      .toContainEqual(expect.objectContaining({ step: 5 }));
     await page.goto(path);
     await expect(stepLabel(page)).toHaveText("Step 5 / 10");
     const other = await context.newPage();
