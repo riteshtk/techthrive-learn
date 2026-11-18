@@ -1,0 +1,51 @@
+[
+ {
+  "step": 1,
+  "file": "01.mp3",
+  "transcript": "You send a prompt, as plain text.",
+  "seconds": 2.05,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 2,
+  "file": "02.mp3",
+  "transcript": "A tokenizer splits the text into tokens: whole words, parts of words, characters or bytes.",
+  "seconds": 6.21,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 3,
+  "file": "03.mp3",
+  "transcript": "The model reads every token so far and scores each possible next token.",
+  "seconds": 4.93,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 4,
+  "file": "04.mp3",
+  "transcript": "The scores become probabilities and one token is drawn; a lower temperature means less randomness.",
+  "seconds": 6.51,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 5,
+  "file": "05.mp3",
+  "transcript": "That token is added to the input, and the model runs again.",
+  "seconds": 4.03,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 6,
+  "file": "06.mp3",
+  "transcript": "This repeats until the model produces an end-of-sequence token or reaches a length limit.",
+  "seconds": 5.7,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 7,
+  "file": "07.mp3",
+  "transcript": "The tokens are turned back into text, and that’s the answer.",
+  "seconds": 4.05,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ }
+]

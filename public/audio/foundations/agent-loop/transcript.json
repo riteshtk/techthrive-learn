@@ -1,0 +1,51 @@
+[
+ {
+  "step": 1,
+  "file": "01.mp3",
+  "transcript": "A goal comes in, in plain words.",
+  "seconds": 2.06,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 2,
+  "file": "02.mp3",
+  "transcript": "The model decides the next action: answer now, or ask for a tool.",
+  "seconds": 4.18,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 3,
+  "file": "03.mp3",
+  "transcript": "It asks for a tool call, with the arguments it wants.",
+  "seconds": 3.57,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 4,
+  "file": "04.mp3",
+  "transcript": "The app running the agent checks the call is allowed.",
+  "seconds": 3.42,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 5,
+  "file": "05.mp3",
+  "transcript": "The tool runs, and its result goes back to the model.",
+  "seconds": 3.47,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 6,
+  "file": "06.mp3",
+  "transcript": "The model decides again, now with more to go on.",
+  "seconds": 3.13,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 7,
+  "file": "07.mp3",
+  "transcript": "When the model stops asking for tools, or a step limit is hit, the loop ends.",
+  "seconds": 5.16,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ }
+]
