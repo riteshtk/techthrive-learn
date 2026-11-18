@@ -57,8 +57,8 @@ for (const lesson of LESSONS) {
       await expect(stepLabel(page)).toHaveText("Step 10 / 10");
       await expect(page).toHaveURL(/\?step=10$/);
       await expect(
-        page.getByRole("link", { name: "Back to the topic" }),
-      ).toHaveAttribute("href", /\/topics\/[a-z-]+\/$/);
+        page.getByRole("link", { name: "Take the checkpoint" }),
+      ).toHaveAttribute("href", /\/checkpoint\/$/);
     });
 
     test("opens every step from its own link", async ({ page }) => {

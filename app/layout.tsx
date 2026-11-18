@@ -10,6 +10,7 @@ import "./styles/components.css";
 import "./styles/shell.css";
 import "./styles/stage.css";
 import "./styles/lesson.css";
+import "./styles/checkpoint.css";
 import "./globals.css";
 
 // Downloaded at build time and served from this site: no third-party requests.

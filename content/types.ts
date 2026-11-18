@@ -340,6 +340,16 @@ export const QuestionSchema = object({
   facts: array(id()),
   /** Also shown in the explanation panel. */
   reviewCard: optional(text(200)),
+  /** Where to see this in more depth, e.g. the topic's threat model. */
+  see: optional(
+    object({
+      label: text(40),
+      path: string({
+        pattern: /^\/topics\/[a-z0-9-]+\/[a-z0-9/-]*$/,
+        patternHint: "an app path like /topics/<topic>/<section>/",
+      }),
+    }),
+  ),
 });
 export type Question = Infer<typeof QuestionSchema>;
 

@@ -1,6 +1,6 @@
-// Where the learner is in each lesson, kept in this browser (PRD P5).
-// Keyed "topic/lesson", because lesson ids are only unique in a topic.
-// Checkpoint answers join this record in P6.
+// Where the learner is in each lesson, and their checkpoint answers, kept
+// in this browser (PRD P5, P6). Keyed "topic/lesson", because lesson ids
+// are only unique in a topic.
 
 import {
   createBrowserStore,
@@ -22,11 +22,21 @@ export type LessonProgress = {
   doneAt?: string;
 };
 
-export type Learning = {
-  lessons: Record<string, LessonProgress>;
+export type OptionId = "A" | "B" | "C" | "D";
+
+export type CheckpointAnswers = {
+  /** The first answer to each question, by question id: the scored one. */
+  answers: Record<string, OptionId>;
+  /** ISO time the last question got its first answer. */
+  doneAt?: string;
 };
 
-export const EMPTY_LEARNING: Learning = { lessons: {} };
+export type Learning = {
+  lessons: Record<string, LessonProgress>;
+  checkpoints: Record<string, CheckpointAnswers>;
+};
+
+export const EMPTY_LEARNING: Learning = { lessons: {}, checkpoints: {} };
 
 export const lessonKey = (topic: string, lesson: string) =>
   `${topic}/${lesson}`;
@@ -39,6 +49,26 @@ const isStep = (v: unknown): v is number =>
 /** Keeps only well-formed records; anything else reads as not started. */
 export function parseLearning(raw: unknown): Learning {
   if (typeof raw !== "object" || raw === null) return EMPTY_LEARNING;
+  const checkpoints: Record<string, CheckpointAnswers> = {};
+  const givenCp = (raw as { checkpoints?: unknown }).checkpoints;
+  if (typeof givenCp === "object" && givenCp !== null)
+    for (const [key, v] of Object.entries(givenCp)) {
+      if (!/^[a-z0-9-]+\/[a-z0-9-]+$/.test(key)) continue;
+      const answers = (v as { answers?: unknown })?.answers;
+      if (typeof answers !== "object" || answers === null) continue;
+      const kept: Record<string, OptionId> = {};
+      for (const [q, a] of Object.entries(answers))
+        if (
+          /^[a-z0-9-]+$/.test(q) &&
+          ["A", "B", "C", "D"].includes(a as string)
+        )
+          kept[q] = a as OptionId;
+      const doneAt = (v as { doneAt?: unknown }).doneAt;
+      checkpoints[key] = {
+        answers: kept,
+        ...(isIso(doneAt) ? { doneAt } : {}),
+      };
+    }
   const lessons: Record<string, LessonProgress> = {};
   const given = (raw as { lessons?: unknown }).lessons;
   if (typeof given === "object" && given !== null)
@@ -56,7 +86,32 @@ export function parseLearning(raw: unknown): Learning {
         ...(isIso(p.doneAt) ? { doneAt: p.doneAt } : {}),
       };
     }
-  return { lessons };
+  return { lessons, checkpoints };
+}
+
+/** Keeps a question's first answer; later picks don't change it. */
+export function answerQuestion(
+  state: Learning,
+  key: string,
+  questionId: string,
+  option: OptionId,
+  questionCount: number,
+  now: string,
+): Learning {
+  const before = state.checkpoints[key] ?? { answers: {} };
+  if (before.answers[questionId]) return state;
+  const answers = { ...before.answers, [questionId]: option };
+  const done = Object.keys(answers).length >= questionCount;
+  return {
+    ...state,
+    checkpoints: {
+      ...state.checkpoints,
+      [key]: {
+        answers,
+        ...(before.doneAt || done ? { doneAt: before.doneAt ?? now } : {}),
+      },
+    },
+  };
 }
 
 /** Records that the learner is on `step` of `total`. */

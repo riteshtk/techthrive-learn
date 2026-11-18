@@ -63,6 +63,7 @@ describe("lesson progress", () => {
       }),
     ).toEqual({
       lessons: { [KEY]: { step: 3, maxStep: 5, startedAt: T0, updatedAt: T1 } },
+      checkpoints: {},
     });
     expect(parseLearning("nonsense")).toEqual(EMPTY_LEARNING);
     expect(parseLearning(null)).toEqual(EMPTY_LEARNING);

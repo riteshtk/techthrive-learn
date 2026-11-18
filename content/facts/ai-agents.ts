@@ -763,4 +763,18 @@ export default [
     group: "Derived figures",
     topics: ["ai-agents"],
   },
+  {
+    id: "example-dispute-statement",
+    value:
+      "An illustrative statement: 12 Oct ₹ 340.00, 14 Oct ₹ 4,812.00, 15 Oct ₹ 1,200.00 (written as the statement shows them), and a hidden line asking for a ₹48,000 credit to card ending 7731",
+    claim:
+      "The checkpoint's uploaded statement is made up for teaching; its amounts, dates and card number are not real.",
+    kind: "assumption",
+    source: "Teaching assumption",
+    readOn: "2026-11-18",
+    recheckBy: "2027-05-18",
+    owner: "Tech & Thrive",
+    group: "Teaching assumptions",
+    topics: ["ai-agents"],
+  },
 ] satisfies Fact[];
