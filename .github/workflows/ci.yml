@@ -1,7 +1,8 @@
 name: CI
 
-# Required to merge (set in branch protection): "Checks", "Build" and
-# "End-to-end (Chromium) + axe". The other jobs are advisory.
+# Required to merge (set in branch protection): "Checks", "Build",
+# "End-to-end (Chromium) + axe", "End-to-end (WebKit)" and "Visual". The
+# other jobs are advisory.
 
 on:
   pull_request:
@@ -26,8 +27,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Content check
+      - name: Content check (every lesson recorded)
         run: npm run check:content
+        env:
+          REQUIRE_NARRATION: "1"
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
@@ -80,10 +83,9 @@ jobs:
           retention-days: 7
 
   webkit:
-    name: End-to-end (WebKit, advisory)
+    name: End-to-end (WebKit)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -93,6 +95,36 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps webkit
       - run: npm run test:e2e:webkit
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-webkit
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  visual:
+    name: Visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Compares with the Linux baselines committed from the
+      # update-visual-baselines workflow's artifact.
+      - run: npm run test:visual
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-diffs
+          path: test-results/
+          retention-days: 7
 
   lighthouse:
     name: Lighthouse (mobile, advisory)

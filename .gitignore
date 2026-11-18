@@ -52,3 +52,6 @@ next-env.d.ts
 
 # lighthouse ci
 /.lighthouseci/
+
+# Design comparison sheets (npm run compare:design)
+compare/
