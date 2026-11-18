@@ -196,6 +196,13 @@ describe("the v2 content model", () => {
       );
     });
 
+    it("reports a hole in a list (a stray comma)", () => {
+      const facts = [fact(), , fact({ id: "other" })];
+      expect(run({ facts }).errors).toContain(
+        `${FACT_FILE} › [1]: must be an object, not undefined`,
+      );
+    });
+
     it("reports missing and unknown fields", () => {
       const t = { ...topic(), tabz: [] } as Record<string, unknown>;
       delete t.summary;

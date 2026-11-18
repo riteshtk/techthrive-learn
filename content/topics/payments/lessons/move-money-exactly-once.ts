@@ -109,7 +109,10 @@ export default {
       short: "PSP",
       addedAt: 1,
       what: "The payment service provider that talks to card networks and UPI. It was there before you built anything.",
-      points: ["Final outcomes often arrive later, by webhook"],
+      points: [
+        "Final outcomes often arrive later, by webhook",
+        "UPI handled 25.47 billion transactions in October 2026",
+      ],
       standards: ["STRWH"],
     },
     {
@@ -186,7 +189,7 @@ export default {
       newNodes: ["C", "P"],
       title: "Charge once. Exactly once.",
       body: [
-        "A retail checkout takes 3 million payments a day, a teaching figure.",
+        "A retail checkout takes 3 million payments a day, a teaching figure. For scale, UPI alone handled 25.47 billion transactions in October 2026, about 822 million a day.",
         "Networks drop, apps retry and people tap Pay twice. Nine components make sure each customer is charged exactly once, and that the books prove it.",
       ],
       callout: {
@@ -194,7 +197,11 @@ export default {
         text: "In payments, “probably succeeded” is not a state. Every step needs a definite answer, or a way to find one.",
       },
       metrics: ["0 / 9", "—", "—", "—"],
-      facts: ["assume-payments-per-day"],
+      facts: [
+        "upi-october-2026-volume",
+        "upi-october-2026-per-day",
+        "assume-payments-per-day",
+      ],
       caption:
         "Millions of payments a day, and every one must happen exactly once.",
       trace: [],

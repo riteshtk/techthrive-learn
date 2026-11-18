@@ -155,12 +155,61 @@ test.describe("keyboard and memory", () => {
     ).toHaveAttribute("href", /^https:\/\/modelcontextprotocol\.io\//);
   });
 
-  test("on a laptop a deep link opens the whole system, not zoomed", async ({
+  test("on a laptop it opens the whole system and stays so", async ({
     page,
   }, info) => {
     test.skip(info.project.name !== "chromium-1280", "laptop only");
+    const zoom = page.locator(".tt-zoom-level");
     await page.goto(`${LESSONS[1].path}?step=3`);
-    await expect(page.locator(".tt-zoom-level")).toHaveText("100%");
+    await expect(zoom).toHaveText("100%");
+    // A full-page capture briefly reports a 1 px wide window.
+    await page.screenshot({ fullPage: true });
+    await page.waitForTimeout(300);
+    await expect(zoom).toHaveText("100%");
+    // Narrowed to a phone, then widened: back to the whole system.
+    await page.setViewportSize({ width: 360, height: 780 });
+    await expect(zoom).toHaveText("150%");
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(zoom).toHaveText("100%");
+  });
+
+  test("the step rail is under the stage on a laptop, above it on a phone", async ({
+    page,
+  }, info) => {
+    await page.goto(`${path}?step=4`);
+    const rail = await page
+      .getByRole("navigation", { name: "Steps" })
+      .boundingBox();
+    const stage = await page.locator(".tt-stagecard").boundingBox();
+    if (info.project.name === "chromium-1280")
+      expect(rail!.y).toBeGreaterThan(stage!.y + stage!.height - 1);
+    else expect(rail!.y + rail!.height).toBeLessThan(stage!.y + 1);
+  });
+
+  test("hop badges keep off the labels (payments step 3)", async ({ page }) => {
+    await page.goto(`${LESSONS[1].path}?step=3`);
+    const overlaps = await page.evaluate(() => {
+      const pills = [...document.querySelectorAll(".tt-stage .lb .pill")].map(
+        (r) => r.getBoundingClientRect(),
+      );
+      const dots = [...document.querySelectorAll(".tt-stage .badge-dot")].map(
+        (c) => c.getBoundingClientRect(),
+      );
+      let n = 0;
+      for (const d of dots) {
+        const cx = d.x + d.width / 2;
+        const cy = d.y + d.height / 2;
+        const r = d.width / 2;
+        for (const p of pills) {
+          const nx = Math.max(p.left, Math.min(cx, p.right));
+          const ny = Math.max(p.top, Math.min(cy, p.bottom));
+          if (Math.hypot(cx - nx, cy - ny) < r - 0.5) n++;
+        }
+      }
+      return { n, dots: dots.length };
+    });
+    expect(overlaps.dots).toBeGreaterThan(0);
+    expect(overlaps.n).toBe(0);
   });
 
   test("on a phone each step opens zoomed in on the request", async ({

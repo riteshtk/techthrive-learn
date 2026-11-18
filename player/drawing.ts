@@ -5,6 +5,7 @@
 
 import type { ColorKey, Diagram } from "@/content/types";
 import { parsePath } from "./flat";
+import type { Box } from "./scene";
 import {
   arrowhead,
   blockFaces,
@@ -72,6 +73,9 @@ export type Drawing = {
   nodes2: NodeDrawing2[];
   edges3: Record<string, EdgeDrawing>;
   edges2: Record<string, EdgeDrawing>;
+  /** What hop badges must keep off: 3D label pills, 2D node boxes. */
+  labels3: Box[];
+  boxes2: Box[];
   /** Where "zoom to it" and the phone camera centre, per view. */
   focus3: Record<string, Pt>;
   focus2: Record<string, Pt>;
@@ -189,6 +193,8 @@ export function drawDiagram(
   }
 
   return {
+    labels3: nodes3.map((n) => [n.label.x, n.label.y, n.label.w, 26] as const),
+    boxes2: diagram.nodes.map((n) => [...n.box2] as const),
     size3: [fit.width, fit.height],
     size2: [960, 500],
     nodes3,

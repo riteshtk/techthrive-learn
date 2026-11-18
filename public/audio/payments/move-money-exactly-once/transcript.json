@@ -1,0 +1,72 @@
+[
+ {
+  "step": 1,
+  "file": "01.mp3",
+  "transcript": "Millions of payments a day, and every one must happen exactly once.",
+  "seconds": 4.59,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 2,
+  "file": "02.mp3",
+  "transcript": "One record, explicit states, and no guessing.",
+  "seconds": 2.94,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 3,
+  "file": "03.mp3",
+  "transcript": "A retry with the same key gets the same answer, not a second charge.",
+  "seconds": 4.58,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 4,
+  "file": "04.mp3",
+  "transcript": "Score first, then move money.",
+  "seconds": 2.1,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 5,
+  "file": "05.mp3",
+  "transcript": "Tokens everywhere; card numbers in one place.",
+  "seconds": 2.87,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 6,
+  "file": "06.mp3",
+  "transcript": "Same key, random backoff, no stampede.",
+  "seconds": 2.63,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 7,
+  "file": "07.mp3",
+  "transcript": "Every rupee has two sides.",
+  "seconds": 2.0,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 8,
+  "file": "08.mp3",
+  "transcript": "One transaction for the money and the message.",
+  "seconds": 3.25,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 9,
+  "file": "09.mp3",
+  "transcript": "Verify, record, acknowledge, then process. Once.",
+  "seconds": 3.34,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 10,
+  "file": "10.mp3",
+  "transcript": "The books and the bank must agree, every day.",
+  "seconds": 2.95,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ }
+]

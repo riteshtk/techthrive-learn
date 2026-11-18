@@ -212,9 +212,11 @@ export function Stage({
     dispatch(action);
   };
 
+  // Badges keep off the labels (3D) and node boxes (2D).
+  const avoid = view === "3d" ? drawing.labels3 : drawing.boxes2;
   const badges = useMemo(
-    () => badgePositions(lines, edges, scene.trace),
-    [lines, edges, scene.trace],
+    () => badgePositions(lines, edges, scene.trace, avoid),
+    [lines, edges, scene.trace, avoid],
   );
 
   const rootClass = [

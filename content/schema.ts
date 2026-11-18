@@ -129,7 +129,9 @@ export function array<T>(
         report(path, `must have at least ${rules.min} items, not ${n}`);
       if (rules.max !== undefined && n > rules.max)
         report(path, `must have at most ${rules.max} items, not ${n}`);
-      value.forEach((v, i) => item.check(v, at(path, i), report));
+      // An index loop: forEach would skip the holes of a sparse list.
+      for (let i = 0; i < value.length; i++)
+        item.check(value[i], at(path, i), report);
       return true;
     },
   };

@@ -147,14 +147,31 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
     [dispatch],
   );
 
-  // Phones open each step zoomed in on where the request starts.
+  // Phones open each step zoomed in on where the request starts (approved
+  // still); desktops show the whole system. The width must stay narrow for
+  // a moment first: browsers report a momentary 1 px width during
+  // full-page captures, and a window can be narrowed and widened again.
+  // Leaving phone width fits the whole system back.
+  const phoneZoomed = useRef(false);
   useEffect(() => {
-    if (!phone || state.view !== "3d") return;
+    if (!phone) {
+      if (phoneZoomed.current) {
+        phoneZoomed.current = false;
+        dispatch({ type: "fit" });
+      }
+      return;
+    }
+    if (state.view !== "3d") return;
     const target =
       effectiveTrace(source, state.step, state.full)[0]?.to ?? step.newNodes[0];
     const at = target ? drawing.focus3[target] : undefined;
     if (!at) return;
-    dispatch({ type: "focus", x: at[0], y: at[1], zoom: 1.5 });
+    const timer = setTimeout(() => {
+      if (!window.matchMedia(PHONE).matches) return;
+      phoneZoomed.current = true;
+      dispatch({ type: "focus", x: at[0], y: at[1], zoom: 1.5 });
+    }, 150);
+    return () => clearTimeout(timer);
   }, [
     phone,
     state.step,
