@@ -52,10 +52,10 @@ test.describe("every page", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Page not found",
     );
-    await page.getByRole("link", { name: "Go to the roadmaps" }).click();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "System design and AI, one step at a time",
-    );
+    await page.getByRole("link", { name: "Go home" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Continue learning" }),
+    ).toBeVisible();
   });
 
   test("every page is prebuilt HTML", async ({ request }) => {

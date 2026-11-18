@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContinueLink } from "@/components/ContinueLink";
 import { DoneTick } from "@/components/DoneTick";
+import { ProgressCount } from "@/components/ProgressCount";
+import { ResetProgress } from "@/components/ResetProgress";
 import { UndoDone } from "@/components/UndoDone";
 import { getRoadmap, getRoadmaps, roadmapTopics } from "@/content/v1";
 import { pageMetadata } from "@/lib/metadata";
@@ -37,7 +39,7 @@ export default async function RoadmapPage({
   return (
     <main className="page">
       <p className="crumb">
-        <Link href="/">All roadmaps</Link>
+        <Link href="/topics/">All topics</Link>
       </p>
       <h1>{roadmap.title}</h1>
       <p className="lede">{roadmap.goal}</p>
@@ -66,6 +68,9 @@ export default async function RoadmapPage({
         ))}
       </ol>
       <UndoDone topics={topics.map((t) => ({ id: t.id, title: t.title }))} />
+      {/* v1 progress, here until Foundations replaces this page (P17). */}
+      <ProgressCount topicIds={roadmap.topics} />
+      <ResetProgress topicIds={roadmap.topics} />
     </main>
   );
 }

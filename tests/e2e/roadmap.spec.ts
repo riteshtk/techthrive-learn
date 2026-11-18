@@ -56,10 +56,4 @@ test.describe("roadmap page", () => {
       "/techthrive-learn/topics/how-an-llm-answers/",
     );
   });
-
-  test("home reaches the roadmap in one tap", async ({ page }) => {
-    await page.goto("./");
-    await page.getByRole("link", { name: "AI System Design" }).click();
-    await expect(page).toHaveURL(/\/roadmaps\/ai-system-design\/$/);
-  });
 });

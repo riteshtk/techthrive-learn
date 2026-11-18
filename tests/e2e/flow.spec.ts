@@ -6,11 +6,9 @@ const TOPICS = [
   { id: "agent-loop", title: "The agent loop", steps: 7 },
 ];
 
-test("home → roadmap → each topic → last step → mark done", async ({
-  page,
-}) => {
-  await page.goto("./");
-  await page.getByRole("link", { name: "AI System Design" }).click();
+test("roadmap → each topic → last step → mark done", async ({ page }) => {
+  // v1's journey, from its roadmap page until Foundations replaces it (P17).
+  await page.goto("roadmaps/ai-system-design/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "AI System Design",
   );
@@ -42,6 +40,6 @@ test("home → roadmap → each topic → last step → mark done", async ({
     );
   }
 
-  await page.getByRole("link", { name: "All roadmaps" }).click();
+  await page.goto("roadmaps/ai-system-design/");
   await expect(page.getByTestId("progress-count")).toHaveText("3 of 3 done");
 });

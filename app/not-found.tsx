@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Page not found",
-  description: "This page doesn't exist. Head back to the roadmaps.",
+  description: "This page doesn't exist. Head back to the topics.",
 };
 
 export default function NotFound() {
@@ -15,7 +15,10 @@ export default function NotFound() {
       </p>
       <p>
         <Link href="/" className="button button-primary">
-          Go to the roadmaps
+          Go home
+        </Link>{" "}
+        <Link href="/topics/" className="button">
+          See all topics
         </Link>
       </p>
     </main>

@@ -61,7 +61,7 @@ test.describe("progress", () => {
     await page.goto("topics/agent-loop/?step=7");
     await page.getByRole("button", { name: "Mark as done" }).click();
     await expect(page.getByTestId("done-agent-loop")).toHaveText("✓ Done");
-    await page.goto("./");
+    await page.goto("roadmaps/ai-system-design/");
     await expect(page.getByTestId("progress-count")).toHaveText("1 of 3 done");
   });
 
@@ -75,7 +75,7 @@ test.describe("progress", () => {
         sessionStorage.setItem("seeded", "1");
       }
     }, KEY);
-    await page.goto("./");
+    await page.goto("roadmaps/ai-system-design/");
     await expect(page.getByTestId("progress-count")).toHaveText("2 of 3 done");
     await page.getByRole("button", { name: "Reset progress" }).click();
     await page.getByRole("button", { name: "Cancel" }).click();

@@ -1,0 +1,177 @@
+/* Home (spec 01 §B1). On phones "Due today" comes before "What changed"
+   (approved still), which is the aside's own order. */
+.tt-home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 28px 28px 56px;
+}
+
+.tt-home-head p,
+.tt-home-head h1 {
+  margin: 0;
+}
+
+.tt-home-head h1 {
+  margin-top: 6px;
+}
+
+.tt-home-head .tt-body {
+  margin-top: 6px;
+}
+
+.tt-home-date {
+  min-height: 1.4em;
+  text-transform: uppercase;
+}
+
+.tt-home-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 22px;
+}
+
+.tt-home-continue {
+  flex: 999 1 640px;
+  min-width: 0;
+}
+
+.tt-home-side {
+  display: flex;
+  flex: 1 1 360px;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+.tt-home-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+}
+
+.tt-home-tile h2,
+.tt-home-tile > p {
+  margin: 0;
+}
+
+.tt-home-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tt-home-resume {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+}
+
+.tt-home-card h3,
+.tt-home-card p {
+  margin: 0;
+}
+
+.tt-home-card .tt-btn {
+  align-self: flex-start;
+}
+
+.tt-home-prog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tt-home-prog .tt-bar {
+  flex: 1;
+}
+
+.tt-home-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.tt-home-empty p {
+  margin: 0;
+}
+
+.tt-home-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+}
+
+.tt-home-row:hover {
+  border-color: var(--line-3);
+}
+
+.tt-home-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tt-home-changes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-home-changes li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tt-home-changes li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.tt-home-changes p {
+  margin: 0;
+}
+
+.tt-home-note {
+  color: var(--text);
+}
+
+.tt-home-changes a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .tt-home-page {
+    padding: 20px 16px 40px;
+  }
+}
