@@ -195,6 +195,7 @@ test.describe("keyboard and memory", () => {
 
   test("hop badges keep off the labels (payments step 3)", async ({ page }) => {
     await page.goto(`${LESSONS[1].path}?step=3`);
+    await expect(stepLabel(page)).toHaveText("Step 3 / 10");
     const overlaps = await page.evaluate(() => {
       const pills = [...document.querySelectorAll(".tt-stage .lb .pill")].map(
         (r) => r.getBoundingClientRect(),

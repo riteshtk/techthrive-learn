@@ -5,7 +5,6 @@
 // and Sources tabs. Steps come from ?step after mount, are remembered in
 // this browser, and can be driven from the keyboard.
 
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
   useCallback,
@@ -14,9 +13,9 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
 import { SegmentedTabs, tabPanelProps } from "@/components/ui/SegmentedTabs";
-import { learningStore, lessonKey, visitStep } from "@/lib/learning";
 import { stepRequest } from "@/lib/stepRequest";
 import { HopWell } from "./lesson/HopWell";
 import { ExplainPanel } from "./lesson/ExplainPanel";
@@ -43,6 +42,8 @@ const NodeDetail = dynamic(
   { ssr: false },
 );
 
+type Progress = typeof import("@/lib/learning");
+
 const PHONE = "(max-width: 720px)";
 const subscribePhone = (cb: () => void) => {
   const q = window.matchMedia(PHONE);
@@ -52,10 +53,19 @@ const subscribePhone = (cb: () => void) => {
 
 type Tab = "explain" | "sources";
 
-export function LessonPlayer({ data }: { data: LessonPageData }) {
-  const { lesson, drawing, topic, outline } = data;
+export function LessonPlayer({
+  data,
+  heading,
+  legend,
+}: {
+  data: LessonPageData;
+  /** Static parts, rendered on the server so their code isn't shipped:
+      the title block (LessonHeading) and the colour key (LessonLegend). */
+  heading: ReactNode;
+  legend: ReactNode;
+}) {
+  const { lesson, drawing, topic } = data;
   const total = lesson.steps.length;
-  const key = lessonKey(topic.id, lesson.id);
 
   const source: SceneSource = useMemo(
     () => ({
@@ -126,11 +136,26 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
   // address as the learner moves. Without one, resume where they were.
   // The step mount asked for; until the player reaches it, nothing is
   // written back, so the address and progress never flash step 1.
+  // The progress store loads after mount, as it's only needed then: it
+  // stays out of the page's first JavaScript.
+  const [progress, setProgress] = useState<Progress | null>(null);
+  useEffect(() => {
+    let live = true;
+    void import("@/lib/learning").then((m) => {
+      if (live) setProgress(m);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  const key = progress?.lessonKey(topic.id, lesson.id);
+
   const started = useRef(false);
   const arriving = useRef<number | null>(null);
   useEffect(() => {
+    if (!progress || !key) return;
     const asked = Number(new URLSearchParams(location.search).get("step"));
-    const saved = learningStore.get().lessons[key]?.step;
+    const saved = progress.learningStore.get().lessons[key]?.step;
     const first =
       Number.isInteger(asked) && asked >= 1 && asked <= total
         ? asked
@@ -138,10 +163,10 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
     if (first !== 1) dispatch({ type: "goto", step: first });
     arriving.current = first;
     started.current = true;
-  }, [dispatch, key, total]);
+  }, [progress, dispatch, key, total]);
 
   useEffect(() => {
-    if (!started.current) return;
+    if (!started.current || !progress || !key) return;
     if (arriving.current !== null) {
       if (state.step !== arriving.current) return;
       arriving.current = null;
@@ -149,10 +174,10 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
     const url = new URL(location.href);
     url.searchParams.set("step", String(state.step));
     history.replaceState(history.state, "", url);
-    learningStore.update((s) =>
-      visitStep(s, key, state.step, total, new Date().toISOString()),
+    progress.learningStore.update((s) =>
+      progress.visitStep(s, key, state.step, total, new Date().toISOString()),
     );
-  }, [state.step, key, total]);
+  }, [state.step, progress, key, total]);
 
   // Search can ask the open lesson to move to a step.
   useEffect(
@@ -251,40 +276,12 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
         };
       });
 
-  const coursePath = `/topics/${topic.id}/lessons/`;
-
   return (
     <>
       <main className={`tt-lesson${wide ? " wide" : ""}`}>
         <section className="tt-lesson-main" aria-labelledby="lesson-title">
           <header className="tt-lesson-head">
-            <div className="tt-lesson-titles">
-              <p className="tt-crumb">
-                <Link href={coursePath}>{topic.title}</Link>
-                <span className="tt-faint" aria-hidden="true">
-                  /
-                </span>
-                <span>
-                  Lesson {outline.position} of {outline.count}
-                </span>
-              </p>
-              <div className="tt-lesson-titlerow">
-                <h1 id="lesson-title" className="tt-h1 tt-lesson-h1">
-                  {outline.title}
-                </h1>
-                <span className="tt-chip">
-                  <svg
-                    className="tt-ic tt-ic-s"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" />
-                  </svg>
-                  {outline.minutes} min
-                </span>
-                <span className="tt-chip">{outline.level}</span>
-              </div>
-            </div>
+            {heading}
             <button
               type="button"
               className={`tt-btn tt-btn-sm${state.auto ? " tt-btn-primary" : ""}`}
@@ -444,20 +441,7 @@ export function LessonPlayer({ data }: { data: LessonPageData }) {
             />
 
             <div className="tt-legend">
-              <ul className="tt-legend-keys" aria-label="Colours">
-                {lesson.legend.map(([color, label]) => (
-                  <li key={label}>
-                    <span className={`tt-key tt-${color}`} aria-hidden="true" />
-                    {label}
-                  </li>
-                ))}
-                <li>
-                  <span className="tt-legend-arrow" aria-hidden="true">
-                    ⟶
-                  </span>
-                  direction of the call
-                </li>
-              </ul>
+              {legend}
               <p className="tt-adds">
                 <span
                   className={`tt-key tt-${step.addsColor}`}

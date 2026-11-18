@@ -20,6 +20,7 @@ import { DIAGRAM_ICON_PATHS } from "@/player/diagramIcons";
 import { drawDiagram } from "@/player/drawing";
 import type { LessonPageData, StepSource } from "@/player/lessonData";
 import { LessonPlayer } from "@/player/LessonPlayer";
+import { LessonHeading, LessonLegend } from "@/player/lesson/LessonStatic";
 
 export const dynamicParams = false;
 
@@ -131,7 +132,11 @@ export default async function LessonPage({
         active="lessons"
         verifiedOn={data.topic.verifiedOn}
       />
-      <LessonPlayer data={data} />
+      <LessonPlayer
+        data={data}
+        heading={<LessonHeading topic={data.topic} outline={data.outline} />}
+        legend={<LessonLegend legend={lesson.legend} />}
+      />
     </>
   );
 }
