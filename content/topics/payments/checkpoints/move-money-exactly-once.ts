@@ -1,13 +1,13 @@
 // The checkpoint for "Move money exactly once". The design has none for
-// this lesson; these questions are written from the lesson and its
-// sources, to be checked by a fresh reviewer and approved by the creator
-// before `approved` is set.
+// this lesson; these questions were written from the lesson and its
+// sources, checked by a fresh reviewer and approved by the creator on
+// 18 Nov 2026.
 import type { Checkpoint } from "../../../types";
 
 export default {
   lesson: "move-money-exactly-once",
   topic: "payments",
-  approved: false,
+  approved: true,
   questions: [
     {
       id: "safe-retry",

@@ -1,13 +1,13 @@
 // The checkpoint for "Anatomy of a production agent". Question 1 is the
-// design's (spec 04 §11.2); questions 2 and 3 are new, written from the
-// lesson and its sources, to be checked by a fresh reviewer and approved
-// by the creator before `approved` is set.
+// design's (spec 04 §11.2, its cap wording corrected); questions 2 and 3
+// were written from the lesson and its sources. All three were checked by
+// a fresh reviewer and approved by the creator on 18 Nov 2026.
 import type { Checkpoint } from "../../../types";
 
 export default {
   lesson: "agent-anatomy",
   topic: "ai-agents",
-  approved: false,
+  approved: true,
   questions: [
     {
       id: "hidden-instruction",
