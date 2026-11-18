@@ -12,6 +12,14 @@ const FILES = {
     width: 1342.86,
     height: 300,
   },
+  // The top bar's logo: a logo with the name under 290 px wide uses the
+  // compact lockup (brand guide; PRD decision 4).
+  compact: {
+    dark: "/brand/lockup-compact_on-dark.svg",
+    light: "/brand/lockup-compact_on-light.svg",
+    width: 1338.69,
+    height: 300,
+  },
   mark: {
     dark: "/brand/mark-small_on-dark.svg",
     light: "/brand/mark-small_on-light.svg",

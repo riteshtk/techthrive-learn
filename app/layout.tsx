@@ -1,13 +1,31 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { AppShell } from "@/components/AppShell";
-import { navRoadmaps, searchEntries } from "@/content";
+import { TopBar } from "@/components/shell/TopBar";
 import { pageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/metadata";
 import { withBase } from "@/lib/paths";
+import { MIGRATE_SCRIPT } from "@/lib/migrateV1";
 import { THEME_SCRIPT } from "@/lib/theme";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/components.css";
+import "./styles/shell.css";
+import "./styles/stage.css";
+import "./styles/lesson.css";
+import "./styles/checkpoint.css";
+import "./styles/overview.css";
+import "./styles/sources.css";
+import "./styles/cost.css";
+import "./styles/threats.css";
+import "./styles/governance.css";
+import "./styles/lab.css";
+import "./styles/sheets.css";
+import "./styles/review.css";
+import "./styles/catalog.css";
+import "./styles/home.css";
 import "./globals.css";
 
 // Downloaded at build time and served from this site: no third-party requests.
+// This is the Google build of Inter, the one the design was drawn with.
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
@@ -41,9 +59,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: MIGRATE_SCRIPT }} />
       </head>
       <body>
-        <AppShell roadmaps={navRoadmaps()} search={searchEntries()} />
+        <TopBar />
         {children}
       </body>
     </html>

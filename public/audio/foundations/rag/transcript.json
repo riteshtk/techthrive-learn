@@ -1,0 +1,51 @@
+[
+ {
+  "step": 1,
+  "file": "01.mp3",
+  "transcript": "Before any question, your documents are split into chunks.",
+  "seconds": 3.91,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 2,
+  "file": "02.mp3",
+  "transcript": "Each chunk becomes an embedding: a list of numbers that captures its meaning.",
+  "seconds": 5.34,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 3,
+  "file": "03.mp3",
+  "transcript": "The embeddings are saved in a vector store.",
+  "seconds": 2.79,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 4,
+  "file": "04.mp3",
+  "transcript": "A question arrives and is turned into an embedding the same way.",
+  "seconds": 4.08,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 5,
+  "file": "05.mp3",
+  "transcript": "The store returns the chunks closest in meaning to the question.",
+  "seconds": 4.55,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 6,
+  "file": "06.mp3",
+  "transcript": "Those chunks go into the prompt, next to the question.",
+  "seconds": 3.18,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 7,
+  "file": "07.mp3",
+  "transcript": "The model answers from those chunks and, with citations turned on, points to the passages it used, but it can still get a fact wrong.",
+  "seconds": 8.68,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ }
+]

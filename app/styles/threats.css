@@ -1,0 +1,409 @@
+/* The threat model (spec 05 §3). Status colours carry a word too. */
+.tt-thr-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+}
+
+.tt-thr-counts {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+  padding: 10px 16px;
+}
+
+.tt-thr-counts dd {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+
+.st-mitigated {
+  --st: var(--green);
+}
+
+.st-partial {
+  --st: var(--amber);
+}
+
+.st-open {
+  --st: var(--red);
+}
+
+.tt-thr-count {
+  color: var(--st);
+}
+
+.tt-thr-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.tt-thr-list {
+  display: flex;
+  flex: 1 1 300px;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 380px;
+  padding: 10px;
+}
+
+.tt-thr-risk {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.tt-thr-risk:hover {
+  background: var(--raised-2);
+}
+
+.tt-thr-risk[aria-selected="true"] {
+  border-color: var(--line-3);
+  background: var(--raised-2);
+}
+
+.tt-thr-id {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.tt-thr-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.tt-thr-st {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--st);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tt-thr-dot {
+  display: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--st);
+}
+
+.tt-thr-detail {
+  display: flex;
+  flex: 999 1 560px;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 26px;
+}
+
+.tt-thr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tt-thr-status {
+  border-color: var(--st);
+  color: var(--st);
+}
+
+.tt-thr-detail .tt-h2,
+.tt-thr-detail p {
+  margin: 0;
+}
+
+.tt-thr-scene {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  background: var(--sunken);
+}
+
+.tt-thr-scene .tt-body-s {
+  color: var(--text);
+}
+
+.tt-thr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.tt-thr-grid .tt-panel-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+.tt-thr-grid .tt-body-s {
+  color: var(--text);
+}
+
+.tt-thr-owner {
+  margin-top: 6px !important;
+}
+
+.tt-thr-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-body-s);
+}
+
+.tt-thr-controls li {
+  display: flex;
+  gap: 10px;
+}
+
+.tt-thr-controls .tt-ic {
+  flex: none;
+  margin-top: 3px;
+  color: var(--green);
+}
+
+.tt-thr-nav {
+  display: flex;
+  gap: 12px;
+}
+
+.tt-thr-nav .tt-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.tt-thr-matrix {
+  display: flex;
+  flex: 999 1 640px;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px 22px;
+}
+
+.tt-thr-matrix-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tt-thr-matrix-head h2 {
+  margin: 0;
+}
+
+.tt-thr-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tt-thr-legend .tt-thr-cell + .tt-thr-cell,
+.tt-thr-legend .tt-thr-cell:last-of-type {
+  margin-left: 10px;
+}
+
+.tt-thr-cell {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--line-3);
+  vertical-align: middle;
+}
+
+.tt-thr-cell.on {
+  background: var(--text);
+}
+
+.tt-thr-scroll {
+  overflow-x: auto;
+}
+
+.tt-thr-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tt-thr-wide .tt-thr-table {
+  min-width: 640px;
+}
+
+.tt-thr-table th,
+.tt-thr-table td {
+  height: 34px;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+
+.tt-thr-table thead th {
+  height: 40px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tt-thr-table abbr {
+  text-decoration: none;
+}
+
+.tt-thr-table tbody th {
+  padding-left: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.tt-thr-table tr.on th {
+  color: var(--text);
+}
+
+.tt-thr-table tr.on td,
+.tt-thr-table td.on,
+.tt-thr-table thead th.on {
+  background: var(--raised-2);
+}
+
+.tt-thr-table thead th.on {
+  color: var(--text);
+}
+
+.tt-thr-narrow {
+  display: none;
+}
+
+.tt-thr-llm {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 22px;
+}
+
+.tt-thr-llm h2 {
+  margin: 0 0 4px;
+}
+
+.tt-thr-llm-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-thr-llm-list li {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tt-thr-llm-list .tt-body-s {
+  color: var(--text);
+}
+
+.tt-thr-was {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tt-thr-change {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: right;
+}
+
+.tt-thr-change.up {
+  color: var(--amber);
+}
+
+@media (max-width: 720px) {
+  .tt-thr-page {
+    padding: 20px 16px 40px;
+  }
+
+  .tt-thr-list {
+    max-width: none;
+  }
+
+  /* The compact list: id, name, status dot (approved still). */
+  .tt-thr-risk {
+    grid-template-columns: 46px minmax(0, 1fr) 14px;
+    padding: 9px 10px;
+  }
+
+  .tt-thr-dot {
+    display: inline-block;
+  }
+
+  .tt-thr-st-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tt-thr-detail {
+    padding: 18px;
+  }
+
+  .tt-thr-wide {
+    display: none;
+  }
+
+  .tt-thr-narrow {
+    display: block;
+  }
+
+  .tt-thr-matrix {
+    padding: 16px;
+  }
+
+  .tt-thr-narrow .tt-thr-table thead th {
+    font-size: 10.5px;
+  }
+
+  .tt-thr-narrow .tt-thr-table tbody th {
+    width: 104px;
+    padding-left: 0;
+    font-size: 11px;
+  }
+}

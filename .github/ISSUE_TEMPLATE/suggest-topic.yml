@@ -1,5 +1,5 @@
 name: Suggest a topic
-description: Propose a system design or AI topic to explain step by step.
+description: Propose a system to teach, built around one real production design.
 title: "Add a topic: "
 labels: ["new topic"]
 body:
@@ -7,16 +7,28 @@ body:
     id: topic
     attributes:
       label: Topic
-      placeholder: e.g. Caching
+      placeholder: e.g. Event streaming at scale
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: The one system it's built around
+      placeholder: e.g. An order-events platform
     validations:
       required: true
   - type: dropdown
-    id: roadmap
+    id: domain
     attributes:
-      label: Roadmap
+      label: Domain
       options:
-        - AI System Design
-        - A new roadmap (describe below)
+        - AI & ML
+        - Payments & fintech
+        - Distributed systems
+        - Data
+        - Security
+        - Reliability
+        - Cloud & platform
     validations:
       required: true
   - type: dropdown
@@ -24,23 +36,23 @@ body:
     attributes:
       label: Level
       options:
-        - Basics
+        - Foundation
         - Intermediate
         - Advanced
     validations:
       required: true
   - type: textarea
-    id: steps
+    id: lessons
     attributes:
-      label: What happens, step by step?
-      description: A rough list of the moving parts and the order they act in.
+      label: Lessons
+      description: A rough list of lessons, and the moving parts each one adds to the system.
     validations:
       required: true
   - type: textarea
     id: sources
     attributes:
       label: Sources
-      description: Papers, official docs or engineering posts to check it against.
+      description: Papers, official docs or engineering posts to check the figures against.
   - type: checkboxes
     id: write
     attributes:

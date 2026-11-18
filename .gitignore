@@ -41,6 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # generated content index
+/content/v1/.generated/
 /content/.generated/
 
 # playwright
@@ -51,3 +52,6 @@ next-env.d.ts
 
 # lighthouse ci
 /.lighthouseci/
+
+# Design comparison sheets (npm run compare:design)
+compare/

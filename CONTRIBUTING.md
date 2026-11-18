@@ -1,54 +1,66 @@
 # Contributing
 
-Thanks for helping. The most useful contribution is a new topic, and you can
-add one without touching any component code.
+Thanks for helping. The most useful contribution is a new lesson or topic,
+and you can add one without touching component code: content is typed data
+under `content/`, checked by `npm test`.
 
-## Add a topic in five steps
+## How a topic is laid out
 
-1. **Copy the template.** Copy `content/topics/_template.ts` to
-   `content/topics/<your-topic-id>.ts`. Use a short kebab-case id, such as
-   `caching` or `load-balancing`.
-2. **Fill it in.** Write the title, level, summary, diagram, steps and
-   sources. The comments in the template explain each field.
-3. **List it in a roadmap.** Add your id to the `topics` list in a file in
-   `content/roadmaps/`, in the order a learner should meet it.
-4. **Run `npm test`.** It checks your file and names the file and field of
-   anything that needs fixing. Run `npm run dev` to see your topic at
-   http://localhost:3000/topics/your-topic-id/.
-5. **Open a pull request.** Fill in the checklist. A maintainer reviews
-   every topic for accuracy before it's merged.
+```
+content/
+  facts/<topic>.ts                 the facts register: every figure, with its source
+  topics/<topic>/
+    topic.ts                       title, level, lessons (outlines), overview
+    diagrams/<diagram>.ts          the system's parts in 3D and 2D
+    lessons/<lesson>.ts            steps: text, hops, metrics, narration line
+    checkpoints/<lesson>.ts        three questions per lesson
+    tools/<kind>.ts                optional: threats, governance, lab, sheets, cards
+```
+
+The Foundations topic (`content/topics/foundations/`) is the smallest
+complete example: copy its shape. Its lessons show every step field in use.
+
+## Add a lesson in six steps
+
+1. **Outline it** in the topic's `lessons` list (`topic.ts`): a kebab-case
+   `id`, title, one-line summary and minutes. Lessons without a file show
+   as "Coming".
+2. **Draw the system** in `diagrams/`, or reuse the topic's diagram. Node
+   ids are single capital letters; 2D boxes sit on a grid; 3D positions are
+   the same grid projected isometrically (see `foundations/diagrams/`).
+3. **Write the steps** in `lessons/<id>.ts` (with `author: "community"`): 3 to 12 steps, each with a
+   short rail label, a title, one to four short paragraphs, a callout, the
+   hops the request makes, and a one-sentence narration `caption`.
+4. **Source every figure.** Any number on screen must appear in the value
+   of a fact in `content/facts/<topic>.ts`, with the primary source's link
+   and the date you read it. The content check names any figure that
+   isn't. Teaching assumptions are allowed, labelled as such.
+5. **Add the checkpoint**: three questions in `checkpoints/<id>.ts`, each
+   with four options, feedback for each, and the facts it relies on. A
+   maintainer checks them against the sources before setting `approved`.
+6. **Run `npm test`**, then `npm run dev` to step through it at
+   http://localhost:3000/topics/<topic>/lessons/<id>/, at phone width too.
+
+Set `author: "community"` on your lesson. Tech & Thrive's own lessons are
+narrated in the creator's voice and CI requires those recordings; a
+community lesson ships with its transcript instead: each step's `caption`
+is shown as text, so write it as one clear sentence.
 
 ## Content rules
 
-`npm test` and the build enforce these:
+`npm test` and the build enforce these, naming the file and field of
+anything that fails:
 
-| Field               | Rule                                                                                               |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| `id`                | kebab-case, the same as the file name; never changes once merged                                   |
-| `title`             | at most 60 characters                                                                              |
-| `level`             | `basics`, `intermediate` or `advanced`                                                             |
-| `minutes`           | whole minutes to work through it, 1–60                                                             |
-| `summary`           | one sentence, at most 140 characters                                                               |
-| `diagram.nodes`     | grid cells x 0–3, y 0–5, one node per cell; label at most 20 characters, no word over 10           |
-| `nodes[].note`      | one sentence, at most 90 characters, on what the part does (shown when a learner clicks the block) |
-| `nodes[].icon`      | optional; one of the icons listed in the template                                                  |
-| `diagram.edges`     | join two node ids; a line may not pass through a third node                                        |
-| `edges[].flows`     | optional; what moves along the line, at most 40 characters (shown on hover)                        |
-| `steps`             | 3 to 9; each `text` is one sentence of at most 140 characters                                      |
-| `steps[].title`     | a short name for the step, at most 24 characters, no full stop (it names the Next button)          |
-| `steps[].highlight` | node and edge ids from this topic                                                                  |
-| `sources`           | at least one outside Tech & Thrive; `read` is the date you checked it (YYYY-MM-DD)                 |
-| `video`             | optional; an 11-character YouTube id and the video's title                                         |
+- Ids are kebab-case and **never change once merged**: they key learners'
+  stored progress. Old topic ids are reserved (`content/types.ts`).
+- Every figure on screen is in the facts register for that topic.
+- Facts have a primary source (`url`) unless they are a labelled teaching
+  assumption or derived from other facts, and a `recheckBy` date.
+- Hops only run along the diagram's edges, between parts already built.
+- Checkpoints have exactly three questions of four options.
 
-Every node and edge id must be unique within the topic. An edge's label is a
-small pill drawn beside its line, so it needs room on one side: leave a gap or
-an empty cell next to the line.
-
-Writing tips:
-
-- One idea per step. Say what the lit-up part is doing, in plain words.
-- Prefer primary sources: papers, official docs and engineering posts.
-- Keep the diagram small. Five to nine boxes is usually enough.
+Writing tips: one idea per step; plain words; prefer papers, official docs
+and engineering posts; keep diagrams to five to thirteen parts.
 
 ## Code changes
 
@@ -63,7 +75,7 @@ npm run test:e2e  # Playwright and axe; installs browsers on first run with npx 
 
 Pages must stay static (no server features), fast (under 150 KB of
 JavaScript per page) and accessible (keyboard, screen readers, reduced
-motion, 4.5:1 contrast).
+motion, 4.5:1 contrast, zero axe violations).
 
 ## Content agreement
 

@@ -1,6 +1,13 @@
 // Fails if any built page loads more than 150 KB of gzipped JavaScript
-// (PRD quality bar). Run after `npm run build`. noModule scripts are
-// skipped: modern browsers never download them.
+// (PRD quality bar). Run after `npm run build`.
+//
+// A page's JavaScript is its <script src> tags plus every chunk its
+// embedded React payload names: client components rendered on the page,
+// including ones loaded through next/dynamic, which never get a script tag
+// but download before the page works. noModule scripts (the legacy
+// polyfill) are skipped wherever they appear: modern browsers never
+// download them. Prefetches for other pages aren't in the page, so they
+// don't count.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { gzipSync } from "node:zlib";
@@ -19,6 +26,14 @@ function htmlFiles(dir: string): string[] {
 }
 
 let failed = false;
+// The legacy polyfill, named by noModule script tags on any page.
+const legacy = new Set<string>();
+for (const file of htmlFiles(out))
+  for (const [tag, src] of readFileSync(file, "utf8").matchAll(
+    /<script[^>]*\ssrc="([^"]+\.js)"[^>]*>/g,
+  ))
+    if (/\snoModule/i.test(tag)) legacy.add(src!.slice(basePath.length));
+
 for (const file of htmlFiles(out)) {
   const html = readFileSync(file, "utf8");
   const scripts = new Set<string>();
@@ -27,6 +42,13 @@ for (const file of htmlFiles(out)) {
   )) {
     if (/\snoModule/i.test(tag)) continue;
     scripts.add(src!.slice(basePath.length));
+  }
+  // Chunks named in the payload, with or without the base path.
+  for (const [, src] of html.matchAll(
+    /(?:\\"|")((?:[^"\\]*?)\/_next\/static\/chunks\/[^"\\]+\.js)/g,
+  )) {
+    const path = src!.slice(src!.indexOf("/_next/"));
+    if (!legacy.has(path)) scripts.add(path);
   }
   let bytes = 0;
   for (const src of scripts)

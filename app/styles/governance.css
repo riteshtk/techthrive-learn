@@ -1,0 +1,315 @@
+/* Governance (spec 05 §4). The crosswalk is a table on desktop and a card
+   per control on phones. */
+.tt-gov-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+}
+
+.tt-gov-page .tt-fgroup {
+  overflow-x: auto;
+}
+
+.tt-gov-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.tt-gov-timeline {
+  flex: 1.2 1 520px;
+  min-width: 0;
+  padding: 22px 24px;
+}
+
+.tt-gov-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tt-gov-head h2 {
+  margin: 0;
+}
+
+.tt-gov-events {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-gov-ev {
+  display: grid;
+  grid-template-columns: 120px 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.tt-gov-ev.today {
+  align-items: center;
+  margin: 4px 0;
+  border-top: 1px dashed var(--line-3);
+  border-bottom: 1px dashed var(--line-3);
+}
+
+.tt-gov-date {
+  padding-top: 2px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tt-gov-ev.past .tt-gov-date,
+.tt-gov-ev.past .tt-h4 {
+  color: var(--muted);
+}
+
+.tt-gov-pin {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.tt-gov-ev.today .tt-gov-pin {
+  padding-top: 0;
+}
+
+/* A block, so the circle keeps its size (the design's pin bug). */
+.tt-gov-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line-3);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.tt-gov-ev.past .tt-gov-dot {
+  border-color: var(--text);
+  background: var(--text);
+}
+
+.tt-gov-ev-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tt-gov-ev-main p {
+  margin: 0;
+}
+
+.tt-gov-ev-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-gov-ev-title .tt-h4 {
+  font-size: 14.5px;
+}
+
+.tt-gov-jur {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tt-gov-ev-main .tt-body-s {
+  font-size: 13px;
+}
+
+.tt-gov-side {
+  display: flex;
+  flex: 1 1 360px;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.tt-gov-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+}
+
+.tt-gov-card h2,
+.tt-gov-card p {
+  margin: 0;
+}
+
+.tt-gov-pen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.tt-gov-pen div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tt-gov-pen dt {
+  color: var(--text);
+}
+
+.tt-gov-pen dd {
+  margin: 0;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.tt-gov-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-gov-chips .tt-chip {
+  height: auto;
+  min-height: 26px;
+  max-width: 100%;
+  color: var(--text);
+  white-space: normal;
+}
+
+.tt-gov-card .tt-cap {
+  font-size: var(--fs-cap-12);
+}
+
+.tt-gov-xw {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 16px 12px;
+}
+
+.tt-gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tt-gov-table th,
+.tt-gov-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tt-gov-table tr:last-child th,
+.tt-gov-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.tt-gov-table thead th {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tt-gov-table tbody th {
+  width: 14%;
+  font-weight: 700;
+}
+
+.tt-gov-table td:last-child {
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .tt-gov-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tt-gov-table,
+  .tt-gov-table tbody,
+  .tt-gov-table tr,
+  .tt-gov-table th,
+  .tt-gov-table td {
+    display: block;
+    width: auto !important;
+  }
+
+  .tt-gov-table tr {
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tt-gov-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .tt-gov-table th,
+  .tt-gov-table td {
+    padding: 4px 0;
+    border: 0;
+  }
+
+  .tt-gov-table tbody th {
+    font-size: 15px;
+  }
+
+  .tt-gov-table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 720px) {
+  .tt-gov-page {
+    padding: 20px 16px 40px;
+  }
+
+  .tt-gov-timeline {
+    padding: 18px 16px;
+  }
+
+  .tt-gov-ev {
+    grid-template-columns: 84px 20px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .tt-gov-date {
+    font-size: 11.5px;
+  }
+}

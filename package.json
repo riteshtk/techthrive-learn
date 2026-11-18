@@ -15,7 +15,9 @@
     "test": "npm run check:content && npm run typecheck && vitest run",
     "test:e2e": "playwright test --project=chromium-360 --project=chromium-1280",
     "test:e2e:webkit": "playwright test --project=webkit-360",
-    "check:budget": "tsx scripts/check-js-budget.ts"
+    "check:budget": "tsx scripts/check-js-budget.ts",
+    "test:visual": "playwright test --project=visual-1440 --project=visual-360",
+    "compare:design": "tsx scripts/compare-design.ts"
   },
   "dependencies": {
     "next": "16.4.6",

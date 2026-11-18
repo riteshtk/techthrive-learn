@@ -9,3 +9,6 @@ playwright-report/
 docs/
 /.lighthouseci/
 public/brand/
+
+# Narration transcripts ship exactly as recorded
+public/audio/

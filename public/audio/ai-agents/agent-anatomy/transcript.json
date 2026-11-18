@@ -1,0 +1,72 @@
+[
+ {
+  "step": 1,
+  "file": "01.mp3",
+  "transcript": "Twenty thousand customers a day, each with a charge they don’t recognise.",
+  "seconds": 4.76,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 2,
+  "file": "02.mp3",
+  "transcript": "Disputes follow a known path, so most of this is a workflow.",
+  "seconds": 4.09,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 3,
+  "file": "03.mp3",
+  "transcript": "The agent borrows the customer’s identity, scoped and short-lived.",
+  "seconds": 4.5,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 4,
+  "file": "04.mp3",
+  "transcript": "Four tools. Two read, two write, and the writes are capped.",
+  "seconds": 3.98,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 5,
+  "file": "05.mp3",
+  "transcript": "Retrieved text steers the agent, so we control what gets retrieved.",
+  "seconds": 4.77,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 6,
+  "file": "06.mp3",
+  "transcript": "The model can want anything. The policy engine decides what happens.",
+  "seconds": 4.52,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 7,
+  "file": "07.mp3",
+  "transcript": "Big credits wait for a human who sees the evidence.",
+  "seconds": 3.34,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 8,
+  "file": "08.mp3",
+  "transcript": "Four runs each. We ship on the worst case, not the best.",
+  "seconds": 3.67,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 9,
+  "file": "09.mp3",
+  "transcript": "Every turn leaves a trace an auditor can read.",
+  "seconds": 2.66,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ },
+ {
+  "step": 10,
+  "file": "10.mp3",
+  "transcript": "About six cents a conversation, before routing.",
+  "seconds": 2.99,
+  "voice": "RK (creator’s own cloned voice), VoiceStudio"
+ }
+]

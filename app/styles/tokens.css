@@ -1,0 +1,140 @@
+/* Design tokens from the v2 design (spec 01 §A1–A5). Each colour is defined
+   once with light-dark(light, dark); color-scheme picks the side. The app is
+   dark unless the learner chooses light with the theme switch, which sets
+   <html data-theme="light"> before paint. There is no OS detection.
+
+   Three light values are darker than the design so every text pair reaches
+   4.5:1 (PRD P1): faint #626A79 → #5E6675, amber #B45309 → #9A4508, green
+   #047857 → #03704F. tests/unit/theme.test.ts checks every pair. */
+:root {
+  /* Brand constants: the same in both themes. Ember is for the logo, the
+     live dot and the one live button, never text on porcelain. */
+  --ink: #070a12;
+  --porcelain: #f4f1ea;
+  --ember: #ff5a1f;
+  --on-ember: #070a12;
+
+  /* Grounds and text */
+  --surface: light-dark(#f4f1ea, #070a12);
+  --raised: light-dark(#ffffff, #0b1226);
+  --raised-2: light-dark(#eae6dc, #111a33);
+  --sunken: light-dark(#ece8de, #05070d);
+  --text: light-dark(#070a12, #f4f1ea);
+  --muted: light-dark(#5b6474, #a3adbf);
+  --faint: light-dark(#5e6675, #7c879b);
+  --line: light-dark(rgba(7, 10, 18, 0.09), rgba(244, 241, 234, 0.09));
+  --line-2: light-dark(rgba(7, 10, 18, 0.16), rgba(244, 241, 234, 0.16));
+  --line-3: light-dark(rgba(7, 10, 18, 0.3), rgba(244, 241, 234, 0.28));
+  --dot: light-dark(rgba(7, 10, 18, 0.12), rgba(244, 241, 234, 0.13));
+  --scrim: light-dark(rgba(7, 10, 18, 0.34), rgba(5, 7, 13, 0.72));
+
+  /* Content colours (decision 3: kept as designed) */
+  --cyan: light-dark(#0369a1, #38bdf8);
+  --violet: light-dark(#7c3aed, #a78bfa);
+  --amber: light-dark(#9a4508, #fbbf24);
+  --green: light-dark(#03704f, #34d399);
+  --red: light-dark(#be123c, #fb7185);
+  --blue: light-dark(#1d4ed8, #60a5fa);
+
+  /* Tinted callouts: background / border */
+  --tint-amber-bg: light-dark(rgba(180, 83, 9, 0.07), rgba(251, 191, 36, 0.08));
+  --tint-amber-line: light-dark(
+    rgba(180, 83, 9, 0.28),
+    rgba(251, 191, 36, 0.28)
+  );
+  --tint-violet-bg: light-dark(
+    rgba(124, 58, 237, 0.06),
+    rgba(167, 139, 250, 0.08)
+  );
+  --tint-violet-line: light-dark(
+    rgba(124, 58, 237, 0.26),
+    rgba(167, 139, 250, 0.28)
+  );
+  --tint-green-bg: light-dark(rgba(4, 120, 87, 0.06), rgba(52, 211, 153, 0.07));
+  --tint-green-line: light-dark(
+    rgba(4, 120, 87, 0.26),
+    rgba(52, 211, 153, 0.26)
+  );
+  --tint-red-bg: light-dark(rgba(190, 18, 60, 0.06), rgba(251, 113, 133, 0.08));
+  --tint-red-line: light-dark(
+    rgba(190, 18, 60, 0.26),
+    rgba(251, 113, 133, 0.28)
+  );
+  --tint-cyan-bg: light-dark(rgba(3, 105, 161, 0.06), rgba(56, 189, 248, 0.07));
+  --tint-cyan-line: light-dark(
+    rgba(3, 105, 161, 0.26),
+    rgba(56, 189, 248, 0.26)
+  );
+
+  --shadow-pop: 0 16px 40px rgba(0, 0, 0, 0.35);
+
+  /* Families: next/font sets --font-sans and --font-mono on <html>. */
+  --sans: var(--font-sans), "Inter", system-ui, sans-serif;
+  --mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+
+  /* Type roles (spec 01 §A4) */
+  --fs-h1: 40px;
+  --fs-h2: 28px;
+  --fs-h3: 20px;
+  --fs-h4: 16px;
+  --fs-body: 16px;
+  --fs-body-s: 14px;
+  --fs-cap: 13px;
+  --fs-lbl: 11px;
+  --fs-lbl-s: 10px;
+
+  /* The design's one-off sizes, named (PRD design rule "tokens, not
+     one-offs"). */
+  --fs-title-card-17: 17px;
+  --fs-title-row-15: 15px;
+  --fs-title-item-14-5: 14.5px;
+  --fs-title-well-14: 14px;
+  --fs-title-topic-19: 19px;
+  --fs-title-cert-18: 18px;
+  --fs-body-13-5: 13.5px;
+  --fs-body-13: 13px;
+  --fs-cap-12: 12px;
+  --fs-meta-mono-11: 11px;
+  --fs-meta-mono-11-5: 11.5px;
+  --fs-stat-22: 22px;
+  --fs-stat-20: 20px;
+  --fs-stat-26: 26px;
+
+  /* Control sizes */
+  --h-control: 44px;
+  --h-control-sm: 36px;
+  --h-input-catalog: 42px;
+  --h-nav: 38px;
+  --h-subnav: 34px;
+  --h-chip: 28px;
+  --h-chip-compact: 22px;
+  --h-filter-chip: 36px;
+  --h-topbar: 64px;
+  --h-topicbar: 54px;
+
+  /* Radii (spec 01 §A5) */
+  --r-pill: 999px;
+  --r-28: 28px;
+  --r-22: 22px;
+  --r-20: 20px;
+  --r-18: 18px;
+  --r-16: 16px;
+  --r-14: 14px;
+  --r-12: 12px;
+  --r-10: 10px;
+  --r-8: 8px;
+  --r-6: 6px;
+  --r-3: 3px;
+
+  /* Layout */
+  --page-max: 1320px;
+  --page-pad: 28px 28px 56px;
+  --gap-section: 22px;
+  --gap-section-tight: 20px;
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}

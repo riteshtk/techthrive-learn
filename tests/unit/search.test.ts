@@ -1,68 +1,122 @@
-import { describe, expect, expectTypeOf, it } from "vitest";
-import { navRoadmaps, searchEntries } from "@/content";
-import type { Level } from "@/content/types";
+import { describe, expect, it } from "vitest";
+import { searchDocuments } from "@/content";
 import {
-  navTopicIds,
-  searchTopics,
-  type NavRoadmap,
-  type NavTopic,
+  parseSearchIndex,
+  resultHref,
+  search,
+  type SearchDoc,
 } from "@/lib/search";
 
-const entries = searchEntries();
-const ids = (q: string) => searchTopics(entries, q).map((r) => r.id);
+const docs: SearchDoc[] = [
+  {
+    kind: "fact",
+    title: "Cache hits cost 10% of input",
+    context: "Production AI agents",
+    text: "Claude prices, read 17 Nov 2026",
+    path: "/topics/agents/sources/",
+  },
+  {
+    kind: "step",
+    title: "Put the limits outside the prompt",
+    context: "Anatomy of a production agent · step 6",
+    text: "The policy engine decides what happens.",
+    path: "/topics/agents/lessons/anatomy/",
+    step: 6,
+  },
+  {
+    kind: "lesson",
+    title: "Anatomy of a production agent",
+    context: "Production AI agents",
+    text: "Nine components around one card-dispute agent, policy included.",
+    path: "/topics/agents/lessons/anatomy/",
+  },
+  {
+    kind: "topic",
+    title: "Production AI agents",
+    context: "Topic",
+    text: "Identity, least privilege, evals, traces and cost.",
+    path: "/topics/agents/",
+  },
+];
+
+const titles = (q: string) => search(docs, q).map((r) => r.title);
 
 describe("search", () => {
-  it("lists every topic for an empty query", () => {
-    expect(ids("").sort()).toEqual(["agent-loop", "how-an-llm-answers", "rag"]);
+  it("needs every word, in any field and any case", () => {
+    expect(titles("POLICY engine")).toEqual([
+      "Put the limits outside the prompt",
+    ]);
+    expect(titles("policy nothing-like-this")).toEqual([]);
   });
 
-  it("finds topics by title, ignoring case", () => {
-    expect(ids("AGENT")).toEqual(["agent-loop"]);
-    expect(ids("rag")[0]).toBe("rag");
+  it("ranks title matches first, then topic, lesson, step, fact", () => {
+    expect(titles("agent")).toEqual([
+      "Production AI agents",
+      "Anatomy of a production agent",
+      "Put the limits outside the prompt",
+      "Cache hits cost 10% of input",
+    ]);
+    expect(titles("policy")).toEqual([
+      "Anatomy of a production agent",
+      "Put the limits outside the prompt",
+    ]);
   });
 
-  it("finds topics by block labels and summaries", () => {
-    expect(ids("vector store")).toEqual(["rag"]);
-    expect(ids("tokenizer")).toEqual(["how-an-llm-answers"]);
+  it("finds facts", () => {
+    expect(titles("cache hits")).toEqual(["Cache hits cost 10% of input"]);
   });
 
-  it("links straight to the step that matches", () => {
-    const [hit] = searchTopics(entries, "temperature");
-    expect(hit).toMatchObject({
-      id: "how-an-llm-answers",
-      step: 4,
-      detail: "Step 4: Pick one token",
-    });
+  it("lists topics for an empty query, and respects the limit", () => {
+    expect(titles("  ")).toEqual(["Production AI agents"]);
+    expect(search(docs, "a", 2)).toHaveLength(2);
   });
 
-  it("needs every word to match", () => {
-    expect(ids("tokenizer permission")).toEqual([]);
-  });
-
-  it("puts title matches first", () => {
-    const results = searchTopics(entries, "model");
-    expect(results.length).toBeGreaterThan(1);
-    expect(results.every((r) => r.step === undefined)).toBe(true);
+  it("links steps with ?step", () => {
+    const [step] = search(docs, "limits outside");
+    expect(step && resultHref(step)).toBe(
+      "/topics/agents/lessons/anatomy/?step=6",
+    );
+    const [topic] = search(docs, "production ai agents");
+    expect(topic && resultHref(topic)).toBe("/topics/agents/");
   });
 });
 
-describe("course menu data", () => {
-  it("counts a topic in two roadmaps once", () => {
-    const topic = (id: string): NavTopic => ({
-      id,
-      title: id,
-      level: "basics",
-    });
-    const roadmaps: NavRoadmap[] = [
-      { id: "one", title: "One", topics: [topic("rag"), topic("agent-loop")] },
-      { id: "two", title: "Two", topics: [topic("rag"), topic("tools")] },
-    ];
-    expect(navTopicIds(roadmaps)).toEqual(["rag", "agent-loop", "tools"]);
+describe("parseSearchIndex", () => {
+  it("keeps valid documents and drops the rest", () => {
+    expect(parseSearchIndex(docs)).toEqual(docs);
+    expect(
+      parseSearchIndex([
+        ...docs,
+        { kind: "x" },
+        null,
+        3,
+        { ...docs[0], step: 1.5 },
+      ]),
+    ).toEqual(docs);
+    expect(parseSearchIndex({ not: "an array" })).toEqual([]);
+  });
+});
+
+describe("the built index", () => {
+  const built = searchDocuments();
+
+  it("covers every kind the content has, with app paths", () => {
+    expect(new Set(built.map((d) => d.kind))).toEqual(
+      new Set(["topic", "lesson", "step", "fact"]),
+    );
+    for (const d of built) expect(d.path).toMatch(/^\/.*\/$/);
   });
 
-  it("types each topic's level as a content level", () => {
-    expectTypeOf<NavTopic["level"]>().toEqualTypeOf<Level>();
-    for (const topic of navRoadmaps().flatMap((r) => r.topics))
-      expect(["basics", "intermediate", "advanced"]).toContain(topic.level);
+  it("finds a lesson step, a tool and a fact", () => {
+    const hit = (q: string) => search(built, q, 20).map((r) => r.path);
+    expect(hit("idempotency key")).toContain(
+      "/topics/payments/lessons/move-money-exactly-once/",
+    );
+    expect(hit("threat model")).toContain("/topics/ai-agents/threats/");
+    expect(hit("NPCI")).toContain("/topics/payments/sources/");
+  });
+
+  it("is valid as served", () => {
+    expect(parseSearchIndex(JSON.parse(JSON.stringify(built)))).toEqual(built);
   });
 });

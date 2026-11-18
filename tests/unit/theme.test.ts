@@ -1,13 +1,16 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { THEME_KEY, THEME_SCRIPT } from "@/lib/theme";
 
-// Reads the colour tokens straight from globals.css, so this checks the
+// Reads the colour tokens straight from tokens.css, so this checks the
 // palette that actually ships, in both themes.
-const css = readFileSync(join(__dirname, "../../app/globals.css"), "utf8");
-const tokenBlock = css.slice(css.indexOf(":root {"), css.indexOf("@media"));
+const css = readFileSync(
+  join(__dirname, "../../app/styles/tokens.css"),
+  "utf8",
+);
 const raw: Record<string, string> = Object.fromEntries(
-  [...tokenBlock.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [
+  [...css.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [
     m[1]!,
     m[2]!.trim(),
   ]),
@@ -15,12 +18,27 @@ const raw: Record<string, string> = Object.fromEntries(
 
 type Scheme = "light" | "dark";
 
+/** Splits light-dark(a, b) at its top-level comma. */
+function lightDark(value: string): [string, string] | null {
+  const inner = value.match(/^light-dark\((.+)\)$/s)?.[1];
+  if (!inner) return null;
+  let depth = 0;
+  for (let i = 0; i < inner.length; i++) {
+    const c = inner[i];
+    if (c === "(") depth++;
+    else if (c === ")") depth--;
+    else if (c === "," && depth === 0)
+      return [inner.slice(0, i).trim(), inner.slice(i + 1).trim()];
+  }
+  return null;
+}
+
 /** Resolves var() and picks the right side of light-dark(). */
 function resolve(name: string, scheme: Scheme): string {
   let value = raw[name];
   for (let i = 0; value && i < 10; i++) {
-    const pair = value.match(/^light-dark\((.+),\s*(.+)\)$/);
-    if (pair) value = scheme === "light" ? pair[1]!.trim() : pair[2]!.trim();
+    const pair = lightDark(value);
+    if (pair) value = scheme === "light" ? pair[0] : pair[1];
     const ref = value.match(/^var\(--([\w-]+)\)$/);
     if (!ref) break;
     value = raw[ref[1]!];
@@ -43,106 +61,80 @@ function contrast(a: string, b: string): number {
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
-/** Every text colour and what it sits on. */
-const TEXT_PAIRS: [text: string, background: string][] = [
-  ["text", "bg"],
-  ["text", "surface"],
-  ["text", "surface-2"], // bottom bar, drawer and search highlights
-  ["text-muted", "bg"],
-  ["text-muted", "surface"], // legend, chips, counter, captions' notes
-  ["text-muted", "surface-2"],
-  ["bg", "text"], // the big Next button is inverted
-  ["node-text-dim", "node-fill"],
-  ["node-text-dim", "surface"], // dimmed edge pills
-  ["node-text-on", "node-fill-on"],
-];
-
-const TEXT_TOKENS = ["text", "text-muted", "node-text-dim", "node-text-on"];
+const GROUNDS = ["surface", "raised", "raised-2", "sunken"];
+const TEXT = ["text", "muted", "faint"];
+const CONTENT = ["cyan", "violet", "amber", "green", "red", "blue"];
 
 describe.each(["dark", "light"] as const)("%s theme", (scheme) => {
-  it.each(TEXT_PAIRS)("--%s on --%s is at least 4.5:1", (fg, bg) => {
+  const pairs = [...TEXT, ...CONTENT].flatMap((fg) =>
+    GROUNDS.map((bg) => [fg, bg] as const),
+  );
+
+  it.each(pairs)("--%s on --%s is at least 4.5:1", (fg, bg) => {
     expect(
       contrast(resolve(fg, scheme), resolve(bg, scheme)),
     ).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("the focus ring stands out at least 3:1 and isn't ember", () => {
-    const focus = resolve("focus", scheme);
-    expect(focus).not.toBe(resolve("ember", scheme));
-    expect(contrast(focus, resolve("bg", scheme))).toBeGreaterThanOrEqual(3);
-    expect(contrast(focus, resolve("surface", scheme))).toBeGreaterThanOrEqual(
-      3,
-    );
-  });
-
-  it("lit lines, packets and the current step stand out at least 3:1", () => {
-    const stage = resolve("surface", scheme);
-    expect(contrast(resolve("edge-on", scheme), stage)).toBeGreaterThanOrEqual(
-      3,
-    );
-    // An ember shape counts if its fill or its ring reaches 3:1.
-    for (const t of ["packet", "step-on"]) {
-      const best = Math.max(
-        contrast(resolve(t, scheme), stage),
-        contrast(resolve("on-ring", scheme), stage),
-      );
-      expect(best).toBeGreaterThanOrEqual(3);
-    }
+  it("primary buttons and on chips (surface on text) reach 4.5:1", () => {
+    expect(
+      contrast(resolve("surface", scheme), resolve("text", scheme)),
+    ).toBeGreaterThanOrEqual(4.5);
   });
 });
 
-describe("Momentum brand", () => {
-  it("uses the brand colours", () => {
+describe("brand", () => {
+  it("uses the brand colours as grounds", () => {
     expect(resolve("ink", "dark")).toBe("#070a12");
     expect(resolve("porcelain", "dark")).toBe("#f4f1ea");
     expect(resolve("ember", "dark")).toBe("#ff5a1f");
-    expect(resolve("bg", "dark")).toBe("#070a12");
-    expect(resolve("bg", "light")).toBe("#f4f1ea");
+    expect(resolve("surface", "dark")).toBe("#070a12");
+    expect(resolve("surface", "light")).toBe("#f4f1ea");
   });
 
-  it("is dark by default, light when the device asks or the toggle says", () => {
-    expect(tokenBlock).toMatch(/color-scheme: dark;/);
-    expect(css).toMatch(
-      /@media \(prefers-color-scheme: light\) \{\s*:root:not\(\[data-theme="dark"\]\) \{\s*color-scheme: light;/,
-    );
-    expect(css).toMatch(
-      /:root\[data-theme="light"\] \{\s*color-scheme: light;/,
-    );
+  it("keeps the design's dark palette unchanged", () => {
+    expect(
+      Object.fromEntries(
+        [...TEXT, ...CONTENT, ...GROUNDS].map((t) => [t, resolve(t, "dark")]),
+      ),
+    ).toEqual({
+      text: "#f4f1ea",
+      muted: "#a3adbf",
+      faint: "#7c879b",
+      cyan: "#38bdf8",
+      violet: "#a78bfa",
+      amber: "#fbbf24",
+      green: "#34d399",
+      red: "#fb7185",
+      blue: "#60a5fa",
+      surface: "#070a12",
+      raised: "#0b1226",
+      "raised-2": "#111a33",
+      sunken: "#05070d",
+    });
   });
 
   it("never uses ember for text in light mode", () => {
-    for (const t of TEXT_TOKENS)
-      expect(resolve(t, "light")).not.toBe(resolve("ember", "light"));
-    // Ember on porcelain would only be about 2.8:1.
+    // Ember on porcelain is about 2.8:1.
     expect(
       contrast(resolve("ember", "light"), resolve("porcelain", "light")),
     ).toBeLessThan(4.5);
+    for (const t of [...TEXT, ...CONTENT])
+      expect(resolve(t, "light")).not.toBe(resolve("ember", "light"));
   });
+});
 
-  it("gives the current step a heavier ink outline in light mode", () => {
-    expect(resolve("node-stroke-on", "light")).toBe(resolve("ink", "light"));
+describe("theme switch", () => {
+  it("is dark unless light is chosen; the device is not consulted", () => {
+    expect(css).toMatch(/:root \{[\s\S]*color-scheme: dark;/);
     expect(css).toMatch(
-      /\.node\[data-on="true"\] \.node-face \{[^}]*stroke-width: 3;/,
+      /:root\[data-theme="light"\] \{\s*color-scheme: light;/,
     );
+    expect(css).not.toMatch(/prefers-color-scheme/);
   });
 
-  it("uses ember only for the current step", () => {
-    const emberTokens = Object.entries(raw)
-      .filter(([k, v]) => k !== "ember" && v.includes("var(--ember)"))
-      .map(([k]) => k)
-      .sort();
-    expect(emberTokens).toEqual([
-      "edge-on",
-      "node-fill-on",
-      "node-stroke-on",
-      "packet",
-      "step-on",
-    ]);
-    // Outside the token block, ember is never used directly.
-    expect(css.slice(css.indexOf("/* Base"))).not.toMatch(/--ember|#ff5a1f/i);
-  });
-
-  it("dims by colour, never opacity", () => {
-    expect(css).not.toMatch(/opacity\s*:/);
+  it("applies the stored choice before paint", () => {
+    expect(THEME_SCRIPT).toContain(JSON.stringify(THEME_KEY));
+    expect(THEME_SCRIPT).toContain("dataset.theme=t");
   });
 });

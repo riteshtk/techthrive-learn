@@ -1,0 +1,824 @@
+/* The lesson page (spec 04 §1). Desktop: the stage section beside the
+   Explain aside, wrapping below 1218 px. Phones follow the approved still:
+   title, step rail, tiles, viewer, hop well, legend, narration, then the
+   Explain panel. */
+
+.tt-lesson {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px 28px;
+}
+
+.tt-lesson-main {
+  display: flex;
+  flex: 999 1 760px;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.tt-lesson.wide .tt-lesson-main {
+  flex: 1 1 100%;
+}
+
+.tt-lesson-aside {
+  display: flex;
+  flex: 1 1 390px;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.tt-lesson.wide .tt-lesson-aside {
+  flex-basis: 100%;
+}
+
+/* Title row */
+.tt-lesson-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.tt-lesson-titles {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.tt-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--fs-cap-12);
+}
+
+.tt-crumb a:hover {
+  color: var(--text);
+}
+
+.tt-lesson-titlerow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.tt-lesson-h1 {
+  font-size: 32px;
+}
+
+.tt-lesson-titlerow .tt-chip {
+  text-transform: uppercase;
+}
+
+/* Desktop order: title, stage card, then the step rail. */
+.tt-lesson-head {
+  order: 0;
+}
+
+.tt-stagecard {
+  order: 1;
+}
+
+.tt-rail {
+  order: 2;
+}
+
+/* The stage card */
+.tt-stagecard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.tt-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tt-metric-tiles {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-mt {
+  display: flex;
+  flex: 1 1 130px;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-12);
+  background: var(--surface);
+}
+
+.tt-mt-value {
+  margin-top: 5px;
+  font-size: 19px;
+}
+
+.tt-vf {
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-18);
+  background: var(--surface);
+}
+
+.tt-vf .tt-vh {
+  position: relative;
+  z-index: 3;
+  padding: 8px 8px 8px 16px;
+  background: var(--raised);
+}
+
+.tt-viewer {
+  position: relative;
+  height: clamp(300px, 64vw, 560px);
+  transition: height 0.35s ease;
+}
+
+.tt-lesson.wide .tt-viewer {
+  height: clamp(300px, 64vw, 720px);
+}
+
+.tt-field-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.tt-wide-toggle[aria-pressed="true"] {
+  background: var(--raised-2);
+}
+
+/* Overlays on the field: component details and the sandbox */
+.tt-ov {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 320px;
+  max-width: calc(100% - 28px);
+  max-height: calc(100% - 28px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-16);
+  background: var(--raised);
+}
+
+.tt-ov:focus-visible {
+  outline: 2px solid var(--text);
+}
+
+.tt-ov-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.tt-ov-head .tt-key {
+  margin-top: 6px;
+}
+
+.tt-ov-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.tt-ov-what {
+  color: var(--text);
+}
+
+.tt-ov-points {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-ov-points .tt-check {
+  font-size: 12.5px;
+}
+
+.tt-ov-standards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.tt-ov-standards ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-body-13);
+}
+
+.tt-ov-std {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.tt-ov-note {
+  font-size: 10.5px;
+}
+
+.tt-ov-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Sandbox: over the field on desktop, inline on phones (approved still). */
+.tt-sandbox-slot {
+  position: relative;
+}
+
+.tt-sandbox {
+  position: absolute;
+  top: 70px;
+  width: 310px;
+  max-height: none;
+}
+
+.tt-sb-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tt-sb-input.off {
+  opacity: 0.55;
+}
+
+.tt-sb-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tt-sb-value {
+  color: var(--text);
+}
+
+.tt-sb-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-body-13-5);
+}
+
+.tt-sb-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--text);
+}
+
+.tt-sb-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.tt-sb-big {
+  font-size: 16px;
+}
+
+.tt-sb-foot {
+  font-size: 11.5px;
+}
+
+/* Hop well */
+.tt-hopwell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+}
+
+.tt-hopwell-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.tt-hopwell-now {
+  flex: 1 1 380px;
+  min-width: 0;
+}
+
+.tt-hoptag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-hoptext {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.tt-hops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Positioned, so its screen-reader text stays inside the scrolling row
+   on phones instead of widening the page. */
+.tt-hopc {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 13px 0 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tt-hopc:hover {
+  border-color: var(--line-3);
+  color: var(--text);
+}
+
+.tt-hopn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1.6px solid var(--hop);
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.tt-hopa {
+  color: var(--faint);
+  font-weight: 500;
+}
+
+.tt-hopc.cur {
+  border-color: var(--line-3);
+  background: var(--raised-2);
+  color: var(--text);
+}
+
+.tt-hopc.cur .tt-hopn {
+  background: var(--hop);
+  color: var(--surface);
+}
+
+.tt-hopc.done .tt-hopn {
+  opacity: 0.55;
+}
+
+/* Legend, added-in-this-step, narration */
+.tt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 18px;
+  padding: 0 4px;
+}
+
+.tt-legend-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--fs-cap-12);
+}
+
+.tt-legend-keys li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tt-legend-arrow {
+  color: var(--muted);
+}
+
+.tt-adds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-adds-what {
+  font-size: var(--fs-body-13-5);
+  font-weight: 700;
+}
+
+.tt-narration {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.tt-narration-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.tt-narration-play {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.tt-narration-line {
+  flex: 1 1 260px;
+  color: var(--text);
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+}
+
+.tt-narration-mode {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tt-pb {
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--line-2);
+}
+
+.tt-pb > i {
+  display: block;
+  height: 100%;
+  background: var(--text);
+  transition: width 0.5s ease;
+}
+
+/* Steps rail */
+.tt-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+}
+
+.tt-rail-now {
+  display: none;
+}
+
+.tt-rail-list {
+  position: relative;
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-rail-list::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  right: 22px;
+  left: 22px;
+  height: 1.5px;
+  background: var(--line-2);
+}
+
+.tt-stp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tt-stp-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--line-3);
+  border-radius: 50%;
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    background 0.3s,
+    border-color 0.3s;
+}
+
+.tt-stp-label {
+  font-size: 10.5px;
+}
+
+.tt-stp.done .tt-stp-dot {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--surface);
+}
+
+/* The current step: ember marks it (the one live highlight). */
+.tt-stp.now {
+  color: var(--text);
+}
+
+.tt-stp.now .tt-stp-dot {
+  border-color: var(--ember);
+  color: var(--text);
+}
+
+.tt-rail-count {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* The aside: Explain and Sources */
+.tt-aside-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 640px;
+  padding: 24px;
+}
+
+.tt-explain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tt-explain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tt-explain-title {
+  font-size: 24px;
+}
+
+.tt-explain-body {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.tt-code {
+  padding: 12px 14px;
+}
+
+.tt-code pre {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.tt-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+}
+
+.tt-callout-text {
+  color: var(--text);
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+}
+
+.tt-explain-spacer {
+  flex: 1;
+}
+
+.tt-explain-nav {
+  display: flex;
+  gap: 10px;
+}
+
+.tt-explain-back {
+  flex: 1;
+}
+
+.tt-explain-next {
+  flex: 2;
+}
+
+.tt-source {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.tt-source-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tt-source-title a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tt-source-detail {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.tt-lesson .tt-stage-text {
+  padding: 0 4px;
+}
+
+/* Phones: the approved still's order and condensing. */
+@media (max-width: 720px) {
+  .tt-lesson {
+    padding: 16px 16px 24px;
+  }
+
+  .tt-lesson-h1 {
+    font-size: 26px;
+  }
+
+  /* Phones: the rail moves up under the title (approved still). */
+  .tt-rail {
+    order: 0;
+  }
+
+  .tt-mt-value {
+    font-size: 16px;
+  }
+
+  .tt-vf .tt-vh {
+    padding: 8px;
+  }
+
+  .tt-vf .tt-vh-tools {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .tt-stagecard {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .tt-mt {
+    flex-basis: calc(50% - 5px);
+  }
+
+  .tt-metrics > .tt-btn {
+    flex: 1 1 100%;
+  }
+
+  .tt-sandbox {
+    position: static;
+    width: auto;
+    max-width: none;
+  }
+
+  .tt-vf .tt-vh-label,
+  .tt-field-hint {
+    display: none;
+  }
+
+  .tt-hops {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tt-rail {
+    padding: 12px 14px;
+  }
+
+  .tt-rail-label,
+  .tt-rail-count {
+    display: none;
+  }
+
+  /* Hidden on screen but kept as the dot's name. */
+  .tt-stp-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tt-rail-now {
+    display: block;
+    margin-left: auto;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .tt-rail-now b {
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+  }
+
+  .tt-rail-list {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .tt-stp {
+    min-width: 0;
+  }
+
+  .tt-stp-dot {
+    width: 27px;
+    height: 27px;
+  }
+
+  .tt-rail-list::before {
+    top: 13px;
+  }
+
+  .tt-aside-card {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .tt-explain-title {
+    font-size: 22px;
+  }
+}

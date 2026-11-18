@@ -1,54 +1,213 @@
-import { roadmapFiles, topicFiles } from "./.generated";
-import type { NavRoadmap, SearchEntry } from "@/lib/search";
-import type { Roadmap, Topic } from "./types";
+// The v2 content, checked once and shared by every page at build time.
+// `npm run check:content` runs first in every build, so by the time a page
+// asks for content it is valid; this throws only if that step was skipped.
+import type { SearchDoc } from "@/lib/search";
+import {
+  catalogFiles,
+  checkpointFiles,
+  diagramFiles,
+  factFiles,
+  lessonFiles,
+  toolFiles,
+  topicFiles,
+} from "./.generated";
+import { formatIssue } from "./schema";
+import type {
+  Checkpoint,
+  Diagram,
+  Fact,
+  Lesson,
+  PlannedTopic,
+  Tool,
+  ToolKind,
+  Topic,
+} from "./types";
+import { validateContent, type Content } from "./validate";
 
-export function getRoadmaps(): Roadmap[] {
-  return roadmapFiles.map((f) => f.roadmap);
-}
+let cached: Content | undefined;
 
-export function getRoadmap(id: string): Roadmap | undefined {
-  return getRoadmaps().find((r) => r.id === id);
+function content(): Content {
+  if (cached) return cached;
+  // Re-check dates only matter to the content check, so any date works.
+  const { issues, content } = validateContent(
+    {
+      topics: topicFiles,
+      lessons: lessonFiles,
+      checkpoints: checkpointFiles,
+      diagrams: diagramFiles,
+      facts: factFiles,
+      tools: toolFiles,
+      catalog: catalogFiles,
+    },
+    "0000-01-01",
+  );
+  const errors = issues.filter((i) => i.level !== "warning");
+  if (errors.length > 0)
+    throw new Error(
+      `Content is invalid; run npm run check:content.\n${errors.map(formatIssue).join("\n")}`,
+    );
+  cached = content;
+  return content;
 }
 
 export function getTopics(): Topic[] {
-  return topicFiles.map((f) => f.topic);
+  return content().topics;
 }
 
 export function getTopic(id: string): Topic | undefined {
   return getTopics().find((t) => t.id === id);
 }
 
-/** A roadmap's topics, in its order, skipping ids that don't exist. */
-export function roadmapTopics(roadmap: Roadmap): Topic[] {
-  return roadmap.topics.flatMap((id) => getTopic(id) ?? []);
+export function getLesson(
+  topicId: string,
+  lessonId: string,
+): Lesson | undefined {
+  return content().lessons.find(
+    (l) => l.topic === topicId && l.id === lessonId,
+  );
 }
 
-/** The first roadmap that lists this topic; "Back to roadmap" goes here. */
-export function homeRoadmapOf(topicId: string): Roadmap | undefined {
-  return getRoadmaps().find((r) => r.topics.includes(topicId));
+export function getLessons(topicId?: string): Lesson[] {
+  const all = content().lessons;
+  return topicId ? all.filter((l) => l.topic === topicId) : all;
 }
 
-/** Roadmaps and their topics, for the navigation drawer. */
-export function navRoadmaps(): NavRoadmap[] {
-  return getRoadmaps().map((r) => ({
-    id: r.id,
-    title: r.title,
-    topics: roadmapTopics(r).map((t) => ({
-      id: t.id,
+export function getCheckpoint(
+  topicId: string,
+  lessonId: string,
+): Checkpoint | undefined {
+  return content().checkpoints.find(
+    (c) => c.topic === topicId && c.lesson === lessonId,
+  );
+}
+
+export function getDiagram(
+  topicId: string,
+  diagramId: string,
+): Diagram | undefined {
+  return content().diagrams.find(
+    (d) => d.topic === topicId && d.id === diagramId,
+  );
+}
+
+/** Topics planned but not written yet (the catalog). */
+export function getPlannedTopics(): PlannedTopic[] {
+  return content().planned;
+}
+
+/** All of a topic's tool data. */
+export function getTools(topicId: string): Tool[] {
+  return content().tools.filter((t) => t.topic === topicId);
+}
+
+/** A topic's tool data, if it has that tool. */
+export function getTool<K extends ToolKind>(
+  topicId: string,
+  kind: K,
+): Extract<Tool, { kind: K }> | undefined {
+  return content().tools.find(
+    (t): t is Extract<Tool, { kind: K }> =>
+      t.topic === topicId && t.kind === kind,
+  );
+}
+
+export function getFacts(topicId?: string): Fact[] {
+  const all = content().facts;
+  return topicId ? all.filter((f) => f.topics.includes(topicId)) : all;
+}
+
+export function getFact(id: string): Fact | undefined {
+  return content().facts.find((f) => f.id === id);
+}
+
+/** "About 2 hours": lesson minutes rounded to the nearest half hour
+    (spec 03 §8.1); under 45 minutes it says the minutes. */
+export function durationLabel(minutes: number): string {
+  if (minutes < 45) return `about ${minutes} minutes`;
+  const halves = Math.round(minutes / 30);
+  const hours = Math.floor(halves / 2);
+  const half = halves % 2 === 1 ? "½" : "";
+  return `about ${hours}${half} hour${hours === 1 && !half ? "" : "s"}`;
+}
+
+/** The oldest read date among facts: the "Verified" chip's date. */
+export function oldestReadOn(facts: readonly Fact[]): string | undefined {
+  return facts.map((f) => f.readOn).sort()[0];
+}
+
+const TOOL_TITLES: Record<string, string> = {
+  threats: "Threat model",
+  governance: "Governance",
+  lab: "Design lab",
+  sheets: "Cheatsheets",
+};
+
+/**
+ * The search index (PRD P2, issue #4): live topics, their lessons and
+ * every step, their tool pages, and their sourced facts. Written once at
+ * build time as search-index.json.
+ */
+export function searchDocuments(): SearchDoc[] {
+  const docs: SearchDoc[] = [];
+  for (const t of getTopics().filter((x) => x.status === "live")) {
+    const base = `/topics/${t.id}/`;
+    docs.push({
+      kind: "topic",
       title: t.title,
-      level: t.level,
-    })),
-  }));
-}
-
-/** Everything search looks through, one entry per topic. */
-export function searchEntries(): SearchEntry[] {
-  return getTopics().map((t) => ({
-    id: t.id,
-    title: t.title,
-    roadmap: homeRoadmapOf(t.id)?.title ?? "",
-    summary: t.summary,
-    nodes: t.diagram.nodes.map((n) => n.label),
-    steps: t.steps.map((s) => ({ title: s.title, text: s.text })),
-  }));
+      context: "Topic",
+      text: `${t.summary} ${t.system} ${t.tags.join(" ")}`,
+      path: base,
+    });
+    for (const lesson of getLessons(t.id)) {
+      const outline = t.lessons.find((l) => l.id === lesson.id);
+      const title = outline?.title ?? lesson.id;
+      const path = `${base}lessons/${lesson.id}/`;
+      docs.push({
+        kind: "lesson",
+        title,
+        context: t.switcherLabel,
+        text: `${outline?.summary ?? ""} ${lesson.nodes.map((n) => n.name).join(" ")}`,
+        path,
+      });
+      lesson.steps.forEach((s, n) =>
+        docs.push({
+          kind: "step",
+          title: s.title,
+          context: `${title} · step ${n + 1}`,
+          text: `${s.body.join(" ")} ${s.caption}`,
+          path,
+          step: n + 1,
+        }),
+      );
+    }
+    for (const tool of getTools(t.id))
+      if (tool.kind in TOOL_TITLES)
+        docs.push({
+          kind: "lesson",
+          title: TOOL_TITLES[tool.kind]!,
+          context: t.switcherLabel,
+          text:
+            tool.kind === "threats"
+              ? tool.risks.map((r) => `${r.id} ${r.name}`).join(" ")
+              : "",
+          path: `${base}${tool.kind}/`,
+        });
+    if (t.tabs.includes("cost"))
+      docs.push({
+        kind: "lesson",
+        title: "Cost model",
+        context: t.switcherLabel,
+        text: "Claude prices caching batch routing per conversation per month",
+        path: `${base}cost/`,
+      });
+    for (const f of getFacts(t.id).filter((x) => x.kind === "real"))
+      docs.push({
+        kind: "fact",
+        title: f.value,
+        context: `${t.switcherLabel} · ${f.title ?? f.source}`,
+        text: f.claim,
+        path: `${base}sources/`,
+      });
+  }
+  return docs;
 }

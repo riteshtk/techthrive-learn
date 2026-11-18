@@ -1,0 +1,638 @@
+/* The diagram stage (spec 04 §3, spec 03 §7.3–7.5). Colours are tokens,
+   so light theme gets light blocks (decision 20). No glow on a selected
+   node (decision 3). Pausing pauses every animation; reduced motion stops
+   them. */
+
+.tt-stage {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  touch-action: none;
+  user-select: none;
+}
+
+.tt-stage:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: -2px;
+}
+
+.tt-stage svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.tt-stage svg:active {
+  cursor: grabbing;
+}
+
+.tt-stage .dot {
+  fill: var(--dot);
+}
+
+/* Edges ---------------------------------------------------------------- */
+
+.tt-stage .ed {
+  fill: none;
+  stroke: var(--line-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  stroke-linecap: round;
+  transition:
+    opacity 0.4s,
+    stroke 0.3s;
+}
+
+.tt-stage.v2 .ed {
+  stroke-dasharray: none;
+  stroke-linejoin: round;
+}
+
+.tt-stage .ed.off {
+  opacity: 0;
+}
+
+.tt-stage .ed.on {
+  stroke-width: 2;
+  stroke-dasharray: 7 7;
+  opacity: 0.85;
+  animation: tt-dash 1.1s linear infinite;
+}
+
+.tt-stage .ed.act {
+  stroke-width: 3;
+  opacity: 1;
+}
+
+@keyframes tt-dash {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+.tt-stage .c-cyan {
+  stroke: var(--cyan);
+}
+
+.tt-stage .c-violet {
+  stroke: var(--violet);
+}
+
+.tt-stage .c-amber {
+  stroke: var(--amber);
+}
+
+.tt-stage .c-green {
+  stroke: var(--green);
+}
+
+.tt-stage .c-blue {
+  stroke: var(--blue);
+}
+
+.tt-stage .c-text {
+  stroke: var(--text);
+}
+
+.tt-stage .ah {
+  fill: var(--line-3);
+  stroke: none;
+  transition: fill 0.3s;
+}
+
+.tt-stage .ah.c-cyan {
+  fill: var(--cyan);
+}
+
+.tt-stage .ah.c-violet {
+  fill: var(--violet);
+}
+
+.tt-stage .ah.c-amber {
+  fill: var(--amber);
+}
+
+.tt-stage .ah.c-green {
+  fill: var(--green);
+}
+
+.tt-stage .ah.c-blue {
+  fill: var(--blue);
+}
+
+.tt-stage .ah.c-text {
+  fill: var(--text);
+}
+
+.tt-stage .ah.cur {
+  stroke: var(--text);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1.35);
+}
+
+.tt-stage.no-links .edges,
+.tt-stage.no-links .arrows,
+.tt-stage.no-labels .labels,
+.tt-stage.no-flow .badges,
+.tt-stage.no-flow .packet {
+  display: none;
+}
+
+.tt-stage.no-flow .ed.on {
+  animation: none;
+}
+
+/* Nodes ------------------------------------------------------------------ */
+
+.tt-stage .nd {
+  cursor: pointer;
+  outline: none;
+  transition:
+    opacity 0.45s,
+    filter 0.45s;
+}
+
+.tt-stage .ring {
+  fill: currentColor;
+  fill-opacity: 0.1;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.tt-stage .slab {
+  fill: var(--sunken);
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+.tt-stage .plate {
+  fill: var(--raised);
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+.tt-stage .glyph .face {
+  fill: currentColor;
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+.tt-stage .glyph .shade {
+  fill: #070a12;
+  stroke: none;
+}
+
+.tt-stage .glyph .band {
+  fill: none;
+  stroke: #070a12;
+  stroke-opacity: 0.35;
+  stroke-width: 1.5;
+}
+
+.tt-stage .figures {
+  color: var(--text);
+}
+
+.tt-stage .fig-body {
+  fill: currentColor;
+  opacity: 0.55;
+}
+
+.tt-stage .fig-head {
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+.tt-stage .figures.solo .fig-body {
+  opacity: 0.66;
+}
+
+.tt-stage .figures.solo .fig-head {
+  opacity: 0.96;
+}
+
+.tt-stage .nd.ghost {
+  opacity: 0.13;
+  filter: grayscale(1);
+  cursor: default;
+}
+
+.tt-stage .nd.dim {
+  opacity: 0.32;
+}
+
+.tt-stage .nd.new .body {
+  animation: tt-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.tt-stage .nd.new .ring {
+  opacity: 1;
+  animation: tt-pulse 1.8s ease-in-out infinite;
+}
+
+.tt-stage .nd.act .ring {
+  opacity: 0.9;
+}
+
+/* Selected: the ring, never a glow (decision 3). Focus shows the ring in
+   the text colour, since outlines on SVG aren't reliable. */
+.tt-stage .nd.sel .ring {
+  opacity: 1;
+}
+
+.tt-stage .nd:focus-visible .ring {
+  opacity: 1;
+  stroke: var(--text);
+}
+
+@keyframes tt-rise {
+  0% {
+    transform: translateY(-46px);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes tt-pulse {
+  0%,
+  100% {
+    fill-opacity: 0.06;
+    stroke-opacity: 0.5;
+  }
+  50% {
+    fill-opacity: 0.2;
+    stroke-opacity: 1;
+  }
+}
+
+/* 3D labels */
+.tt-stage .lb {
+  cursor: pointer;
+  transition: opacity 0.45s;
+}
+
+.tt-stage .pill {
+  fill: var(--raised);
+  stroke: var(--line-2);
+}
+
+.tt-stage .lb text {
+  fill: var(--text);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.tt-stage .lb.ghost {
+  opacity: 0.28;
+}
+
+.tt-stage .lb.dim {
+  opacity: 0.4;
+}
+
+.tt-stage .lb.new .pill {
+  stroke: var(--amber);
+}
+
+.tt-stage .lb.sel .pill {
+  stroke: var(--text);
+}
+
+/* 2D nodes */
+.tt-stage .bx {
+  fill: var(--raised);
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+.tt-stage .nd:hover .bx {
+  stroke: var(--line-3);
+}
+
+.tt-stage .nd.sel .bx,
+.tt-stage .nd.new .bx {
+  stroke: currentColor;
+}
+
+.tt-stage .tile {
+  fill: currentColor;
+  fill-opacity: 0.16;
+}
+
+.tt-stage .icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tt-stage .name2 {
+  fill: var(--text);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.tt-stage .sub2 {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.tt-stage.v2 .nd.ghost {
+  opacity: 0.22;
+}
+
+.tt-stage.v2 .nd.ghost .bx {
+  stroke-dasharray: 4 4;
+}
+
+.tt-stage.v2 .nd.new .body {
+  animation: tt-pop 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes tt-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The hop: packet and badges -------------------------------------------- */
+
+.tt-stage .packet {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tt-stage .packet-halo {
+  fill: currentColor;
+  fill-opacity: 0.22;
+}
+
+.tt-stage .packet-core {
+  fill: currentColor;
+  stroke: #070a12;
+  stroke-width: 1.4;
+}
+
+.tt-stage .badge-dot {
+  fill: var(--raised);
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.tt-stage .badge-ring {
+  fill: none;
+  stroke: currentColor;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.tt-stage .badge text {
+  fill: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.tt-stage .badge.next .badge-dot {
+  stroke: var(--line-3);
+  stroke-dasharray: 3 3;
+}
+
+.tt-stage .badge.next text,
+.tt-stage .badge.done text {
+  fill: var(--muted);
+}
+
+.tt-stage .badge.cur .badge-dot {
+  fill: currentColor;
+}
+
+.tt-stage .badge.cur text {
+  fill: var(--surface);
+}
+
+.tt-stage .badge.cur .badge-ring {
+  animation: tt-ring 1.3s ease-out infinite;
+}
+
+.tt-stage .badge.done .badge-dot {
+  fill: var(--raised-2);
+  stroke: var(--line-3);
+}
+
+@keyframes tt-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* Paused: everything holds where it is. */
+.tt-stage.paused * {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-stage *,
+  .tt-stage *::before,
+  .tt-stage *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .tt-stage .nd.new .ring {
+    opacity: 1;
+  }
+}
+
+/* The text version */
+.tt-stage-text {
+  font-size: var(--fs-body-13-5);
+  color: var(--text);
+}
+
+.tt-stage-text summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--fs-meta-mono-11);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tt-stage-text ul,
+.tt-stage-text ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+/* Viewer toolbar and playback (spec 04 §1.4) ---------------------------- */
+
+.tt-vh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tt-vh-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tt-vh-tools {
+  position: relative;
+  gap: 8px;
+}
+
+.tt-vh-label {
+  flex: none;
+}
+
+.tt-vh-spacer {
+  flex: 1 1 8px;
+}
+
+.tt-vh-count {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.tt-sw {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+}
+
+.tt-sw button {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tt-sw button:hover {
+  color: var(--text);
+}
+
+.tt-sw button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.tt-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--h-control-sm);
+  padding: 0 4px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+}
+
+.tt-zoom button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tt-zoom button:hover {
+  background: var(--raised-2);
+}
+
+.tt-zoom-level {
+  min-width: 48px;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+.tt-layers {
+  top: 44px;
+  right: auto;
+  left: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tt-layer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--r-10);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.tt-layer:hover {
+  background: var(--raised-2);
+}
+
+.tt-layer input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--text);
+}
+
+.tt-playback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

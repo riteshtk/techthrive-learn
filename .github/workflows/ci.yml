@@ -1,11 +1,17 @@
 name: CI
 
-# Required to merge (set in branch protection): "Checks", "Build" and
-# "End-to-end (Chromium) + axe". The other jobs are advisory.
+# Required to merge (set in branch protection): "Checks", "Build",
+# "End-to-end (Chromium) + axe", "End-to-end (WebKit)" and "Visual". The
+# other jobs are advisory.
 
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      baselines:
+        description: Render the visual baselines and upload them (review, then commit from the artifact)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -26,8 +32,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Content check
+      - name: Content check (every lesson recorded)
         run: npm run check:content
+        env:
+          REQUIRE_NARRATION: "1"
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
@@ -80,10 +88,11 @@ jobs:
           retention-days: 7
 
   webkit:
-    name: End-to-end (WebKit, advisory)
+    name: End-to-end (WebKit)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    continue-on-error: true
+    # WebKit's system packages alone can take over 15 minutes from a slow
+    # Ubuntu mirror.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -93,6 +102,62 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps webkit
       - run: npm run test:e2e:webkit
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-webkit
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # Run by hand (Actions → CI → Run workflow, baselines ticked) after a
+  # deliberate visual change. It renders every screen on the same Linux
+  # runner the Visual job compares on and uploads the PNGs; review them,
+  # then commit them from the artifact (gh run download). Baselines are
+  # never made on a Mac: fonts and anti-aliasing differ.
+  baselines:
+    name: Render visual baselines
+    if: ${{ inputs.baselines }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual -- --update-snapshots
+      - uses: actions/upload-artifact@v7
+        with:
+          name: visual-baselines
+          path: tests/visual/screens.spec.ts-snapshots/
+          retention-days: 14
+
+  visual:
+    name: Visual
+    if: ${{ !inputs.baselines }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Compares with the Linux baselines committed from the
+      # update-visual-baselines workflow's artifact.
+      - run: npm run test:visual
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-diffs
+          path: test-results/
+          retention-days: 7
 
   lighthouse:
     name: Lighthouse (mobile, advisory)

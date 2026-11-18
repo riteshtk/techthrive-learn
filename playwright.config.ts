@@ -7,6 +7,8 @@ const baseURL = `http://localhost:${PORT}${BASE_PATH}/`;
 
 export default defineConfig({
   testDir: "tests/e2e",
+  snapshotPathTemplate:
+    "{testDir}/{testFileName}-snapshots/{projectName}/{arg}{ext}",
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -14,7 +16,8 @@ export default defineConfig({
   webServer: {
     command: "npm run build && node scripts/serve-out.ts",
     url: baseURL,
-    env: { ...process.env, BASE_PATH, PORT: String(PORT) } as Record<
+    // KIT=1 builds the component kit page for the axe checks.
+    env: { ...process.env, BASE_PATH, KIT: "1", PORT: String(PORT) } as Record<
       string,
       string
     >,
@@ -30,7 +33,7 @@ export default defineConfig({
         viewport: { width: 360, height: 780 },
       },
     },
-    // Advisory in CI: npm run test:e2e:webkit
+    // Required in CI from P19: npm run test:e2e:webkit
     {
       name: "webkit-360",
       use: {
@@ -43,6 +46,23 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 800 },
+      },
+    },
+    // Visual regression (npm run test:visual): Linux baselines from CI.
+    {
+      name: "visual-1440",
+      testDir: "tests/visual",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
+    {
+      name: "visual-360",
+      testDir: "tests/visual",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 360, height: 780 },
       },
     },
   ],

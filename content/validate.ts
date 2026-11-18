@@ -1,434 +1,723 @@
-// Content checks (PRD F9). Run by `npm run build` and `npm test` through
-// scripts/check-content.ts. Works on raw, untrusted values so a broken file
-// gets a clear message naming the file and field, not a crash.
+// Checks every v2 content file (PRD P3). It treats each file as untrusted:
+// schema first, then the links between files, then the figure rule. Every
+// problem names the file and the field. Nothing here throws.
 
+import { edgeOfHop, effectiveTrace, isPresent } from "../player/trace";
+import { figureKey, figureKeys, figuresIn } from "./figures";
+import { checkFile, type Issue } from "./schema";
 import {
-  NARROW,
-  WIDE,
-  edgeLabelsOverNodes,
-  edgesCrossingNodes,
-  layoutDiagram,
-  wrapLabel,
-} from "../player/geometry";
-import { NODE_ICONS, type DiagramEdge, type DiagramNode } from "./types";
+  CheckpointSchema,
+  DiagramSchema,
+  FactFileSchema,
+  LessonSchema,
+  RESERVED_TOPIC_IDS,
+  TopicSchema,
+  type Checkpoint,
+  type Diagram,
+  type Fact,
+  type Lesson,
+  type Topic,
+  ToolSchema,
+  type Tool,
+  CatalogSchema,
+  type PlannedTopic,
+} from "./types";
 
-export type Issue = { file: string; field: string; message: string };
+export type ContentFile = { file: string; data: unknown };
 
-export function formatIssue(issue: Issue): string {
-  return `${issue.file} › ${issue.field}: ${issue.message}`;
-}
-
-export const LIMITS = {
-  title: 60,
-  summary: 140,
-  stepText: 140,
-  goal: 140,
-  label: 20,
-  word: 10,
-  labelLines: 2,
-  minSteps: 3,
-  maxSteps: 9,
-  maxX: 3,
-  maxY: 5,
-  stepTitle: 24,
-  note: 90,
-  flows: 40,
-  minMinutes: 1,
-  maxMinutes: 60,
-} as const;
-
-const LEVELS = ["basics", "intermediate", "advanced"];
-const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-/** Hosts that count as Tech & Thrive's own, for the outside-source rule. */
-const TECH_THRIVE_HOST = /tech-?(and-?)?thrive/i;
-
-type Input = {
-  topics: { file: string; topic: unknown }[];
-  roadmaps: { file: string; roadmap: unknown }[];
+export type ContentInput = {
+  topics: ContentFile[];
+  lessons: ContentFile[];
+  checkpoints: ContentFile[];
+  diagrams: ContentFile[];
+  facts: ContentFile[];
+  /** Topic tools (content/topics/<topic>/tools/<kind>.ts). */
+  tools: ContentFile[];
+  /** Planned topics (content/catalog.ts). */
+  catalog?: ContentFile[];
 };
 
-type Obj = Record<string, unknown>;
-const isObj = (v: unknown): v is Obj =>
-  typeof v === "object" && v !== null && !Array.isArray(v);
+/** The checked content, for pages and the search index. */
+export type Content = {
+  topics: Topic[];
+  lessons: Lesson[];
+  checkpoints: Checkpoint[];
+  diagrams: Diagram[];
+  facts: Fact[];
+  tools: Tool[];
+  planned: PlannedTopic[];
+};
 
+/** content/topics/<topic>/… → the topic folder's name. */
+function topicFolder(file: string): string | undefined {
+  return file.match(/^content\/topics\/([^/]+)\//)?.[1];
+}
+
+/** The file's name without folders or ".ts". */
 function baseName(file: string): string {
-  return file.replace(/^.*\//, "").replace(/\.ts$/, "");
+  return file.slice(file.lastIndexOf("/") + 1).replace(/\.ts$/, "");
 }
 
-/** YYYY-MM-DD naming a day that exists (Date.parse rolls 31 Feb over). */
-function isRealDate(text: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
-  const date = new Date(`${text}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text);
+/** Fields whose strings are ids, links, colours or code, not words a
+    learner reads. */
+const NOT_DISPLAY = new Set([
+  "id",
+  "portrait2",
+  "node",
+  "telemetry",
+  "diagram",
+  "size2",
+  "date",
+  "precision",
+  "jurisdiction",
+  "topic",
+  "lesson",
+  "from",
+  "to",
+  "color",
+  "addsColor",
+  "edges",
+  "newNodes",
+  "facts",
+  "tabs",
+  "kind",
+  "type",
+  "verdict",
+  "code",
+  "standards",
+  "bypass",
+  "sandbox",
+  "status",
+  "level",
+  "url",
+  "icon",
+  "glyph",
+  "paths2",
+  "diagram",
+  "heroTrace",
+  "layout",
+  "tab",
+]);
+
+/** Calls back with every display string in a content object. */
+function walkText(
+  value: unknown,
+  path: string,
+  visit: (text: string, path: string) => void,
+) {
+  if (typeof value === "string") visit(value, path);
+  else if (Array.isArray(value))
+    value.forEach((v, i) => walkText(v, `${path}[${i}]`, visit));
+  else if (typeof value === "object" && value !== null)
+    for (const [k, v] of Object.entries(value)) {
+      if (NOT_DISPLAY.has(k)) continue;
+      walkText(v, path ? `${path}.${k}` : k, visit);
+    }
 }
 
-/** Ends like a sentence and doesn't run on into a second one. */
-function isOneSentence(text: string): boolean {
-  return /[.!?]$/.test(text) && !/[.!?]\s+[A-Z]/.test(text.slice(0, -1));
-}
-
-export function validateContent({ topics, roadmaps }: Input): Issue[] {
+export function validateContent(
+  input: ContentInput,
+  today: string,
+): { issues: Issue[]; content: Content } {
   const issues: Issue[] = [];
-  const topicIds = new Set<string>();
+  const error = (file: string, field: string, message: string) =>
+    issues.push({ file, field, message });
+  const warn = (file: string, field: string, message: string) =>
+    issues.push({ file, field, message, level: "warning" });
 
+  // Schemas ---------------------------------------------------------------
+  const topics: { file: string; topic: Topic }[] = [];
+  for (const { file, data } of input.topics)
+    if (checkFile(TopicSchema, file, data, issues))
+      topics.push({ file, topic: data });
+  const lessons: { file: string; lesson: Lesson }[] = [];
+  for (const { file, data } of input.lessons)
+    if (checkFile(LessonSchema, file, data, issues))
+      lessons.push({ file, lesson: data });
+  const checkpoints: { file: string; checkpoint: Checkpoint }[] = [];
+  for (const { file, data } of input.checkpoints)
+    if (checkFile(CheckpointSchema, file, data, issues))
+      checkpoints.push({ file, checkpoint: data });
+  const diagrams: { file: string; diagram: Diagram }[] = [];
+  for (const { file, data } of input.diagrams)
+    if (checkFile(DiagramSchema, file, data, issues))
+      diagrams.push({ file, diagram: data });
+  const tools: { file: string; tool: Tool }[] = [];
+  for (const { file, data } of input.tools)
+    if (checkFile(ToolSchema, file, data, issues))
+      tools.push({ file, tool: data });
+  const facts: { file: string; field: string; fact: Fact }[] = [];
+  for (const { file, data } of input.facts)
+    if (checkFile(FactFileSchema, file, data, issues))
+      data.forEach((fact, i) => facts.push({ file, field: `[${i}]`, fact }));
+
+  const topicById = new Map(topics.map((t) => [t.topic.id, t.topic]));
+  const factById = new Map<string, Fact>();
+
+  // Facts -----------------------------------------------------------------
+  for (const { file, field, fact } of facts) {
+    const f = (name: string) => `${field}.${name}`;
+    if (factById.has(fact.id))
+      error(file, f("id"), `"${fact.id}" is used by another fact`);
+    else factById.set(fact.id, fact);
+    if (fact.kind === "real" && !fact.url)
+      error(file, f("url"), "a real fact needs its primary source's link");
+    if (!isRealDate(fact.readOn))
+      error(file, f("readOn"), `${fact.readOn} is not a real date`);
+    if (!isRealDate(fact.recheckBy))
+      error(file, f("recheckBy"), `${fact.recheckBy} is not a real date`);
+    else if (fact.recheckBy <= fact.readOn)
+      error(file, f("recheckBy"), "must come after readOn");
+    else if (fact.recheckBy < today)
+      warn(
+        file,
+        f("recheckBy"),
+        `"${fact.id}" was due for a re-check on ${fact.recheckBy}`,
+      );
+    if (fact.changedOn !== undefined && fact.previousValue === undefined)
+      error(file, f("previousValue"), "a changed fact needs its old value");
+    if (fact.changedOn !== undefined && !isRealDate(fact.changedOn))
+      error(file, f("changedOn"), `${fact.changedOn} is not a real date`);
+    fact.topics.forEach((t, i) => {
+      if (!topicById.has(t))
+        error(file, f(`topics[${i}]`), `"${t}" is not a topic`);
+    });
+  }
+
+  // Topics ----------------------------------------------------------------
   for (const { file, topic } of topics) {
-    const add = (field: string, message: string) =>
-      issues.push({ file, field, message });
-
-    if (!isObj(topic)) {
-      add("default export", "must be a topic object");
-      continue;
-    }
-
-    const text = (
-      field: string,
-      max?: number,
-      opts: { sentence?: boolean } = {},
-    ): string | undefined => {
-      const value = topic[field];
-      if (typeof value !== "string" || value.trim() === "") {
-        add(field, "is missing");
-        return undefined;
-      }
-      if (max !== undefined && value.length > max)
-        add(field, `is ${value.length} characters; the limit is ${max}`);
-      if (opts.sentence && !isOneSentence(value))
-        add(field, "must be one sentence");
-      return value;
-    };
-
-    const id = text("id");
-    if (id !== undefined) {
-      if (!KEBAB.test(id)) add("id", `"${id}" must be kebab-case`);
-      if (id !== baseName(file))
-        add("id", `"${id}" must match the file name "${baseName(file)}"`);
-      if (topicIds.has(id)) add("id", `"${id}" is used by another topic`);
-      topicIds.add(id);
-    }
-    text("title", LIMITS.title);
-    text("summary", LIMITS.summary, { sentence: true });
-    const minutes = topic.minutes;
-    if (
-      !Number.isInteger(minutes) ||
-      (minutes as number) < LIMITS.minMinutes ||
-      (minutes as number) > LIMITS.maxMinutes
-    )
-      add(
-        "minutes",
-        `must be a whole number from ${LIMITS.minMinutes} to ${LIMITS.maxMinutes}`,
+    if (topicFolder(file) !== topic.id)
+      error(
+        file,
+        "id",
+        `"${topic.id}" must match its folder, content/topics/${topic.id}/`,
       );
-    if (!LEVELS.includes(topic.level as string))
-      add("level", `must be one of ${LEVELS.join(", ")}`);
-
-    // Diagram ------------------------------------------------------------
-    const diagram = topic.diagram;
-    const nodes: DiagramNode[] = [];
-    const edges: DiagramEdge[] = [];
-    // Position of each valid edge in diagram.edges, for messages.
-    const edgeIndex = new Map<string, number>();
-    const allIds = new Map<string, string>(); // id → field that declared it
-    const declare = (id: unknown, field: string) => {
-      if (typeof id !== "string" || id === "") {
-        add(field, "is missing");
-        return false;
-      }
-      const first = allIds.get(id);
-      if (first) {
-        add(field, `"${id}" repeats the id at ${first}`);
-        return false;
-      }
-      allIds.set(id, field);
-      return true;
-    };
-
-    if (!isObj(diagram) || !Array.isArray(diagram.nodes)) {
-      add("diagram.nodes", "is missing");
-    } else {
-      if (diagram.nodes.length === 0) add("diagram.nodes", "is empty");
-      const cells = new Map<string, string>();
-      diagram.nodes.forEach((raw: unknown, i: number) => {
-        const field = `diagram.nodes[${i}]`;
-        if (!isObj(raw)) return add(field, "must be an object");
-        const ok = declare(raw.id, `${field}.id`);
-        const label = raw.label;
-        if (typeof label !== "string" || label.trim() === "") {
-          add(`${field}.label`, "is missing");
-        } else {
-          if (label.length > LIMITS.label)
-            add(
-              `${field}.label`,
-              `"${label}" is ${label.length} characters; the limit is ${LIMITS.label}`,
-            );
-          const long = label.split(/\s+/).find((w) => w.length > LIMITS.word);
-          if (long)
-            add(
-              `${field}.label`,
-              `the word "${long}" is over ${LIMITS.word} characters`,
-            );
-          else if (wrapLabel(label).length > LIMITS.labelLines)
-            add(`${field}.label`, `"${label}" needs more than two lines`);
-        }
-        const note = raw.note;
-        if (typeof note !== "string" || note.trim() === "") {
-          add(`${field}.note`, "is missing");
-        } else {
-          if (note.length > LIMITS.note)
-            add(
-              `${field}.note`,
-              `is ${note.length} characters; the limit is ${LIMITS.note}`,
-            );
-          if (!isOneSentence(note))
-            add(`${field}.note`, "must be one sentence");
-        }
-        if (
-          raw.icon !== undefined &&
-          !(NODE_ICONS as readonly unknown[]).includes(raw.icon)
-        )
-          add(`${field}.icon`, `must be one of ${NODE_ICONS.join(", ")}`);
-        const x = raw.x;
-        const y = raw.y;
-        const xOk =
-          Number.isInteger(x) &&
-          (x as number) >= 0 &&
-          (x as number) <= LIMITS.maxX;
-        const yOk =
-          Number.isInteger(y) &&
-          (y as number) >= 0 &&
-          (y as number) <= LIMITS.maxY;
-        if (!xOk)
-          add(`${field}.x`, `must be a whole number from 0 to ${LIMITS.maxX}`);
-        if (!yOk)
-          add(`${field}.y`, `must be a whole number from 0 to ${LIMITS.maxY}`);
-        if (xOk && yOk) {
-          const cell = `${x},${y}`;
-          const other = cells.get(cell);
-          if (other) add(field, `shares cell (${cell}) with ${other}`);
-          else cells.set(cell, `"${String(raw.id)}"`);
-        }
-        if (ok && typeof label === "string" && xOk && yOk)
-          nodes.push({
-            id: raw.id as string,
-            label,
-            note: typeof note === "string" ? note : "",
-            x: x as number,
-            y: y as number,
-          });
-      });
-    }
-
-    const nodeIds = new Set(nodes.map((n) => n.id));
-    if (isObj(diagram) && Array.isArray(diagram.edges)) {
-      diagram.edges.forEach((raw: unknown, i: number) => {
-        const field = `diagram.edges[${i}]`;
-        if (!isObj(raw)) return add(field, "must be an object");
-        const ok = declare(raw.id, `${field}.id`);
-        let ends = true;
-        for (const end of ["from", "to"] as const) {
-          const v = raw[end];
-          if (typeof v !== "string" || !nodeIds.has(v)) {
-            add(`${field}.${end}`, `"${String(v)}" is not a node id`);
-            ends = false;
-          }
-        }
-        if (ends && raw.from === raw.to)
-          add(field, "must join two different nodes");
-        if (
-          raw.label !== undefined &&
-          (typeof raw.label !== "string" || raw.label.length > LIMITS.label)
-        )
-          add(
-            `${field}.label`,
-            `must be text of at most ${LIMITS.label} characters`,
-          );
-        if (
-          raw.flows !== undefined &&
-          (typeof raw.flows !== "string" ||
-            raw.flows.trim() === "" ||
-            raw.flows.length > LIMITS.flows)
-        )
-          add(
-            `${field}.flows`,
-            `must be text of at most ${LIMITS.flows} characters`,
-          );
-        if (ok && ends && raw.from !== raw.to) {
-          edgeIndex.set(raw.id as string, i);
-          edges.push({
-            id: raw.id as string,
-            from: raw.from as string,
-            to: raw.to as string,
-            label: raw.label as string | undefined,
-          });
-        }
-      });
-    } else if (isObj(diagram)) {
-      add("diagram.edges", "is missing");
-    }
-
-    // Layout rules, using the renderer's own geometry, for both the phone
-    // layout and the wider one big screens use.
-    const said = new Set<string>();
-    for (const [size, where] of [
-      [NARROW, ""],
-      [WIDE, " on wide screens"],
-    ] as const) {
-      const layout = layoutDiagram(nodes, edges, size);
-      // A problem found on both layouts is reported once, phone first.
-      const once = (key: string, field: string, message: string) => {
-        if (!said.has(key)) add(field, message);
-        said.add(key);
-      };
-      for (const { edge, node } of edgesCrossingNodes(layout)) {
-        once(
-          `cross|${edge.id}|${node.id}`,
-          `diagram.edges[${edgeIndex.get(edge.id)}]`,
-          `"${edge.id}" crosses node "${node.id}"${where}; move a node so the line is clear`,
-        );
-      }
-      for (const { edge, node } of edgeLabelsOverNodes(layout)) {
-        once(
-          `label|${edge.id}`,
-          `diagram.edges[${edgeIndex.get(edge.id)}].label`,
-          node
-            ? `"${edge.label}" has no room beside its line${where} and overlaps node "${node.id}"; leave a gap or empty cell between the nodes`
-            : `"${edge.label}" has no room beside its line inside the diagram${where}; move the nodes inwards`,
-        );
-      }
-    }
-
-    // Steps ----------------------------------------------------------------
-    const steps = topic.steps;
-    if (!Array.isArray(steps)) {
-      add("steps", "is missing");
-    } else {
-      if (steps.length < LIMITS.minSteps || steps.length > LIMITS.maxSteps)
-        add(
-          "steps",
-          `has ${steps.length} steps; topics need ${LIMITS.minSteps} to ${LIMITS.maxSteps}`,
-        );
-      steps.forEach((raw: unknown, i: number) => {
-        const field = `steps[${i}]`;
-        if (!isObj(raw)) return add(field, "must be an object");
-        const title = raw.title;
-        if (typeof title !== "string" || title.trim() === "")
-          add(`${field}.title`, "is missing");
-        else {
-          if (title.length > LIMITS.stepTitle)
-            add(
-              `${field}.title`,
-              `"${title}" is ${title.length} characters; the limit is ${LIMITS.stepTitle}`,
-            );
-          if (/[.!?]$/.test(title))
-            add(`${field}.title`, "is a short name; leave off the full stop");
-        }
-        const t = raw.text;
-        if (typeof t !== "string" || t.trim() === "")
-          add(`${field}.text`, "is missing");
-        else {
-          if (t.length > LIMITS.stepText)
-            add(
-              `${field}.text`,
-              `is ${t.length} characters; the limit is ${LIMITS.stepText}`,
-            );
-          if (!isOneSentence(t)) add(`${field}.text`, "must be one sentence");
-        }
-        if (!Array.isArray(raw.highlight) || raw.highlight.length === 0) {
-          add(`${field}.highlight`, "must list at least one node or edge id");
-        } else {
-          for (const h of raw.highlight) {
-            if (typeof h !== "string" || !allIds.has(h))
-              add(`${field}.highlight`, `unknown id "${String(h)}"`);
-          }
-        }
-      });
-    }
-
-    // Sources and video ------------------------------------------------
-    const sources = topic.sources;
-    if (!Array.isArray(sources) || sources.length === 0) {
-      add("sources", "must list at least one source");
-    } else {
-      let outside = false;
-      sources.forEach((raw: unknown, i: number) => {
-        const field = `sources[${i}]`;
-        if (!isObj(raw)) return add(field, "must be an object");
-        if (typeof raw.title !== "string" || raw.title.trim() === "")
-          add(`${field}.title`, "is missing");
-        let url: URL | undefined;
-        try {
-          url = new URL(String(raw.url));
-        } catch {
-          add(`${field}.url`, "must be a full https:// link");
-        }
-        if (url && url.protocol !== "https:")
-          add(`${field}.url`, "must be a full https:// link");
-        if (url && !TECH_THRIVE_HOST.test(url.hostname)) outside = true;
-        const read = raw.read;
-        if (typeof read !== "string" || !isRealDate(read))
-          add(`${field}.read`, "must be the date checked, as YYYY-MM-DD");
-      });
-      if (!outside)
-        add("sources", "needs at least one source outside Tech & Thrive");
-    }
-
-    const video = topic.video;
-    if (video !== undefined) {
-      if (!isObj(video)) add("video", "must be { youtubeId, title }");
-      else {
-        if (
-          typeof video.youtubeId !== "string" ||
-          !/^[A-Za-z0-9_-]{11}$/.test(video.youtubeId)
-        )
-          add("video.youtubeId", "must be an 11-character YouTube video id");
-        if (typeof video.title !== "string" || video.title.trim() === "")
-          add("video.title", "is missing");
-      }
-    }
+    if ((RESERVED_TOPIC_IDS as readonly string[]).includes(topic.id))
+      error(
+        file,
+        "id",
+        `"${topic.id}" is a v1 address that redirects; choose another id`,
+      );
+    const seen = new Set<string>();
+    topic.lessons.forEach((l, i) => {
+      if (seen.has(l.id))
+        error(file, `lessons[${i}].id`, `"${l.id}" is listed twice`);
+      seen.add(l.id);
+    });
+    if (topic.status === "live" && topic.lessons.length === 0)
+      error(file, "lessons", "a live topic needs its course outline");
   }
 
-  // Roadmaps ---------------------------------------------------------------
-  const roadmapIds = new Set<string>();
-  for (const { file, roadmap } of roadmaps) {
-    const add = (field: string, message: string) =>
-      issues.push({ file, field, message });
-    if (!isObj(roadmap)) {
-      add("default export", "must be a roadmap object");
-      continue;
+  // Diagrams --------------------------------------------------------------
+  const diagramByKey = new Map<string, Diagram>();
+  for (const { file, diagram } of diagrams) {
+    if (baseName(file) !== diagram.id)
+      error(file, "id", `"${diagram.id}" must match the file name`);
+    if (topicFolder(file) !== diagram.topic)
+      error(file, "topic", `must be "${topicFolder(file)}", its folder`);
+    if (!topicById.has(diagram.topic))
+      error(file, "topic", `"${diagram.topic}" is not a topic`);
+    diagramByKey.set(`${diagram.topic}/${diagram.id}`, diagram);
+    const ids = new Set<string>();
+    diagram.nodes.forEach((n, i) => {
+      if (ids.has(n.id))
+        error(file, `nodes[${i}].id`, `"${n.id}" is used twice`);
+      ids.add(n.id);
+    });
+    if (diagram.portrait) {
+      const placed = diagram.portrait.nodes.map((n) => n.id);
+      for (const id of ids)
+        if (!placed.includes(id))
+          error(file, "portrait.nodes", `"${id}" has no place in the portrait`);
+      placed.forEach((id, i) => {
+        if (!ids.has(id))
+          error(file, `portrait.nodes[${i}].id`, `"${id}" is not a node`);
+      });
     }
-    const id = roadmap.id;
-    if (typeof id !== "string" || id === "") add("id", "is missing");
+    if (diagram.portrait2) {
+      const { boxes, paths } = diagram.portrait2;
+      for (const id of ids)
+        if (!boxes[id])
+          error(
+            file,
+            "portrait2.boxes",
+            `"${id}" has no box on the phone board`,
+          );
+      for (const edge of Object.keys(diagram.paths2))
+        if (!paths[edge])
+          error(
+            file,
+            "portrait2.paths",
+            `"${edge}" has no path on the phone board`,
+          );
+    }
+    for (const edge of Object.keys(diagram.paths2))
+      for (const end of edge.split("_"))
+        if (!ids.has(end))
+          error(file, `paths2.${edge}`, `"${end}" is not a node`);
+  }
+
+  // Lessons ---------------------------------------------------------------
+  const lessonByKey = new Map<string, Lesson>();
+  for (const { file, lesson } of lessons) {
+    if (baseName(file) !== lesson.id)
+      error(file, "id", `"${lesson.id}" must match the file name`);
+    if (topicFolder(file) !== lesson.topic)
+      error(file, "topic", `must be "${topicFolder(file)}", its folder`);
+    const topic = topicById.get(lesson.topic);
+    if (!topic) error(file, "topic", `"${lesson.topic}" is not a topic`);
+    else if (!topic.lessons.some((l) => l.id === lesson.id))
+      error(
+        file,
+        "id",
+        `"${lesson.id}" is not in the lessons of content/topics/${lesson.topic}/topic.ts`,
+      );
+    lessonByKey.set(`${lesson.topic}/${lesson.id}`, lesson);
+    checkLesson(file, lesson, factById, error);
+    const diagram = diagramByKey.get(`${lesson.topic}/${lesson.diagram}`);
+    if (!diagram)
+      error(
+        file,
+        "diagram",
+        `"${lesson.diagram}" has no file in content/topics/${lesson.topic}/diagrams/`,
+      );
     else {
-      if (!KEBAB.test(id)) add("id", `"${id}" must be kebab-case`);
-      if (id !== baseName(file))
-        add("id", `"${id}" must match the file name "${baseName(file)}"`);
-      if (roadmapIds.has(id)) add("id", `"${id}" is used by another roadmap`);
-      roadmapIds.add(id);
-    }
-    if (typeof roadmap.title !== "string" || roadmap.title.trim() === "")
-      add("title", "is missing");
-    else if (roadmap.title.length > LIMITS.title)
-      add(
-        "title",
-        `is ${roadmap.title.length} characters; the limit is ${LIMITS.title}`,
-      );
-    if (typeof roadmap.goal !== "string" || roadmap.goal.trim() === "")
-      add("goal", "is missing");
-    else if (roadmap.goal.length > LIMITS.goal || roadmap.goal.includes("\n"))
-      add("goal", `must be one line of at most ${LIMITS.goal} characters`);
-    if (!Array.isArray(roadmap.topics) || roadmap.topics.length === 0) {
-      add("topics", "must list at least one topic id");
-    } else {
-      const seen = new Set<string>();
-      roadmap.topics.forEach((t: unknown, i: number) => {
-        if (typeof t !== "string" || !topicIds.has(t))
-          add(
-            `topics[${i}]`,
-            `"${String(t)}" is not a topic; add content/topics/${String(t)}.ts or fix the id`,
-          );
-        else if (seen.has(t)) add(`topics[${i}]`, `"${t}" is listed twice`);
-        if (typeof t === "string") seen.add(t);
+      const drawn = new Set(diagram.nodes.map((n) => n.id));
+      lesson.nodes.forEach((n, i) => {
+        if (!drawn.has(n.id))
+          error(file, `nodes[${i}].id`, `"${n.id}" is not in the diagram`);
+      });
+      for (const id of drawn)
+        if (!lesson.nodes.some((n) => n.id === id))
+          error(file, "nodes", `the diagram's "${id}" has no lesson node`);
+      lesson.edges.forEach((e, i) => {
+        if (!diagram.paths2[e])
+          error(file, `edges[${i}]`, `"${e}" has no 2D path in the diagram`);
       });
     }
   }
 
-  return issues;
+  // Overviews -------------------------------------------------------------
+  for (const { file, topic } of topics) {
+    const o = topic.overview;
+    if (!o) {
+      if (topic.status === "live")
+        error(file, "overview", "a live topic needs its overview");
+      continue;
+    }
+    const diagram = diagramByKey.get(`${topic.id}/${o.diagram}`);
+    if (!diagram)
+      error(
+        file,
+        "overview.diagram",
+        `"${o.diagram}" has no file in content/topics/${topic.id}/diagrams/`,
+      );
+    else {
+      const edges = Object.keys(diagram.paths2);
+      o.heroTrace.forEach((hop, i) => {
+        if (!edgeOfHop(edges, hop))
+          error(
+            file,
+            `overview.heroTrace[${i}]`,
+            `no edge joins ${hop.from} and ${hop.to}`,
+          );
+      });
+    }
+    if (o.secondary && !topic.tabs.includes(o.secondary.tab))
+      error(
+        file,
+        "overview.secondary.tab",
+        `"${o.secondary.tab}" is not one of this topic's tabs`,
+      );
+    const refs: [string, string][] = [
+      ...o.why.stats.flatMap((s, i) =>
+        s.facts.map(
+          (f, j) =>
+            [`overview.why.stats[${i}].facts[${j}]`, f] as [string, string],
+        ),
+      ),
+      ...(o.brief?.facts ?? []).map(
+        (f, j) => [`overview.brief.facts[${j}]`, f] as [string, string],
+      ),
+      ...(o.currentWith ?? []).flatMap((c, i) =>
+        c.facts.map(
+          (f, j) =>
+            [`overview.currentWith[${i}].facts[${j}]`, f] as [string, string],
+        ),
+      ),
+    ];
+    for (const [field, id] of refs)
+      checkFactRef(file, field, id, topic.id, factById, error);
+  }
+
+  // Checkpoints -----------------------------------------------------------
+  for (const { file, checkpoint } of checkpoints) {
+    if (baseName(file) !== checkpoint.lesson)
+      error(file, "lesson", `must be "${baseName(file)}", the file name`);
+    if (topicFolder(file) !== checkpoint.topic)
+      error(file, "topic", `must be "${topicFolder(file)}", its folder`);
+    const lesson = lessonByKey.get(`${checkpoint.topic}/${checkpoint.lesson}`);
+    if (!lesson)
+      error(
+        file,
+        "lesson",
+        `"${checkpoint.lesson}" has no lesson file in content/topics/${checkpoint.topic}/lessons/`,
+      );
+    if (!checkpoint.approved)
+      warn(
+        file,
+        "approved",
+        "not yet checked against the sources and approved",
+      );
+    const ids = new Set<string>();
+    checkpoint.questions.forEach((q, i) => {
+      const at = `questions[${i}]`;
+      if (ids.has(q.id)) error(file, `${at}.id`, `"${q.id}" is used twice`);
+      ids.add(q.id);
+      const right = q.options.filter((o) => o.verdict === "right").length;
+      if (right !== 1)
+        error(
+          file,
+          `${at}.options`,
+          `needs exactly one right option, not ${right}`,
+        );
+      const letters = q.options.map((o) => o.id).join("");
+      if (letters !== "ABCD")
+        error(file, `${at}.options`, `must be A, B, C and D in order`);
+      if (lesson && q.replayStep > lesson.steps.length)
+        error(
+          file,
+          `${at}.replayStep`,
+          `the lesson has ${lesson.steps.length} steps`,
+        );
+      q.facts.forEach((id, j) =>
+        checkFactRef(
+          file,
+          `${at}.facts[${j}]`,
+          id,
+          checkpoint.topic,
+          factById,
+          error,
+        ),
+      );
+    });
+  }
+
+  // Catalog ---------------------------------------------------------------
+  const planned: PlannedTopic[] = [];
+  for (const { file, data } of input.catalog ?? [])
+    if (checkFile(CatalogSchema, file, data, issues))
+      data.forEach((p, i) => {
+        if (
+          topicById.has(p.id) ||
+          planned.some((q) => q.id === p.id) ||
+          (RESERVED_TOPIC_IDS as readonly string[]).includes(p.id)
+        )
+          error(file, `[${i}].id`, `"${p.id}" is taken`);
+        planned.push(p);
+      });
+
+  // Tools -----------------------------------------------------------------
+  for (const { file, tool } of tools) {
+    if (topicFolder(file) !== tool.topic)
+      error(file, "topic", `must be "${topicFolder(file)}", its folder`);
+    if (baseName(file) !== tool.kind)
+      error(file, "kind", `must be "${baseName(file)}", the file name`);
+    const topic = topicById.get(tool.topic);
+    // Cards have no tab of their own: they meet on /review.
+    if (topic && tool.kind !== "cards" && !topic.tabs.includes(tool.kind))
+      error(file, "kind", `the topic has no "${tool.kind}" tab`);
+    checkTool(
+      file,
+      tool,
+      tools.map((t) => t.tool),
+      factById,
+      diagramByKey,
+      error,
+    );
+  }
+
+  // Figures: every one on screen is in the register -----------------------
+  const keysByTopic = new Map<string, Set<string>>();
+  for (const fact of factById.values())
+    for (const t of fact.topics) {
+      const keys = keysByTopic.get(t) ?? new Set<string>();
+      for (const k of figureKeys(fact.value)) keys.add(k);
+      keysByTopic.set(t, keys);
+    }
+  const checkFigures = (file: string, topicId: string, data: unknown) =>
+    walkText(data, "", (text, path) => {
+      const keys = keysByTopic.get(topicId);
+      for (const figure of figuresIn(text))
+        if (!keys?.has(figureKey(figure)))
+          error(
+            file,
+            path,
+            `the figure "${figure}" is not in the facts register for "${topicId}"; add a fact whose value shows it (content/facts/)`,
+          );
+    });
+  for (const { file, topic } of topics) checkFigures(file, topic.id, topic);
+  for (const { file, lesson } of lessons)
+    checkFigures(file, lesson.topic, lesson);
+  for (const { file, checkpoint } of checkpoints)
+    checkFigures(file, checkpoint.topic, checkpoint);
+  for (const { file, diagram } of diagrams)
+    checkFigures(file, diagram.topic, diagram);
+  for (const { file, tool } of tools) checkFigures(file, tool.topic, tool);
+
+  return {
+    issues,
+    content: {
+      topics: topics.map((t) => t.topic),
+      lessons: lessons.map((l) => l.lesson),
+      checkpoints: checkpoints.map((c) => c.checkpoint),
+      diagrams: diagrams.map((d) => d.diagram),
+      facts: [...factById.values()],
+      tools: tools.map((t) => t.tool),
+      planned,
+    },
+  };
+}
+
+/** The links inside one tool's data. */
+function checkTool(
+  file: string,
+  tool: Tool,
+  tools: readonly Tool[],
+  factById: Map<string, Fact>,
+  diagrams: Map<string, Diagram>,
+  error: (file: string, field: string, message: string) => void,
+) {
+  const ref = (field: string, id: string) =>
+    checkFactRef(file, field, id, tool.topic, factById, error);
+  const unique = (field: string, ids: string[]) =>
+    ids.forEach((id, i) => {
+      if (ids.indexOf(id) !== i)
+        error(file, `${field}[${i}].id`, `"${id}" is used twice`);
+    });
+  switch (tool.kind) {
+    case "threats": {
+      const parts = new Set(tool.components.map((c) => c.id));
+      unique(
+        "components",
+        tool.components.map((c) => c.id),
+      );
+      unique(
+        "risks",
+        tool.risks.map((r) => r.id),
+      );
+      unique(
+        "related.items",
+        tool.related.items.map((r) => r.id),
+      );
+      tool.risks.forEach((r, i) => {
+        r.components.forEach((c, j) => {
+          if (!parts.has(c))
+            error(
+              file,
+              `risks[${i}].components[${j}]`,
+              `"${c}" is not one of the components`,
+            );
+        });
+        r.facts.forEach((f, j) => ref(`risks[${i}].facts[${j}]`, f));
+      });
+      tool.related.facts.forEach((f, j) => ref(`related.facts[${j}]`, f));
+      break;
+    }
+    case "lab": {
+      const diagram = diagrams.get(`${tool.topic}/${tool.diagram}`);
+      if (!diagram) {
+        error(
+          file,
+          "diagram",
+          `"${tool.diagram}" has no file in content/topics/${tool.topic}/diagrams/`,
+        );
+        break;
+      }
+      const ids = new Set(diagram.nodes.map((n) => n.id));
+      const edges = Object.keys(diagram.paths2);
+      tool.trace.forEach((hop, i) => {
+        if (!edgeOfHop(edges, hop))
+          error(file, `trace[${i}]`, `no edge joins ${hop.from} and ${hop.to}`);
+      });
+      tool.telemetry.forEach((n, i) => {
+        if (!ids.has(n))
+          error(file, `telemetry[${i}]`, `"${n}" is not in the diagram`);
+      });
+      const detailed = new Set(tool.details.map((d) => d.node));
+      for (const n of ids)
+        if (!detailed.has(n)) error(file, "details", `"${n}" has no detail`);
+      tool.details.forEach((d, i) => {
+        if (!ids.has(d.node))
+          error(
+            file,
+            `details[${i}].node`,
+            `"${d.node}" is not in the diagram`,
+          );
+        d.facts.forEach((f, j) => ref(`details[${i}].facts[${j}]`, f));
+      });
+      break;
+    }
+    case "cards": {
+      unique(
+        "cards",
+        tool.cards.map((c) => c.id),
+      );
+      tool.cards.forEach((c, i) =>
+        c.facts.forEach((f, j) => ref(`cards[${i}].facts[${j}]`, f)),
+      );
+      break;
+    }
+    case "sheets": {
+      const gov = tools.find(
+        (x) => x.topic === tool.topic && x.kind === "governance",
+      );
+      const threats = tools.find(
+        (x) => x.topic === tool.topic && x.kind === "threats",
+      );
+      tool.sheets.forEach((s, i) => {
+        s.facts.forEach((f, j) => ref(`sheets[${i}].facts[${j}]`, f));
+        const b = s.body;
+        if (b.type === "risks" && !threats)
+          error(file, `sheets[${i}].body`, "the topic has no threat model");
+        if (b.type === "dates")
+          b.picks.forEach((p, j) => {
+            if (
+              gov?.kind !== "governance" ||
+              !gov.events.some((e) => e.date === p.date)
+            )
+              error(
+                file,
+                `sheets[${i}].body.picks[${j}].date`,
+                `${p.date} is not a date on the governance timeline`,
+              );
+          });
+      });
+      break;
+    }
+    case "governance": {
+      tool.events.forEach((e, i) => {
+        if (!isRealDate(e.date))
+          error(file, `events[${i}].date`, `${e.date} is not a real date`);
+        const prev = tool.events[i - 1];
+        if (prev && prev.date > e.date)
+          error(file, `events[${i}].date`, "events must be in date order");
+        e.facts.forEach((f, j) => ref(`events[${i}].facts[${j}]`, f));
+      });
+      tool.penalties.facts.forEach((f, j) => ref(`penalties.facts[${j}]`, f));
+      tool.frameworks.forEach((fw, i) =>
+        fw.facts.forEach((f, j) => ref(`frameworks[${i}].facts[${j}]`, f)),
+      );
+      tool.crosswalk.facts.forEach((f, j) => ref(`crosswalk.facts[${j}]`, f));
+      break;
+    }
+  }
+}
+
+function checkFactRef(
+  file: string,
+  field: string,
+  id: string,
+  topicId: string,
+  factById: Map<string, Fact>,
+  error: (file: string, field: string, message: string) => void,
+) {
+  const fact = factById.get(id);
+  if (!fact) error(file, field, `"${id}" is not in the facts register`);
+  else if (!fact.topics.includes(topicId))
+    error(file, field, `"${id}" doesn't list "${topicId}" in its topics`);
+}
+
+function checkLesson(
+  file: string,
+  lesson: Lesson,
+  factById: Map<string, Fact>,
+  error: (file: string, field: string, message: string) => void,
+) {
+  const nodeIds = new Set<string>();
+  lesson.nodes.forEach((n, i) => {
+    if (nodeIds.has(n.id))
+      error(file, `nodes[${i}].id`, `"${n.id}" is used twice`);
+    nodeIds.add(n.id);
+    if (n.addedAt > lesson.steps.length)
+      error(
+        file,
+        `nodes[${i}].addedAt`,
+        `the lesson has ${lesson.steps.length} steps`,
+      );
+    n.standards?.forEach((s, j) => {
+      if (!lesson.standards?.[s])
+        error(
+          file,
+          `nodes[${i}].standards[${j}]`,
+          `"${s}" is not in standards`,
+        );
+    });
+  });
+
+  const edgeIds = new Set<string>();
+  lesson.edges.forEach((e, i) => {
+    if (edgeIds.has(e)) error(file, `edges[${i}]`, `"${e}" is listed twice`);
+    edgeIds.add(e);
+    for (const end of e.split("_"))
+      if (!nodeIds.has(end))
+        error(file, `edges[${i}]`, `"${end}" is not a node`);
+  });
+
+  if (lesson.bypass) {
+    if (!nodeIds.has(lesson.bypass.node))
+      error(file, "bypass.node", `"${lesson.bypass.node}" is not a node`);
+    if (!edgeIds.has(lesson.bypass.edge))
+      error(file, "bypass.edge", `"${lesson.bypass.edge}" is not an edge`);
+  }
+
+  lesson.steps.forEach((step, s) => {
+    const n = s + 1;
+    const at = `steps[${s}]`;
+    step.newNodes.forEach((id, j) => {
+      if (!isPresent(lesson, id, n))
+        error(file, `${at}.newNodes[${j}]`, `"${id}" isn't built by step ${n}`);
+    });
+    step.trace.forEach((hop, j) => {
+      if (!nodeIds.has(hop.from))
+        error(file, `${at}.trace[${j}].from`, `"${hop.from}" is not a node`);
+      if (!nodeIds.has(hop.to))
+        error(file, `${at}.trace[${j}].to`, `"${hop.to}" is not a node`);
+    });
+    // After the bypass rule, every hop runs along an edge between two
+    // parts that exist at this step.
+    effectiveTrace(lesson, n).forEach((hop) => {
+      if (!edgeOfHop(lesson.edges, hop))
+        error(file, `${at}.trace`, `no edge joins ${hop.from} and ${hop.to}`);
+      for (const end of [hop.from, hop.to])
+        if (nodeIds.has(end) && !isPresent(lesson, end, n))
+          error(
+            file,
+            `${at}.trace`,
+            `${hop.from}→${hop.to}: "${end}" isn't built by step ${n}`,
+          );
+    });
+    step.facts.forEach((id, j) =>
+      checkFactRef(
+        file,
+        `${at}.facts[${j}]`,
+        id,
+        lesson.topic,
+        factById,
+        error,
+      ),
+    );
+  });
+}
+
+/** Date.parse rolls 31 Feb over to March; this doesn't. */
+function isRealDate(iso: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return false;
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return (
+    date.getUTCFullYear() === y &&
+    date.getUTCMonth() === m - 1 &&
+    date.getUTCDate() === d
+  );
 }

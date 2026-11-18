@@ -1,101 +1,83 @@
-// Navigation and search data for the app shell. Built from content at
-// build time (content/index.ts) and passed to the client as plain data, so
-// no content files ship as JavaScript.
+// Search over topics, lessons, their steps and facts (PRD P2). The index is
+// built from content at build time, written once as search-index.json, and
+// fetched the first time search opens, so no page carries it (issue #4).
 
-import type { Level } from "@/content/types";
+export type SearchKind = "topic" | "lesson" | "step" | "fact";
 
-export type NavTopic = { id: string; title: string; level: Level };
-export type NavRoadmap = { id: string; title: string; topics: NavTopic[] };
-
-/** Each topic once, though a topic may sit in more than one roadmap. */
-export function navTopicIds(roadmaps: readonly NavRoadmap[]): string[] {
-  return [...new Set(roadmaps.flatMap((r) => r.topics.map((t) => t.id)))];
-}
-
-export type SearchEntry = {
-  id: string;
+export type SearchDoc = {
+  kind: SearchKind;
   title: string;
-  roadmap: string;
-  summary: string;
-  nodes: string[];
-  steps: { title: string; text: string }[];
+  /** Where it sits, shown under the title: a topic, or topic · lesson. */
+  context: string;
+  /** Searched, but not shown. */
+  text: string;
+  /** App path with a trailing slash, before the base path. */
+  path: string;
+  /** 1-based step to open, for step results. */
+  step?: number;
 };
 
-export type SearchResult = {
-  id: string;
-  title: string;
-  roadmap: string;
-  /** 1-based step to open, when the match is inside one step. */
-  step?: number;
-  /** What matched, to show under the title. */
-  detail: string;
+export type SearchResult = SearchDoc;
+
+/** A topic or lesson outranks a step, a step outranks a fact. */
+const KIND_RANK: Record<SearchKind, number> = {
+  topic: 3,
+  lesson: 2,
+  step: 1,
+  fact: 0,
 };
 
 const norm = (s: string) => s.toLowerCase();
 
 /**
- * Every word of the query must appear. Topic-level matches (title, summary,
- * block labels) come first, title matches first of all; otherwise the first
- * step that matches is linked directly.
+ * Every word of the query must appear in the title, context or text.
+ * Title matches come first, then by kind; ties keep index order.
  */
-export function searchTopics(
-  entries: readonly SearchEntry[],
+export function search(
+  docs: readonly SearchDoc[],
   query: string,
   limit = 8,
 ): SearchResult[] {
   const words = norm(query).split(/\s+/).filter(Boolean);
   if (words.length === 0) {
-    return entries.slice(0, limit).map((e) => ({
-      id: e.id,
-      title: e.title,
-      roadmap: e.roadmap,
-      detail: e.summary,
-    }));
+    return docs.filter((d) => d.kind === "topic").slice(0, limit);
   }
   const has = (text: string) => words.every((w) => norm(text).includes(w));
-  const scored: { result: SearchResult; score: number }[] = [];
-  for (const e of entries) {
-    if (has(e.title)) {
-      scored.push({
-        score: 3,
-        result: {
-          id: e.id,
-          title: e.title,
-          roadmap: e.roadmap,
-          detail: e.summary,
-        },
-      });
-      continue;
-    }
-    if (has(`${e.title} ${e.summary} ${e.nodes.join(" ")}`)) {
-      scored.push({
-        score: 2,
-        result: {
-          id: e.id,
-          title: e.title,
-          roadmap: e.roadmap,
-          detail: e.summary,
-        },
-      });
-      continue;
-    }
-    const i = e.steps.findIndex((s) => has(`${e.title} ${s.title} ${s.text}`));
-    const step = e.steps[i];
-    if (step) {
-      scored.push({
-        score: 1,
-        result: {
-          id: e.id,
-          title: e.title,
-          roadmap: e.roadmap,
-          step: i + 1,
-          detail: `Step ${i + 1}: ${step.title}`,
-        },
-      });
-    }
-  }
+  const scored: { doc: SearchDoc; score: number; order: number }[] = [];
+  docs.forEach((doc, order) => {
+    const inTitle = has(doc.title);
+    if (!inTitle && !has(`${doc.title} ${doc.context} ${doc.text}`)) return;
+    scored.push({
+      doc,
+      order,
+      score: (inTitle ? 10 : 0) + KIND_RANK[doc.kind],
+    });
+  });
   return scored
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => b.score - a.score || a.order - b.order)
     .slice(0, limit)
-    .map((s) => s.result);
+    .map((s) => s.doc);
 }
+
+/** The link for a result: its path, plus ?step for steps. */
+export function resultHref(result: SearchResult): string {
+  return result.step ? `${result.path}?step=${result.step}` : result.path;
+}
+
+/** Validates the fetched index: drops anything that isn't a SearchDoc. */
+export function parseSearchIndex(data: unknown): SearchDoc[] {
+  if (!Array.isArray(data)) return [];
+  return data.filter(
+    (d): d is SearchDoc =>
+      typeof d === "object" &&
+      d !== null &&
+      ["topic", "lesson", "step", "fact"].includes(d.kind) &&
+      typeof d.title === "string" &&
+      typeof d.context === "string" &&
+      typeof d.text === "string" &&
+      typeof d.path === "string" &&
+      (d.step === undefined || Number.isInteger(d.step)),
+  );
+}
+
+export const SEARCH_INDEX_PATH = "/search-index.json";

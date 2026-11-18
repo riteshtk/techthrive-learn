@@ -15,7 +15,9 @@ npm run typecheck      # next typegen && tsc --noEmit
 npm test               # content check + typecheck + Vitest (no browsers; must stay under 30 s)
 npm run check:content  # just the content rules (also runs before every build)
 npm run test:e2e       # Playwright, Chromium at 360 px and 1280 px (builds under /techthrive-learn, port 4517)
-npm run test:e2e:webkit  # advisory WebKit run
+npm run test:e2e:webkit  # WebKit at 360 px (required in CI)
+npm run test:visual    # visual regression; Linux only (skipped on macOS)
+npm run compare:design # local: side-by-side sheets against the design export (DESIGN_DIR)
 npm run check:budget   # after a build: each page under 150 KB gzipped JS
 
 npx vitest run tests/unit/engine.test.ts      # one unit test file
@@ -40,4 +42,7 @@ npx playwright test tests/e2e/flow.spec.ts --project=chromium-360
 
 ## Git workflow
 
-`main` holds only the scaffold commit. All v1 work goes on `feat/learn-v1` and lands as one pull request. Don't commit to `main`, and don't create or push anything on GitHub without asking the user first.
+v1 is merged and live. v2 phase 1 (PRD features P1–P19) goes on `feat/v2-phase1` and lands as one pull request; each later phase gets its own branch and PR. Don't commit to `main`, and don't create or push anything on GitHub without asking the user first.
+
+- No Docker on this Mac. Linux visual baselines come from the CI workflow run by hand with `baselines` ticked (`gh workflow run ci.yml --ref <branch> -f baselines=true`): review its `visual-baselines` artifact, then commit the PNGs into `tests/visual/screens.spec.ts-snapshots/`.
+- The design export and specs live in `/Users/Shared/ttl/design-v2` and are never committed.
