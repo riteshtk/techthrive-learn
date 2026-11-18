@@ -20,3 +20,17 @@
 .kit-field {
   padding: 16px;
 }
+
+.kit-stage {
+  display: grid;
+  gap: 12px;
+}
+
+.kit-stage-frame {
+  padding: 0;
+  overflow: hidden;
+}
+
+.kit-stage-field {
+  height: 560px;
+}

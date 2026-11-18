@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import {
-  Button,
-  ButtonLink,
   Chip,
   FilterGroup,
   Kbd,
@@ -29,6 +28,7 @@ import {
   StatCard,
 } from "@/components/ui/display";
 import { TopicBar } from "@/components/shell/TopicBar";
+import { StageDemo } from "./StageDemo";
 import { SegmentedTabs, tabPanelProps } from "@/components/ui/SegmentedTabs";
 import {
   CardLarge,
@@ -189,6 +189,7 @@ export function Kit() {
           </DotField>
           <EmptyState title="No topics match">Try another word.</EmptyState>
         </section>
+        <StageDemo />
         <FootNote>Sample content for checks only.</FootNote>
       </main>
     </>

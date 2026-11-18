@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Button } from "@/components/ui/controls";
+import { Button } from "@/components/ui/Button";
 import { currentTheme, setTheme, subscribeTheme } from "@/lib/theme";
 
 /** Sun while dark, moon while light; the label says what a press does. */
