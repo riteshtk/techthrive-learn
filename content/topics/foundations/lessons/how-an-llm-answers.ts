@@ -6,6 +6,7 @@ import type { Lesson } from "../../../types";
 export default {
   id: "how-an-llm-answers",
   topic: "foundations",
+  author: "tech-and-thrive",
   diagram: "llm-answers",
   metricLabels: ["Parts built", "Model passes", "Next", "Stopped by"],
   legend: [

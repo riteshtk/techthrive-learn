@@ -5,6 +5,7 @@ import type { Lesson } from "../../../types";
 export default {
   id: "agent-loop",
   topic: "foundations",
+  author: "tech-and-thrive",
   diagram: "agent-loop",
   metricLabels: ["Parts built", "Model turns", "Tool calls", "Status"],
   legend: [

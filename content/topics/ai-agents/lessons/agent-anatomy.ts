@@ -6,6 +6,7 @@ import type { Lesson } from "../../../types";
 export default {
   id: "agent-anatomy",
   topic: "ai-agents",
+  author: "tech-and-thrive",
   diagram: "card-dispute-agent",
   metricLabels: [
     "COMPONENTS",

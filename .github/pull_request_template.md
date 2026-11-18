@@ -12,7 +12,7 @@ For a new or changed lesson:
 
 - [ ] Each step is one idea in plain words, and its hops run along the diagram
 - [ ] Every figure on screen is in the facts register, with a primary source I read on the `readOn` date
-- [ ] Each step has a one-sentence narration `caption`
+- [ ] The lesson has `author: "community"`, and each step a one-sentence `caption` (shown as its transcript)
 - [ ] The checkpoint's three questions are answered by the lesson and its sources
 
 ## Content agreement

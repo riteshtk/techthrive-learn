@@ -148,6 +148,7 @@ function lesson(): Lesson {
   return {
     id: "exactly-once",
     topic: "payments",
+    author: "community",
     diagram: "checkout",
     metricLabels: ["A", "B", "C", "D"],
     legend: [["cyan", "request"]],

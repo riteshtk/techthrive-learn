@@ -6,6 +6,7 @@ import type { Lesson } from "../../../types";
 export default {
   id: "rag",
   topic: "foundations",
+  author: "tech-and-thrive",
   diagram: "rag-pipeline",
   metricLabels: ["Parts built", "Documents", "Retrieved", "Answer"],
   legend: [

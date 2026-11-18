@@ -28,7 +28,7 @@ complete example: copy its shape. Its lessons show every step field in use.
 2. **Draw the system** in `diagrams/`, or reuse the topic's diagram. Node
    ids are single capital letters; 2D boxes sit on a grid; 3D positions are
    the same grid projected isometrically (see `foundations/diagrams/`).
-3. **Write the steps** in `lessons/<id>.ts`: 3 to 12 steps, each with a
+3. **Write the steps** in `lessons/<id>.ts` (with `author: "community"`): 3 to 12 steps, each with a
    short rail label, a title, one to four short paragraphs, a callout, the
    hops the request makes, and a one-sentence narration `caption`.
 4. **Source every figure.** Any number on screen must appear in the value
@@ -41,9 +41,10 @@ complete example: copy its shape. Its lessons show every step field in use.
 6. **Run `npm test`**, then `npm run dev` to step through it at
    http://localhost:3000/topics/<topic>/lessons/<id>/, at phone width too.
 
-Narration is recorded by Tech & Thrive from your `caption` lines; until the
-audio is in `public/audio/<topic>/<lesson>/`, the lesson shows the line as
-text. `npm run check:content` lists missing recordings.
+Set `author: "community"` on your lesson. Tech & Thrive's own lessons are
+narrated in the creator's voice and CI requires those recordings; a
+community lesson ships with its transcript instead: each step's `caption`
+is shown as text, so write it as one clear sentence.
 
 ## Content rules
 

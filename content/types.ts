@@ -433,6 +433,10 @@ export type Step = Infer<typeof StepSchema>;
 export const LessonSchema = object({
   id: id(),
   topic: id(),
+  /** Tech & Thrive's own lessons are narrated in the creator's voice, and
+      CI requires every recording. Community lessons can't be, so they
+      ship with their transcript: each step's caption, shown as text. */
+  author: oneOf(["tech-and-thrive", "community"] as const),
   /** The diagram file it draws, in content/topics/<topic>/diagrams/. */
   diagram: id(),
   metricLabels: tuple(text(24), text(24), text(24), text(24)),

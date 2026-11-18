@@ -5,6 +5,7 @@ import type { Lesson } from "../../../types";
 export default {
   id: "move-money-exactly-once",
   topic: "payments",
+  author: "tech-and-thrive",
   diagram: "checkout-payments",
   metricLabels: [
     "COMPONENTS",

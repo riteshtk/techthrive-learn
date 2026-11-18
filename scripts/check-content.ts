@@ -13,6 +13,7 @@ import {
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { formatIssue } from "../content/schema";
+import { narrationIssues } from "../content/narration";
 import { validateContent } from "../content/validate";
 
 const today = new Date().toISOString().slice(0, 10);
@@ -29,28 +30,16 @@ const { issues, content } = validateContent(
   today,
 );
 
-// Narration: one recording per lesson step, at
-// public/audio/<topic>/<lesson>/<NN>.mp3 (PRD P5). Missing audio is a
-// warning while lessons are being recorded; REQUIRE_NARRATION=1 (Gate 1)
-// makes it an error.
-const requireNarration = process.env.REQUIRE_NARRATION === "1";
-for (const lesson of content.lessons) {
-  const missing = lesson.steps
-    .map((_, i) => String(i + 1).padStart(2, "0"))
-    .filter(
-      (nn) =>
-        !existsSync(
-          join("public", "audio", lesson.topic, lesson.id, `${nn}.mp3`),
-        ),
-    );
-  if (missing.length > 0)
-    issues.push({
-      file: `content/topics/${lesson.topic}/lessons/${lesson.id}.ts`,
-      field: "steps",
-      message: `narration audio missing for step ${missing.map(Number).join(", ")} (public/audio/${lesson.topic}/${lesson.id}/NN.mp3)`,
-      level: requireNarration ? "error" : "warning",
-    });
-}
+// Narration: Tech & Thrive's lessons must be recorded (an error with
+// REQUIRE_NARRATION=1, as CI runs it); community lessons ship with their
+// transcript.
+issues.push(
+  ...narrationIssues(
+    content.lessons,
+    (path) => existsSync(join("public", path)),
+    process.env.REQUIRE_NARRATION === "1",
+  ),
+);
 
 const errors = issues.filter((i) => i.level !== "warning");
 const warnings = issues.filter((i) => i.level === "warning");
