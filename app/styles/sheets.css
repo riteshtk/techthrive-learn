@@ -1,0 +1,244 @@
+/* Cheatsheets (spec 05 §7), with an A4 print layout: light colours, no
+   chrome, two columns, no sheet split across pages. */
+.tt-sh-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 28px 56px;
+}
+
+.tt-sh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
+.tt-sh {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 22px;
+}
+
+.tt-nocaps {
+  text-transform: none;
+}
+
+.tt-sh h2,
+.tt-sh p {
+  margin: 0;
+}
+
+.tt-sh-kv {
+  margin: 0;
+}
+
+.tt-sh-kv div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tt-sh-kv div:last-child {
+  border-bottom: 0;
+}
+
+.tt-sh-kv dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tt-sh-aside {
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--sunken);
+  font-size: 13px;
+}
+
+.tt-sh-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-sh-list li {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.tt-sh-id {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tt-sh-change {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.tt-sh-change.up {
+  color: var(--amber);
+}
+
+.tt-sh-code {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 16px;
+  background: var(--sunken);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.tt-sh-prices {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.tt-sh-prices th,
+.tt-sh-prices td {
+  padding: 7px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+
+.tt-sh-prices thead th {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tt-sh-prices th:first-child {
+  text-align: left;
+}
+
+.tt-sh-prices tbody th {
+  font-weight: 600;
+}
+
+.tt-sh-prices td {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tt-sh-more {
+  align-self: flex-start;
+}
+
+.tt-sh-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.tt-sh-foot p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .tt-sh-page {
+    padding: 20px 16px 40px;
+  }
+
+  /* Price rows put the model name above the figures (approved still). */
+  .tt-sh-prices thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tt-sh-prices tr {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px 6px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tt-sh-prices th,
+  .tt-sh-prices td {
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .tt-sh-prices tbody th {
+    grid-column: 1 / -1;
+  }
+
+  .tt-sh-prices td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: 9.5px;
+    text-transform: uppercase;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  :root {
+    color-scheme: light !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .tt-topbar,
+  .tt-topicbar,
+  .tt-sh-page .tt-pagehead-actions,
+  .tt-sh-more {
+    display: none !important;
+  }
+
+  .tt-sh-page {
+    max-width: none;
+    padding: 0;
+  }
+
+  .tt-sh-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tt-sh {
+    padding: 12px;
+    border-radius: 10px;
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}

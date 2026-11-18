@@ -9,9 +9,11 @@ import { PRICE_FACTS } from "./claudePrices";
 export type Use = { label: string; href: string };
 
 const TOOL_LABEL: Record<Tool["kind"], string> = {
+  cards: "Review cards",
   threats: "Threat model",
   governance: "Governance",
   lab: "Design lab",
+  sheets: "Cheatsheets",
 };
 
 export type SourceRow = {
@@ -88,6 +90,14 @@ export function usesOf(
         break;
       case "lab":
         for (const d of tool.details) for (const id of d.facts) add(id, use);
+        break;
+      case "cards":
+        for (const c of tool.cards)
+          for (const id of c.facts)
+            add(id, { label: "Review cards", href: "/review/" });
+        break;
+      case "sheets":
+        for (const sh of tool.sheets) for (const id of sh.facts) add(id, use);
         break;
       case "governance":
         for (const id of [

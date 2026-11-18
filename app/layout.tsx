@@ -17,6 +17,7 @@ import "./styles/cost.css";
 import "./styles/threats.css";
 import "./styles/governance.css";
 import "./styles/lab.css";
+import "./styles/sheets.css";
 import "./globals.css";
 
 // Downloaded at build time and served from this site: no third-party requests.

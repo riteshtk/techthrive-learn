@@ -405,9 +405,17 @@ export function validateContent(
     if (baseName(file) !== tool.kind)
       error(file, "kind", `must be "${baseName(file)}", the file name`);
     const topic = topicById.get(tool.topic);
-    if (topic && !topic.tabs.includes(tool.kind))
+    // Cards have no tab of their own: they meet on /review.
+    if (topic && tool.kind !== "cards" && !topic.tabs.includes(tool.kind))
       error(file, "kind", `the topic has no "${tool.kind}" tab`);
-    checkTool(file, tool, factById, diagramByKey, error);
+    checkTool(
+      file,
+      tool,
+      tools.map((t) => t.tool),
+      factById,
+      diagramByKey,
+      error,
+    );
   }
 
   // Figures: every one on screen is in the register -----------------------
@@ -455,6 +463,7 @@ export function validateContent(
 function checkTool(
   file: string,
   tool: Tool,
+  tools: readonly Tool[],
   factById: Map<string, Fact>,
   diagrams: Map<string, Diagram>,
   error: (file: string, field: string, message: string) => void,
@@ -526,6 +535,43 @@ function checkTool(
             `"${d.node}" is not in the diagram`,
           );
         d.facts.forEach((f, j) => ref(`details[${i}].facts[${j}]`, f));
+      });
+      break;
+    }
+    case "cards": {
+      unique(
+        "cards",
+        tool.cards.map((c) => c.id),
+      );
+      tool.cards.forEach((c, i) =>
+        c.facts.forEach((f, j) => ref(`cards[${i}].facts[${j}]`, f)),
+      );
+      break;
+    }
+    case "sheets": {
+      const gov = tools.find(
+        (x) => x.topic === tool.topic && x.kind === "governance",
+      );
+      const threats = tools.find(
+        (x) => x.topic === tool.topic && x.kind === "threats",
+      );
+      tool.sheets.forEach((s, i) => {
+        s.facts.forEach((f, j) => ref(`sheets[${i}].facts[${j}]`, f));
+        const b = s.body;
+        if (b.type === "risks" && !threats)
+          error(file, `sheets[${i}].body`, "the topic has no threat model");
+        if (b.type === "dates")
+          b.picks.forEach((p, j) => {
+            if (
+              gov?.kind !== "governance" ||
+              !gov.events.some((e) => e.date === p.date)
+            )
+              error(
+                file,
+                `sheets[${i}].body.picks[${j}].date`,
+                `${p.date} is not a date on the governance timeline`,
+              );
+          });
       });
       break;
     }

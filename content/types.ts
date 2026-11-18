@@ -640,10 +640,76 @@ export const LabSchema = object({
 });
 export type Lab = Infer<typeof LabSchema>;
 
+/** Cheatsheets (spec 05 §7, PRD P13): the topic on one printable page.
+    Prices, risk lists and dates are drawn from the rate card, the threat
+    model and the governance timeline, so they're never typed twice. */
+export const SheetsSchema = object({
+  topic: id(),
+  title: text(60),
+  intro: text(200),
+  sheets: array(
+    object({
+      label: text(60),
+      title: text(60),
+      body: tagged("type", {
+        kv: object({
+          rows: array(object({ k: text(80), v: text(60) }), {
+            min: 1,
+            max: 12,
+          }),
+          /** A boxed one-liner under the rows. */
+          aside: optional(text(160)),
+        }),
+        code: object({
+          /** Shown as written; its figures are checked by unit tests. */
+          code: text(600),
+          text: optional(text(240)),
+        }),
+        prices: object({}),
+        risks: object({ list: oneOf(["threats", "related"] as const) }),
+        dates: object({
+          picks: array(object({ label: text(60), date: date() }), {
+            min: 1,
+            max: 10,
+          }),
+        }),
+      }),
+      caption: optional(text(240)),
+      facts: array(id()),
+    }),
+    { min: 1, max: 12 },
+  ),
+  footer: text(200),
+});
+export type Sheets = Infer<typeof SheetsSchema>;
+
+/** Review cards (spec 05 §8, PRD P14): short questions on a topic's
+    facts, scheduled with FSRS on /review. Card ids key learners' stored
+    schedules, so they never change once merged. */
+export const CardsSchema = object({
+  topic: id(),
+  cards: array(
+    object({
+      id: id(),
+      /** The chip: "Cost", "Security", "Evals", "Protocol". */
+      area: text(20),
+      /** Where it comes from, shown small: "Anthropic pricing". */
+      source: text(60),
+      q: text(200),
+      a: text(300),
+      facts: array(id(), { min: 1 }),
+    }),
+    { min: 1, max: 60 },
+  ),
+});
+export type Cards = Infer<typeof CardsSchema>;
+
 export const ToolSchema = tagged("kind", {
+  cards: CardsSchema,
   threats: ThreatsSchema,
   governance: GovernanceSchema,
   lab: LabSchema,
+  sheets: SheetsSchema,
 });
 export type Tool = Infer<typeof ToolSchema>;
 export type ToolKind = Tool["kind"];
