@@ -5,6 +5,7 @@ import {
   checkpointFiles,
   diagramFiles,
   factFiles,
+  catalogFiles,
   lessonFiles,
   toolFiles,
   topicFiles,
@@ -28,6 +29,7 @@ const { issues, content } = validateContent(
     diagrams: diagramFiles,
     facts: factFiles,
     tools: toolFiles,
+    catalog: catalogFiles,
   },
   today,
 );

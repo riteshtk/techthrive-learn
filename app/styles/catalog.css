@@ -1,0 +1,139 @@
+/* The topic catalog (spec 01 §B2). */
+.tt-cat-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 28px 28px 56px;
+}
+
+.tt-cat-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 10px;
+  padding: 14px;
+}
+
+.tt-cat-search {
+  flex: 1 1 320px;
+  height: 42px;
+}
+
+/* The focus ring traces the field, not the inner input. */
+.tt-cat-search:focus-within {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.tt-cat-search input:focus-visible {
+  outline: none;
+}
+
+.tt-cat-filters .tt-fgroup {
+  flex-wrap: wrap;
+}
+
+.tt-cat-filters .tt-fgroup:last-child {
+  flex: 1 1 100%;
+}
+
+.tt-cat-count {
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tt-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-cat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+}
+
+.tt-cat-card p {
+  margin: 0;
+}
+
+.tt-cat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tt-cat-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.tt-cat-title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.tt-cat-card:has(a) {
+  position: relative;
+}
+
+.tt-cat-card:has(a):hover {
+  border-color: var(--line-3);
+}
+
+.tt-cat-card .tt-body-s {
+  flex: 1;
+}
+
+.tt-cat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-cat-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.tt-cat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px;
+  text-align: center;
+}
+
+.tt-cat-empty p {
+  margin: 0;
+}
+
+.tt-cat-note {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .tt-cat-page {
+    padding: 20px 16px 40px;
+  }
+}

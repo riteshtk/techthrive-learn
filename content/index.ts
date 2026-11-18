@@ -2,6 +2,7 @@
 // `npm run check:content` runs first in every build, so by the time a page
 // asks for content it is valid; this throws only if that step was skipped.
 import {
+  catalogFiles,
   checkpointFiles,
   diagramFiles,
   factFiles,
@@ -15,6 +16,7 @@ import type {
   Diagram,
   Fact,
   Lesson,
+  PlannedTopic,
   Tool,
   ToolKind,
   Topic,
@@ -34,6 +36,7 @@ function content(): Content {
       diagrams: diagramFiles,
       facts: factFiles,
       tools: toolFiles,
+      catalog: catalogFiles,
     },
     "0000-01-01",
   );
@@ -84,6 +87,11 @@ export function getDiagram(
   return content().diagrams.find(
     (d) => d.topic === topicId && d.id === diagramId,
   );
+}
+
+/** Topics planned but not written yet (the catalog). */
+export function getPlannedTopics(): PlannedTopic[] {
+  return content().planned;
 }
 
 /** All of a topic's tool data. */

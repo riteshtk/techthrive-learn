@@ -60,7 +60,7 @@ function topic(): Topic {
     level: "advanced",
     status: "live",
     summary: "Move money exactly once.",
-    domain: "Payments",
+    domain: "Payments & fintech",
     system: "Checkout payments",
     tags: ["Idempotency"],
     tabs: ["overview", "lessons"],

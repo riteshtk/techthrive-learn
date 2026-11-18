@@ -11,7 +11,7 @@ export default {
   status: "live",
   summary:
     "Build a card-dispute agent a bank could run: identity, least privilege, evals you can trust, traces an auditor can read, and a bill you can predict.",
-  domain: "AI systems",
+  domain: "AI & ML",
   system: "Card-dispute agent",
   tags: ["MCP", "OWASP", "Evals", "Tracing", "Cost"],
   tabs: [

@@ -76,6 +76,9 @@ write("content", [
   ...diagrams.map(importOf("d")),
   ...tools.map(importOf("x")),
   ...facts.map(importOf("f")),
+  ...(existsSync(join(root, "content/catalog.ts"))
+    ? ['import catalog from "../catalog";']
+    : []),
   "",
   "// Each file's default export, unchecked: content/validate.ts checks it.",
   "export const topicFiles: { file: string; data: unknown }[] = [",
@@ -92,6 +95,11 @@ write("content", [
   "];",
   "export const factFiles: { file: string; data: unknown }[] = [",
   ...listOf("f", facts),
+  "];",
+  "export const catalogFiles: { file: string; data: unknown }[] = [",
+  ...(existsSync(join(root, "content/catalog.ts"))
+    ? ['  { file: "content/catalog.ts", data: catalog },']
+    : []),
   "];",
   "export const toolFiles: { file: string; data: unknown }[] = [",
   ...listOf("x", tools),

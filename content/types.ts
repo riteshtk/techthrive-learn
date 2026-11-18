@@ -37,6 +37,17 @@ const https = () =>
 const text = (max?: number) => string({ max });
 
 export const LEVELS = ["foundation", "intermediate", "advanced"] as const;
+
+/** The catalog's domains, in its filter order. */
+export const DOMAINS = [
+  "AI & ML",
+  "Payments & fintech",
+  "Distributed systems",
+  "Data",
+  "Security",
+  "Reliability",
+  "Cloud & platform",
+] as const;
 export const COLORS = [
   "text",
   "cyan",
@@ -216,7 +227,7 @@ export const TopicSchema = object({
   /** One sentence for the catalog and search. */
   summary: text(240),
   /** Catalog filter. */
-  domain: text(40),
+  domain: oneOf(DOMAINS),
   /** The catalog card's system line, e.g. "Card-dispute agent". */
   system: text(60),
   tags: array(text(30), { max: 6 }),
@@ -713,3 +724,24 @@ export const ToolSchema = tagged("kind", {
 });
 export type Tool = Infer<typeof ToolSchema>;
 export type ToolKind = Tool["kind"];
+
+// The catalog ---------------------------------------------------------------
+// content/catalog.ts: topics that are planned but not written yet, shown
+// on /topics as planned and never as links. A planned id is reserved for
+// the topic it becomes.
+
+export const CatalogSchema = array(
+  object({
+    id: id(),
+    title: text(60),
+    domain: oneOf(DOMAINS),
+    /** The system the topic is built around. */
+    system: text(160),
+    tags: array(text(30), { min: 1, max: 3 }),
+    plannedLessons: number({ int: true, min: 1, max: 20 }),
+    /** "Q1 2027", if it's scheduled. */
+    plannedFor: optional(text(20)),
+  }),
+  { max: 40 },
+);
+export type PlannedTopic = Infer<typeof CatalogSchema>[number];

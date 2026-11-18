@@ -8,7 +8,7 @@ export default {
   status: "live",
   summary:
     "Networks drop, apps retry and webhooks arrive twice. Build a checkout payment system that charges each customer exactly once and can prove it.",
-  domain: "Payments",
+  domain: "Payments & fintech",
   system: "Checkout payment system",
   tags: ["Idempotency", "Ledgers", "Webhooks", "PCI DSS"],
   tabs: ["overview", "lessons"],

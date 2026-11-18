@@ -19,6 +19,8 @@ import {
   type Topic,
   ToolSchema,
   type Tool,
+  CatalogSchema,
+  type PlannedTopic,
 } from "./types";
 
 export type ContentFile = { file: string; data: unknown };
@@ -31,6 +33,8 @@ export type ContentInput = {
   facts: ContentFile[];
   /** Topic tools (content/topics/<topic>/tools/<kind>.ts). */
   tools: ContentFile[];
+  /** Planned topics (content/catalog.ts). */
+  catalog?: ContentFile[];
 };
 
 /** The checked content, for pages and the search index. */
@@ -41,6 +45,7 @@ export type Content = {
   diagrams: Diagram[];
   facts: Fact[];
   tools: Tool[];
+  planned: PlannedTopic[];
 };
 
 /** content/topics/<topic>/… → the topic folder's name. */
@@ -398,6 +403,20 @@ export function validateContent(
     });
   }
 
+  // Catalog ---------------------------------------------------------------
+  const planned: PlannedTopic[] = [];
+  for (const { file, data } of input.catalog ?? [])
+    if (checkFile(CatalogSchema, file, data, issues))
+      data.forEach((p, i) => {
+        if (
+          topicById.has(p.id) ||
+          planned.some((q) => q.id === p.id) ||
+          (RESERVED_TOPIC_IDS as readonly string[]).includes(p.id)
+        )
+          error(file, `[${i}].id`, `"${p.id}" is taken`);
+        planned.push(p);
+      });
+
   // Tools -----------------------------------------------------------------
   for (const { file, tool } of tools) {
     if (topicFolder(file) !== tool.topic)
@@ -455,6 +474,7 @@ export function validateContent(
       diagrams: diagrams.map((d) => d.diagram),
       facts: [...factById.values()],
       tools: tools.map((t) => t.tool),
+      planned,
     },
   };
 }
