@@ -11,8 +11,8 @@ test("lists live and planned topics with a computed count", async ({
   page,
 }) => {
   await page.goto(PAGE);
-  await expect(count(page)).toHaveText("13 of 13 topics · 2 live");
-  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(13);
+  await expect(count(page)).toHaveText("14 of 14 topics · 3 live");
+  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(14);
 });
 
 test("live topics link to their pages; planned topics are not links", async ({
@@ -25,7 +25,7 @@ test("live topics link to their pages; planned topics are not links", async ({
   await expect(
     page.getByRole("heading", { name: "Search at scale" }).getByRole("link"),
   ).toHaveCount(0);
-  await expect(page.locator(".tt-cat-grid a")).toHaveCount(2);
+  await expect(page.locator(".tt-cat-grid a")).toHaveCount(3);
 });
 
 test("searches, filters and keeps the filters in the address", async ({
@@ -35,7 +35,7 @@ test("searches, filters and keeps the filters in the address", async ({
   await page
     .getByRole("searchbox", { name: "Search topics" })
     .fill("idempotency");
-  await expect(count(page)).toHaveText("1 of 13 topics · 2 live");
+  await expect(count(page)).toHaveText("1 of 14 topics · 3 live");
   await page.getByRole("searchbox", { name: "Search topics" }).fill("");
   await page
     .getByRole("group", { name: "Status" })
@@ -45,20 +45,20 @@ test("searches, filters and keeps the filters in the address", async ({
     .getByRole("group", { name: "Domain" })
     .getByRole("button", { name: "AI & ML", exact: true })
     .click();
-  await expect(count(page)).toHaveText("1 of 13 topics · 2 live");
+  await expect(count(page)).toHaveText("1 of 14 topics · 3 live");
   await expect(page.getByRole("heading", { level: 2 })).toHaveText(
     "LLM platform: RAG, evals and gateways",
   );
   await expect(page).toHaveURL(/\?status=planned&domain=AI\+%26\+ML$/);
   await page.reload();
-  await expect(count(page)).toHaveText("1 of 13 topics · 2 live");
+  await expect(count(page)).toHaveText("1 of 14 topics · 3 live");
 });
 
 test("shows an empty state that clears the filters", async ({ page }) => {
   await page.goto(`${PAGE}?q=zzzz`);
   await expect(page.getByRole("status")).toContainText("No topics match");
   await page.getByRole("button", { name: "Clear filters" }).click();
-  await expect(count(page)).toHaveText("13 of 13 topics · 2 live");
+  await expect(count(page)).toHaveText("14 of 14 topics · 3 live");
 });
 
 test("has no axe violations in either theme, and no sideways scroll", async ({

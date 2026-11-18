@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createBrowserStore } from "@/lib/browserStore";
+import { MIGRATE_FN, V1_KEY } from "@/lib/migrateV1";
 import {
   EMPTY_LEARNING,
   LEARNING_KEY,
@@ -128,5 +129,70 @@ describe("the browser store", () => {
     store.reset();
     expect(store.get()).toEqual(EMPTY_LEARNING);
     expect(storage.getItem(LEARNING_KEY)).toBeNull();
+  });
+});
+
+describe("moving v1 progress (P17)", () => {
+  // The exact script the layout inlines.
+  const migrateV1 = new Function(`return (${MIGRATE_FN})`)() as (
+    s: Storage,
+    now: Date,
+  ) => void;
+  const storage = (items: Record<string, string>) => {
+    const map = new Map(Object.entries(items));
+    return {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, v),
+      removeItem: (k: string) => void map.delete(k),
+      map,
+    } as unknown as Storage & { map: Map<string, string> };
+  };
+  const NOW = new Date("2026-11-18T09:00:00Z");
+
+  it("marks each finished v1 topic's Foundations lesson done, then drops v1", () => {
+    const s = storage({
+      [V1_KEY]: JSON.stringify({ done: ["rag", "agent-loop", "not-a-topic"] }),
+    });
+    migrateV1(s, NOW);
+    expect(s.map.has(V1_KEY)).toBe(false);
+    const v2 = JSON.parse(s.map.get(LEARNING_KEY)!);
+    expect(Object.keys(v2.lessons).sort()).toEqual([
+      "foundations/agent-loop",
+      "foundations/rag",
+    ]);
+    expect(v2.lessons["foundations/rag"]).toEqual({
+      step: 7,
+      maxStep: 7,
+      startedAt: NOW.toISOString(),
+      updatedAt: NOW.toISOString(),
+      doneAt: NOW.toISOString(),
+    });
+  });
+
+  it("keeps v2 progress that's already there", () => {
+    const mine = {
+      step: 3,
+      maxStep: 3,
+      startedAt: "2026-11-17T09:00:00.000Z",
+      updatedAt: "2026-11-17T09:10:00.000Z",
+    };
+    const s = storage({
+      [V1_KEY]: JSON.stringify({ done: ["rag"] }),
+      [LEARNING_KEY]: JSON.stringify({
+        lessons: { "foundations/rag": mine },
+        checkpoints: {},
+      }),
+    });
+    migrateV1(s, NOW);
+    expect(
+      JSON.parse(s.map.get(LEARNING_KEY)!).lessons["foundations/rag"],
+    ).toEqual(mine);
+  });
+
+  it("drops corrupt v1 data without touching v2", () => {
+    const s = storage({ [V1_KEY]: "{not json" });
+    migrateV1(s, NOW);
+    expect(s.map.has(V1_KEY)).toBe(false);
+    expect(s.map.has(LEARNING_KEY)).toBe(false);
   });
 });

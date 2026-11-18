@@ -1,76 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ContinueLink } from "@/components/ContinueLink";
-import { DoneTick } from "@/components/DoneTick";
-import { ProgressCount } from "@/components/ProgressCount";
-import { ResetProgress } from "@/components/ResetProgress";
-import { UndoDone } from "@/components/UndoDone";
-import { getRoadmap, getRoadmaps, roadmapTopics } from "@/content/v1";
-import { pageMetadata } from "@/lib/metadata";
-import { levelLabel } from "@/lib/roadmap";
+import { Redirect } from "@/components/Redirect";
 
+// v1's one roadmap is now the Foundations topic (P17).
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return getRoadmaps().map((r) => ({ id: r.id }));
+  return [{ id: "ai-system-design" }];
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/roadmaps/[id]">): Promise<Metadata> {
-  const roadmap = getRoadmap((await params).id);
-  return roadmap
-    ? pageMetadata({
-        title: roadmap.title,
-        description: roadmap.goal,
-        path: `/roadmaps/${roadmap.id}/`,
-      })
-    : {};
-}
+export const metadata: Metadata = {
+  title: "AI System Design has moved",
+  robots: { index: false },
+};
 
-export default async function RoadmapPage({
-  params,
-}: PageProps<"/roadmaps/[id]">) {
-  const roadmap = getRoadmap((await params).id);
-  if (!roadmap) notFound();
-  const topics = roadmapTopics(roadmap);
-
-  return (
-    <main className="page">
-      <p className="crumb">
-        <Link href="/topics/">All topics</Link>
-      </p>
-      <h1>{roadmap.title}</h1>
-      <p className="lede">{roadmap.goal}</p>
-      <p>
-        <ContinueLink
-          topics={topics.map((t) => ({ id: t.id, title: t.title }))}
-        />
-      </p>
-      <ol className="card-list topic-list">
-        {topics.map((topic, i) => (
-          <li key={topic.id} className="card">
-            <p className="meta">
-              <span className="topic-number">{i + 1}</span>
-              <span className={`level level-${topic.level}`}>
-                {levelLabel[topic.level]}
-              </span>
-            </p>
-            <h2>
-              <Link href={`/topics/${topic.id}/`} className="card-link">
-                {topic.title}
-              </Link>
-            </h2>
-            <p>{topic.summary}</p>
-            <DoneTick topicId={topic.id} />
-          </li>
-        ))}
-      </ol>
-      <UndoDone topics={topics.map((t) => ({ id: t.id, title: t.title }))} />
-      {/* v1 progress, here until Foundations replaces this page (P17). */}
-      <ProgressCount topicIds={roadmap.topics} />
-      <ResetProgress topicIds={roadmap.topics} />
-    </main>
-  );
+export default function MovedRoadmap() {
+  return <Redirect to="/topics/foundations/" title="AI System Design" />;
 }

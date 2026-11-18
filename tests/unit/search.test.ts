@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchDocuments } from "@/content/v1";
+import { searchDocuments } from "@/content";
 import {
   parseSearchIndex,
   resultHref,
@@ -102,9 +102,18 @@ describe("the built index", () => {
 
   it("covers every kind the content has, with app paths", () => {
     expect(new Set(built.map((d) => d.kind))).toEqual(
-      new Set(["topic", "lesson", "step"]),
+      new Set(["topic", "lesson", "step", "fact"]),
     );
     for (const d of built) expect(d.path).toMatch(/^\/.*\/$/);
+  });
+
+  it("finds a lesson step, a tool and a fact", () => {
+    const hit = (q: string) => search(built, q, 20).map((r) => r.path);
+    expect(hit("idempotency key")).toContain(
+      "/topics/payments/lessons/move-money-exactly-once/",
+    );
+    expect(hit("threat model")).toContain("/topics/ai-agents/threats/");
+    expect(hit("NPCI")).toContain("/topics/payments/sources/");
   });
 
   it("is valid as served", () => {

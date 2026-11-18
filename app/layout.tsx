@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { TopBar } from "@/components/shell/TopBar";
 import { pageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/metadata";
 import { withBase } from "@/lib/paths";
+import { MIGRATE_SCRIPT } from "@/lib/migrateV1";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./styles/tokens.css";
 import "./styles/base.css";
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: MIGRATE_SCRIPT }} />
       </head>
       <body>
         <TopBar />

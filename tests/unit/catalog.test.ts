@@ -32,7 +32,7 @@ const entries: CatalogEntry[] = [
 describe("the catalog", () => {
   it("lists the live topics and the planned ones", () => {
     expect(entries.filter((e) => e.status === "live").map((e) => e.id)).toEqual(
-      ["ai-agents", "payments"],
+      ["ai-agents", "foundations", "payments"],
     );
     expect(entries.filter((e) => e.status === "planned")).toHaveLength(11);
   });

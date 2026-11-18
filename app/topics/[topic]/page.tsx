@@ -10,21 +10,22 @@ import {
   getTopics,
   oldestReadOn,
 } from "@/content";
-import { getTopics as getV1Topics } from "@/content/v1";
 import { pageMetadata } from "@/lib/metadata";
 import { DIAGRAM_ICON_PATHS } from "@/player/diagramIcons";
 import { drawDiagram } from "@/player/drawing";
-import { v1Metadata, V1Topic } from "./V1Topic";
+import { Redirect } from "@/components/Redirect";
+
+import { MOVED } from "@/lib/moved";
 
 export const dynamicParams = false;
 
-/** Live v2 topics, plus the v1 topic addresses until P17 redirects them. */
+/** Live topics, plus v1's topic addresses, which redirect. */
 export function generateStaticParams() {
   return [
     ...getTopics()
       .filter((t) => t.status === "live")
       .map((t) => ({ topic: t.id })),
-    ...getV1Topics().map((t) => ({ topic: t.id })),
+    ...Object.keys(MOVED).map((topic) => ({ topic })),
   ];
 }
 
@@ -33,7 +34,10 @@ export async function generateMetadata({
 }: PageProps<"/topics/[topic]">): Promise<Metadata> {
   const id = (await params).topic;
   const topic = getTopic(id);
-  if (!topic) return v1Metadata(id);
+  const moved = MOVED[id];
+  if (!topic && moved)
+    return { title: `${moved.title} has moved`, robots: { index: false } };
+  if (!topic) return {};
   return pageMetadata({
     title: topic.title,
     description: topic.summary,
@@ -46,7 +50,15 @@ export default async function TopicPage({
 }: PageProps<"/topics/[topic]">) {
   const id = (await params).topic;
   const topic = getTopic(id);
-  if (!topic) return <V1Topic id={id} />;
+  const moved = MOVED[id];
+  if (!topic && moved)
+    return (
+      <Redirect
+        to={`/topics/foundations/lessons/${moved.lesson}/`}
+        title={moved.title}
+      />
+    );
+  if (!topic) notFound();
   const o = topic.overview;
   const diagram = o && getDiagram(topic.id, o.diagram);
   if (!o || !diagram) notFound();

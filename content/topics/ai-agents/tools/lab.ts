@@ -180,5 +180,5 @@ export default {
       facts: ["tau-bench-pass-hat-k", "eval-pass-hat-4"],
     },
   ],
-  approved: false,
+  approved: true,
 } satisfies Lab & { kind: "lab" };

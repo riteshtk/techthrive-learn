@@ -1,6 +1,7 @@
 // The v2 content, checked once and shared by every page at build time.
 // `npm run check:content` runs first in every build, so by the time a page
 // asks for content it is valid; this throws only if that step was skipped.
+import type { SearchDoc } from "@/lib/search";
 import {
   catalogFiles,
   checkpointFiles,
@@ -132,4 +133,81 @@ export function durationLabel(minutes: number): string {
 /** The oldest read date among facts: the "Verified" chip's date. */
 export function oldestReadOn(facts: readonly Fact[]): string | undefined {
   return facts.map((f) => f.readOn).sort()[0];
+}
+
+const TOOL_TITLES: Record<string, string> = {
+  threats: "Threat model",
+  governance: "Governance",
+  lab: "Design lab",
+  sheets: "Cheatsheets",
+};
+
+/**
+ * The search index (PRD P2, issue #4): live topics, their lessons and
+ * every step, their tool pages, and their sourced facts. Written once at
+ * build time as search-index.json.
+ */
+export function searchDocuments(): SearchDoc[] {
+  const docs: SearchDoc[] = [];
+  for (const t of getTopics().filter((x) => x.status === "live")) {
+    const base = `/topics/${t.id}/`;
+    docs.push({
+      kind: "topic",
+      title: t.title,
+      context: "Topic",
+      text: `${t.summary} ${t.system} ${t.tags.join(" ")}`,
+      path: base,
+    });
+    for (const lesson of getLessons(t.id)) {
+      const outline = t.lessons.find((l) => l.id === lesson.id);
+      const title = outline?.title ?? lesson.id;
+      const path = `${base}lessons/${lesson.id}/`;
+      docs.push({
+        kind: "lesson",
+        title,
+        context: t.switcherLabel,
+        text: `${outline?.summary ?? ""} ${lesson.nodes.map((n) => n.name).join(" ")}`,
+        path,
+      });
+      lesson.steps.forEach((s, n) =>
+        docs.push({
+          kind: "step",
+          title: s.title,
+          context: `${title} · step ${n + 1}`,
+          text: `${s.body.join(" ")} ${s.caption}`,
+          path,
+          step: n + 1,
+        }),
+      );
+    }
+    for (const tool of getTools(t.id))
+      if (tool.kind in TOOL_TITLES)
+        docs.push({
+          kind: "lesson",
+          title: TOOL_TITLES[tool.kind]!,
+          context: t.switcherLabel,
+          text:
+            tool.kind === "threats"
+              ? tool.risks.map((r) => `${r.id} ${r.name}`).join(" ")
+              : "",
+          path: `${base}${tool.kind}/`,
+        });
+    if (t.tabs.includes("cost"))
+      docs.push({
+        kind: "lesson",
+        title: "Cost model",
+        context: t.switcherLabel,
+        text: "Claude prices caching batch routing per conversation per month",
+        path: `${base}cost/`,
+      });
+    for (const f of getFacts(t.id).filter((x) => x.kind === "real"))
+      docs.push({
+        kind: "fact",
+        title: f.value,
+        context: `${t.switcherLabel} · ${f.title ?? f.source}`,
+        text: f.claim,
+        path: `${base}sources/`,
+      });
+  }
+  return docs;
 }

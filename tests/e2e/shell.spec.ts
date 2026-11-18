@@ -98,26 +98,36 @@ test.describe("search", () => {
     await expect(dialog).toBeVisible();
     const input = dialog.getByRole("combobox");
     await expect(input).toBeFocused();
-    await input.fill("lower temperature");
+    await input.fill("greedy search");
     const option = dialog.getByRole("option").first();
-    await expect(option).toContainText("Pick one token");
+    await expect(option).toContainText("Draw one token");
     await expect(option).toContainText("How an LLM answers · step 4");
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/topics\/how-an-llm-answers\/\?step=4$/);
-    await expect(page.getByTestId("counter")).toHaveText("4 of 7");
+    await expect(page).toHaveURL(
+      /\/topics\/foundations\/lessons\/how-an-llm-answers\/\?step=4$/,
+    );
+    await expect(
+      page.getByRole("tabpanel").getByText(/^Step \d+ \/ 7$/),
+    ).toHaveText("Step 4 / 7");
   });
 
   test("a step in the page already open moves the player there", async ({
     page,
   }) => {
-    await page.goto("topics/how-an-llm-answers/?step=2");
-    await expect(page.getByTestId("counter")).toHaveText("2 of 7");
+    await page.goto("topics/foundations/lessons/how-an-llm-answers/?step=2");
+    await expect(
+      page.getByRole("tabpanel").getByText(/^Step \d+ \/ 7$/),
+    ).toHaveText("Step 2 / 7");
     await page.keyboard.press("Control+k");
-    await dialogOf(page).getByRole("combobox").fill("lower temperature");
+    await dialogOf(page).getByRole("combobox").fill("greedy search");
     await expect(dialogOf(page).getByRole("option").first()).toBeVisible();
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/topics\/how-an-llm-answers\/\?step=4$/);
-    await expect(page.getByTestId("counter")).toHaveText("4 of 7");
+    await expect(page).toHaveURL(
+      /\/topics\/foundations\/lessons\/how-an-llm-answers\/\?step=4$/,
+    );
+    await expect(
+      page.getByRole("tabpanel").getByText(/^Step \d+ \/ 7$/),
+    ).toHaveText("Step 4 / 7");
   });
 
   test("/ opens it and arrow keys move through results", async ({ page }) => {
@@ -154,12 +164,17 @@ test.describe("search", () => {
 // in every page.
 test.describe("search index on demand", () => {
   test("no page carries other topics' step text", async ({ request }) => {
+    const phrase = "less randomness";
     const home = await (await request.get("./")).text();
-    expect(home).not.toContain("likeliest tokens");
-    const rag = await (await request.get("topics/rag/")).text();
-    expect(rag).not.toContain("likeliest tokens");
-    const llm = await (await request.get("topics/how-an-llm-answers/")).text();
-    expect(llm).toContain("likeliest tokens");
+    expect(home).not.toContain(phrase);
+    const rag = await (
+      await request.get("topics/foundations/lessons/rag/")
+    ).text();
+    expect(rag).not.toContain(phrase);
+    const llm = await (
+      await request.get("topics/foundations/lessons/how-an-llm-answers/")
+    ).text();
+    expect(llm).toContain(phrase);
   });
 
   test("the index is fetched once, when search first opens", async ({

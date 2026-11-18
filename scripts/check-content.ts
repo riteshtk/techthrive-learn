@@ -14,11 +14,6 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { formatIssue } from "../content/schema";
 import { validateContent } from "../content/validate";
-import {
-  roadmapFiles,
-  topicFiles as v1TopicFiles,
-} from "../content/v1/.generated/index";
-import { validateContent as validateV1 } from "../content/v1/validate";
 
 const today = new Date().toISOString().slice(0, 10);
 const { issues, content } = validateContent(
@@ -33,7 +28,6 @@ const { issues, content } = validateContent(
   },
   today,
 );
-const v1Issues = validateV1({ topics: v1TopicFiles, roadmaps: roadmapFiles });
 
 // Narration: one recording per lesson step, at
 // public/audio/<topic>/<lesson>/<NN>.mp3 (PRD P5). Missing audio is a
@@ -58,7 +52,7 @@ for (const lesson of content.lessons) {
     });
 }
 
-const errors = [...issues.filter((i) => i.level !== "warning"), ...v1Issues];
+const errors = issues.filter((i) => i.level !== "warning");
 const warnings = issues.filter((i) => i.level === "warning");
 
 for (const w of warnings) console.warn(`  ! ${formatIssue(w)}`);
@@ -73,5 +67,5 @@ console.log(
     `${content.lessons.length} lessons, ${content.checkpoints.length} checkpoints, ` +
     `${content.facts.length} facts, ${content.tools.length} tools` +
     (warnings.length ? `, ${warnings.length} warning(s)` : "") +
-    ` (v1: ${v1TopicFiles.length} topics, ${roadmapFiles.length} roadmaps).`,
+    ".",
 );

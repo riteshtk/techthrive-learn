@@ -1,4 +1,4 @@
-import { searchDocuments } from "@/content/v1";
+import { searchDocuments } from "@/content";
 
 // Written once at build time as out/search-index.json. The search dialog
 // fetches it the first time it opens (issue #4).

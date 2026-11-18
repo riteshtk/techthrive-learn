@@ -8,11 +8,12 @@
 - [ ] `npm run lint` passes
 - [ ] I checked the change in the browser with `npm run dev`, at phone width too
 
-For a new or changed topic:
+For a new or changed lesson:
 
-- [ ] Each step is one plain sentence and lights up the parts it describes
-- [ ] Every fact is backed by a listed source, and I checked those sources on the `read` date
-- [ ] The topic is listed in a roadmap, in a sensible order
+- [ ] Each step is one idea in plain words, and its hops run along the diagram
+- [ ] Every figure on screen is in the facts register, with a primary source I read on the `readOn` date
+- [ ] Each step has a one-sentence narration `caption`
+- [ ] The checkpoint's three questions are answered by the lesson and its sources
 
 ## Content agreement
 

@@ -5,8 +5,14 @@ import { getLessons } from "@/content";
 
 // Each step's narration is recorded in the creator's voice and shipped with
 // its transcript (PRD P5). The transcript must be the step's caption, word
-// for word, so changing a caption means recording it again.
-describe.each(getLessons().map((l) => [`${l.topic}/${l.id}`, l] as const))(
+// for word, so changing a caption means recording it again. Lessons not yet
+// recorded are listed by the content check (an error with
+// REQUIRE_NARRATION=1, as Gate 1 requires).
+const recorded = getLessons().filter((l) =>
+  existsSync(join("public", "audio", l.topic, l.id, "transcript.json")),
+);
+
+describe.each(recorded.map((l) => [`${l.topic}/${l.id}`, l] as const))(
   "narration for %s",
   (key, lesson) => {
     const dir = join("public", "audio", key);
