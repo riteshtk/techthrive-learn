@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import type { IconName } from "@/components/ui/icons";
+import { AnyIcon, type PageIconName } from "@/components/ui/PageIcon";
 import type { TopicTabId } from "@/content/types";
 import { formatDate } from "@/lib/dates";
 
@@ -16,7 +17,7 @@ export const TOPIC_TABS = {
   sheets: { label: "Sheets", icon: "sheet", path: "sheets/" },
 } as const satisfies Record<
   TopicTabId,
-  { label: string; icon: IconName; path: string }
+  { label: string; icon: IconName | PageIconName; path: string }
 >;
 
 export type TopicTab = TopicTabId;
@@ -76,7 +77,7 @@ export function TopicBar({
             className="tt-navlink"
             aria-current={tab === active ? "page" : undefined}
           >
-            <Icon name={TOPIC_TABS[tab].icon} />
+            <AnyIcon name={TOPIC_TABS[tab].icon} />
             {TOPIC_TABS[tab].label}
           </Link>
         ))}

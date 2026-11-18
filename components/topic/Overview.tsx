@@ -8,6 +8,7 @@ import Link from "next/link";
 import { BrandImage } from "@/components/BrandImage";
 import { Icon } from "@/components/ui/Icon";
 import type { IconName } from "@/components/ui/icons";
+import { AnyIcon, type PageIconName } from "@/components/ui/PageIcon";
 import { TOPIC_TABS } from "@/components/shell/TopicBar";
 import { durationLabel } from "@/content";
 import type { Fact, Topic } from "@/content/types";
@@ -67,7 +68,7 @@ export function Overview({ data }: { data: OverviewData }) {
                   href={`/topics/${topic.id}/${TOPIC_TABS[o.secondary.tab].path}`}
                   className="tt-btn tt-hero-cta tt-hero-secondary"
                 >
-                  <Icon name={TOPIC_TABS[o.secondary.tab].icon} />
+                  <AnyIcon name={TOPIC_TABS[o.secondary.tab].icon} />
                   {o.secondary.label}
                 </Link>
               )}
@@ -75,7 +76,7 @@ export function Overview({ data }: { data: OverviewData }) {
             <ul className="tt-hero-highlights">
               {o.highlights.map((h) => (
                 <li key={h.text}>
-                  <Icon name={h.icon as IconName} />
+                  <AnyIcon name={h.icon as IconName | PageIconName} />
                   {h.text}
                 </li>
               ))}

@@ -1,12 +1,12 @@
 // The checkpoint for "The agent loop" (PRD P17), written from the lesson
-// and its sources. Not approved until a fresh reviewer and the creator
-// have checked it.
+// and its sources. Checked by a fresh reviewer and approved
+// by the creator on 18 Nov 2026.
 import type { Checkpoint } from "../../../types";
 
 export default {
   lesson: "agent-loop",
   topic: "foundations",
-  approved: false,
+  approved: true,
   questions: [
     {
       id: "who-runs-tools",

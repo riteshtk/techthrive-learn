@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TopicBar } from "@/components/shell/TopicBar";
 import { PageHeader } from "@/components/ui/display";
-import { Icon } from "@/components/ui/Icon";
+import { PageIcon } from "@/components/ui/PageIcon";
 import {
   getCheckpoint,
   getFacts,
@@ -154,7 +154,7 @@ export default async function SourcesPage({
           </section>
         ))}
         <p className="tt-panel-2 tt-src-note">
-          <Icon name="shield" />
+          <PageIcon name="shield" />
           <span>
             Each figure is re-read from its source by its re-check date.
             Regulatory summaries support engineering design and are not legal

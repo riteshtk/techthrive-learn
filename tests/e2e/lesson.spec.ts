@@ -113,7 +113,14 @@ test.describe("keyboard and memory", () => {
 
   test("Tab reaches Next, and Enter on a step dot goes there", async ({
     page,
+    browserName,
   }) => {
+    // WebKit on macOS, like Safari by default, only Tabs to buttons with
+    // Option held; Linux WebKit and Chromium Tab to everything.
+    const tab =
+      browserName === "webkit" && process.platform === "darwin"
+        ? "Alt+Tab"
+        : "Tab";
     await page.goto(`${path}?step=1`);
     const next = page.getByRole("button", { name: "Next · Shape" });
     for (
@@ -121,7 +128,7 @@ test.describe("keyboard and memory", () => {
       i < 80 && !(await next.evaluate((el) => el === document.activeElement));
       i++
     )
-      await page.keyboard.press("Tab");
+      await page.keyboard.press(tab);
     await expect(next).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(stepLabel(page)).toHaveText("Step 2 / 10");

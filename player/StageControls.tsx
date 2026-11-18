@@ -37,14 +37,25 @@ export function ViewerToolbar({
   const wrap = useRef<HTMLDivElement>(null);
   const on = LAYERS.filter((l) => state.layers[l]).length;
 
-  // Close the layers popover on a click elsewhere.
+  // Close the layers popover on a click elsewhere, or on Escape wherever
+  // focus is: Safari doesn't focus a checkbox you click, so focus may not
+  // be inside the popover.
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
       if (!wrap.current?.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      wrap.current?.querySelector("button")?.focus();
+    };
     document.addEventListener("pointerdown", onDown);
-    return () => document.removeEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
@@ -92,12 +103,6 @@ export function ViewerToolbar({
             className="tt-pop tt-layers"
             role="group"
             aria-label="Layers"
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.stopPropagation();
-                setOpen(false);
-              }
-            }}
           >
             {LAYERS.map((layer) => (
               <label key={layer} className="tt-layer">

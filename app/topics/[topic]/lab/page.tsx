@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TopicBar } from "@/components/shell/TopicBar";
 import { LabView } from "@/components/topic/LabView";
-import { Icon } from "@/components/ui/Icon";
+import { PageIcon } from "@/components/ui/PageIcon";
 import {
   getDiagram,
   getFacts,
@@ -80,7 +80,7 @@ export default async function LabPage({
         <header className="tt-lab-head">
           <div className="tt-lab-title">
             <span className="tt-sq" aria-hidden="true">
-              <Icon name="grid" />
+              <PageIcon name="grid" />
             </span>
             <div>
               <h1 className="tt-h3">{lab.title}</h1>
@@ -96,7 +96,7 @@ export default async function LabPage({
                 href={`/topics/${topic.id}/threats/`}
                 className="tt-btn tt-btn-sm"
               >
-                <Icon name="shield" />
+                <PageIcon name="shield" />
                 Threat model
               </Link>
             )}
@@ -105,7 +105,7 @@ export default async function LabPage({
                 href={`/topics/${topic.id}/cost/`}
                 className="tt-btn tt-btn-sm"
               >
-                <Icon name="bar-chart" />
+                <PageIcon name="bar-chart" />
                 Cost it
               </Link>
             )}
