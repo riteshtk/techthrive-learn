@@ -7,7 +7,7 @@ import { CLOCK, SCREENS } from "./screens";
 
 test.skip(
   process.platform === "darwin",
-  "baselines are Linux renders made in CI; see .github/workflows/visual-baselines.yml",
+  "baselines are Linux renders made in CI; made by the CI workflow with baselines=true",
 );
 
 for (const theme of ["dark", "light"] as const)

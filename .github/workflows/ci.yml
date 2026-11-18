@@ -7,6 +7,11 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      baselines:
+        description: Render the visual baselines and upload them (review, then commit from the artifact)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -104,8 +109,34 @@ jobs:
             test-results/
           retention-days: 7
 
+  # Run by hand (Actions → CI → Run workflow, baselines ticked) after a
+  # deliberate visual change. It renders every screen on the same Linux
+  # runner the Visual job compares on and uploads the PNGs; review them,
+  # then commit them from the artifact (gh run download). Baselines are
+  # never made on a Mac: fonts and anti-aliasing differ.
+  baselines:
+    name: Render visual baselines
+    if: ${{ inputs.baselines }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual -- --update-snapshots
+      - uses: actions/upload-artifact@v7
+        with:
+          name: visual-baselines
+          path: tests/visual/screens.spec.ts-snapshots/
+          retention-days: 14
+
   visual:
     name: Visual
+    if: ${{ !inputs.baselines }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

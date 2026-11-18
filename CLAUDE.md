@@ -44,5 +44,5 @@ npx playwright test tests/e2e/flow.spec.ts --project=chromium-360
 
 v1 is merged and live. v2 phase 1 (PRD features P1–P19) goes on `feat/v2-phase1` and lands as one pull request; each later phase gets its own branch and PR. Don't commit to `main`, and don't create or push anything on GitHub without asking the user first.
 
-- No Docker on this Mac. Linux visual baselines come from the "Update visual baselines" workflow (workflow_dispatch): review its artifact, then commit the PNGs into `tests/visual/screens.spec.ts-snapshots/`.
+- No Docker on this Mac. Linux visual baselines come from the CI workflow run by hand with `baselines` ticked (`gh workflow run ci.yml --ref <branch> -f baselines=true`): review its `visual-baselines` artifact, then commit the PNGs into `tests/visual/screens.spec.ts-snapshots/`.
 - The design export and specs live in `/Users/Shared/ttl/design-v2` and are never committed.
