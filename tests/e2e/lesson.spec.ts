@@ -435,6 +435,37 @@ test.describe("resuming and narration", () => {
       .toBe(9);
   });
 
+  test("moving before the progress code arrives still saves the step", async ({
+    page,
+  }) => {
+    // The page's own scripts come at once; code it loads after mount (the
+    // progress store among it) arrives 3 s late, as on a slow phone.
+    const html = await (await page.request.get(PAYMENTS)).text();
+    const initial = new Set(html.match(/\/_next\/static\/chunks\/[^"]+?\.js/g));
+    await page.route("**/_next/static/chunks/**", async (route) => {
+      if (!initial.has(new URL(route.request().url()).pathname))
+        await new Promise((r) => setTimeout(r, 3000));
+      await route.continue();
+    });
+    await page.goto(PAYMENTS);
+    await page.keyboard.press("ArrowRight");
+    await expect(stepLabel(page)).toHaveText("Step 2 / 10");
+    // Once it arrives, the step the learner is on is kept and saved.
+    await expect(page).toHaveURL(/\?step=2$/, { timeout: 8000 });
+    await expect(stepLabel(page)).toHaveText("Step 2 / 10");
+    const stored = () =>
+      page.evaluate(
+        (key) =>
+          JSON.parse(localStorage.getItem("ttl-learn:progress:v2") ?? "{}")
+            .lessons?.[key]?.step,
+        KEY,
+      );
+    await expect.poll(stored).toBe(2);
+    await page.keyboard.press("ArrowRight");
+    await expect(page).toHaveURL(/\?step=3$/);
+    await expect.poll(stored).toBe(3);
+  });
+
   test("Play lesson waits for this step's line, whatever the last one reports late", async ({
     page,
   }) => {

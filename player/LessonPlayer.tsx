@@ -140,8 +140,13 @@ export function LessonPlayer({
 
   const started = useRef(false);
   const arriving = useRef<number | null>(null);
+  // Set if the learner moves before the store arrives (a slow network):
+  // the step they're on then wins over ?step and the saved one.
+  const moved = useRef(false);
   useEffect(() => {
     if (!progress || !key) return;
+    started.current = true;
+    if (moved.current) return;
     const asked = Number(new URLSearchParams(location.search).get("step"));
     // A saved step can be past the end if the lesson has since lost steps.
     const saved = progress.learningStore.get().lessons[key]?.step;
@@ -151,11 +156,14 @@ export function LessonPlayer({
         : Math.min(saved ?? 1, total);
     if (first !== 1) dispatch({ type: "goto", step: first });
     arriving.current = first;
-    started.current = true;
   }, [progress, dispatch, key, total]);
 
   useEffect(() => {
-    if (!started.current || !progress || !key) return;
+    if (!started.current) {
+      if (state.step !== 1) moved.current = true;
+      return;
+    }
+    if (!progress || !key) return;
     if (arriving.current !== null) {
       if (state.step !== arriving.current) return;
       arriving.current = null;
