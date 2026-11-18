@@ -5,9 +5,13 @@ import { navRoadmaps, searchEntries } from "@/content";
 import { pageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/metadata";
 import { withBase } from "@/lib/paths";
 import { THEME_SCRIPT } from "@/lib/theme";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/components.css";
 import "./globals.css";
 
 // Downloaded at build time and served from this site: no third-party requests.
+// This is the Google build of Inter, the one the design was drawn with.
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 

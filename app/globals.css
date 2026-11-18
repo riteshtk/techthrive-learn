@@ -1,92 +1,23 @@
-/* Momentum, the Tech & Thrive theme (PRD F10): ink, porcelain and one ember
-   accent, set in Inter and JetBrains Mono.
-
-   Each colour token is defined once with light-dark(light, dark). The
-   colour-scheme property picks the side: dark by default, light when the
-   device asks, and either one when the learner chooses with the toggle
-   (<html data-theme>). Ember marks the current step only and never carries
-   text in light mode. Dimmed text is dimmed by colour, never opacity. Every
-   text pair here is checked for 4.5:1 by tests/unit/theme.test.ts. */
+/* v1 styles, retired page by page as the v2 pages replace them. Colours
+   come from app/styles/tokens.css; the diagram colours below belong to the
+   v1 player and go with it. */
 :root {
-  --ink: #070a12;
-  --porcelain: #f4f1ea;
-  --ember: #ff5a1f;
-
-  --bg: light-dark(#f4f1ea, #070a12);
-  --surface: light-dark(#fbfaf7, #111725);
-  --surface-2: light-dark(#ebe7dd, #0c111c);
-  --text: light-dark(#070a12, #f4f1ea);
-  --text-muted: light-dark(#4f4b44, #b8b4ab);
-  --border: light-dark(#c9c3b8, #2a3142);
-  --focus: light-dark(#070a12, #f4f1ea);
-  --grid-dot: light-dark(#d9d3c7, #1d2433);
-
   --node-fill: light-dark(#fbfaf7, #161d2c);
   --node-side: light-dark(#cfc8bb, #04060b);
   --node-stroke-dim: light-dark(#c9c3b8, #2a3142);
   --node-text-dim: light-dark(#5d5952, #9ea3ae);
-  /* The current step: ember outline on dark; on light, an ember block with
-     ink text and a heavier ink outline. */
   --node-fill-on: light-dark(var(--ember), #1b2334);
   --node-side-on: light-dark(#b8400f, #7a2a0e);
   --node-stroke-on: light-dark(#070a12, var(--ember));
   --node-text-on: light-dark(#070a12, #f4f1ea);
   --edge-dim: light-dark(#a9a296, #4a5265);
-  /* Ember is under 3:1 on light surfaces, so in light mode lit lines are
-     heavier ink, and the packet and current timeline step get an ink ring. */
   --edge-on: light-dark(#070a12, var(--ember));
   --packet: var(--ember);
   --step-on: var(--ember);
   --on-ring: light-dark(#070a12, #111725);
-
-  color-scheme: dark;
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    color-scheme: light;
-  }
-}
-
-:root[data-theme="light"] {
-  color-scheme: light;
 }
 
 /* Base ------------------------------------------------------------------ */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
-}
-
-a {
-  color: inherit;
-}
-
-:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 
 .icon {
   flex: none;
@@ -101,9 +32,9 @@ kbd {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.75rem;
   padding: 0 0.375rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 0.375rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 h1 {
@@ -123,12 +54,12 @@ h3 {
 }
 
 .meta {
-  color: var(--text-muted);
+  color: var(--muted);
   font-size: 0.9375rem;
 }
 
 .lede {
-  color: var(--text-muted);
+  color: var(--muted);
   margin: 0 0 1.5rem;
 }
 
@@ -154,16 +85,6 @@ h3 {
   display: block;
 }
 
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .brand-image .on-dark {
-    display: none;
-  }
-
-  :root:not([data-theme="dark"]) .brand-image .on-light {
-    display: block;
-  }
-}
-
 /* Buttons -------------------------------------------------------------- */
 
 .button {
@@ -173,9 +94,9 @@ h3 {
   gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.5rem 1rem;
-  border: 2px solid var(--border);
+  border: 2px solid var(--line-3);
   border-radius: 0.75rem;
-  background: var(--surface);
+  background: var(--raised);
   color: var(--text);
   font: inherit;
   font-weight: 600;
@@ -188,8 +109,8 @@ h3 {
 }
 
 .button[aria-disabled="true"] {
-  color: var(--text-muted);
-  border-color: var(--border);
+  color: var(--muted);
+  border-color: var(--line-3);
   cursor: default;
 }
 
@@ -205,9 +126,9 @@ h3 {
   width: 2.5rem;
   height: 2.5rem;
   flex: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 0.625rem;
-  background: var(--surface);
+  background: var(--raised);
   color: var(--text);
   cursor: pointer;
 }
@@ -218,8 +139,8 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-3);
 }
 
 .shell-inner {
@@ -245,7 +166,7 @@ h3 {
 }
 
 .brand > span:last-child {
-  color: var(--text-muted);
+  color: var(--muted);
   padding-top: 0.2rem;
 }
 
@@ -255,10 +176,10 @@ h3 {
   gap: 0.5rem;
   height: 2.5rem;
   padding: 0 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 0.625rem;
-  background: var(--surface);
-  color: var(--text-muted);
+  background: var(--raised);
+  color: var(--muted);
   font: inherit;
   font-size: 0.9375rem;
   cursor: pointer;
@@ -302,8 +223,8 @@ h3 {
    trapping, Escape and an inert page behind. */
 dialog {
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--raised);
+  border: 1px solid var(--line-3);
   padding: 0;
 }
 
@@ -350,7 +271,7 @@ dialog::backdrop {
 
 .drawer-count {
   font-family: var(--font-mono), ui-monospace, monospace;
-  color: var(--text-muted);
+  color: var(--muted);
   font-weight: 400;
 }
 
@@ -374,7 +295,7 @@ dialog::backdrop {
 }
 
 .drawer-roadmap ol a[aria-current="page"] {
-  background: var(--surface-2);
+  background: var(--raised-2);
   box-shadow: inset 3px 0 0 var(--text);
 }
 
@@ -387,14 +308,14 @@ dialog::backdrop {
   place-items: center;
   width: 1.125rem;
   height: 1.125rem;
-  border: 2px solid var(--text-muted);
+  border: 2px solid var(--muted);
   border-radius: 50%;
 }
 
 .drawer-tick[data-done="true"] {
   background: var(--text);
   border-color: var(--text);
-  color: var(--bg);
+  color: var(--surface);
 }
 
 .drawer-foot {
@@ -402,7 +323,7 @@ dialog::backdrop {
   justify-content: space-between;
   margin: auto 0 0;
   padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line-3);
 }
 
 .search {
@@ -420,7 +341,7 @@ dialog::backdrop {
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line-3);
 }
 
 .search-field input {
@@ -439,7 +360,7 @@ dialog::backdrop {
 }
 
 .search-field:focus-within {
-  box-shadow: inset 0 -2px 0 var(--focus);
+  box-shadow: inset 0 -2px 0 var(--text);
 }
 
 .search-results {
@@ -459,7 +380,7 @@ dialog::backdrop {
 }
 
 .search-results li[aria-selected="true"] {
-  background: var(--surface-2);
+  background: var(--raised-2);
   box-shadow: inset 3px 0 0 var(--text);
 }
 
@@ -470,7 +391,7 @@ dialog::backdrop {
 .search-empty {
   padding: 0.75rem;
   margin: 0;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 /* Pages ---------------------------------------------------------------- */
@@ -498,9 +419,9 @@ dialog::backdrop {
 .card {
   position: relative;
   padding: 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 0.75rem;
-  background: var(--surface);
+  background: var(--raised);
 }
 
 .card h2 {
@@ -538,7 +459,7 @@ dialog::backdrop {
 .level {
   font-family: var(--font-mono), ui-monospace, monospace;
   padding: 0 0.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 999px;
   font-size: 0.8125rem;
 }
@@ -595,7 +516,7 @@ dialog::backdrop {
   justify-content: space-between;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line-3);
 }
 
 .card-footer .meta {
@@ -610,7 +531,7 @@ dialog::backdrop {
 
 .progress-count {
   min-height: 1.5em;
-  color: var(--text-muted);
+  color: var(--muted);
   font-size: 0.9375rem;
 }
 
@@ -623,7 +544,7 @@ dialog::backdrop {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 50%;
-  border: 2px solid var(--text-muted);
+  border: 2px solid var(--muted);
 }
 
 .dot[data-done="true"] {
@@ -653,7 +574,7 @@ dialog::backdrop {
   padding: 0.75rem 1rem;
   border: 2px solid var(--text);
   border-radius: 0.75rem;
-  background: var(--surface);
+  background: var(--raised);
 }
 
 .reset {
@@ -674,7 +595,7 @@ dialog::backdrop {
 
 .reset-status {
   min-height: 1.5em;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 /* Topic page ----------------------------------------------------------- */
@@ -709,9 +630,9 @@ dialog::backdrop {
   align-items: center;
   gap: 0.375rem;
   padding: 0.125rem 0.625rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--raised);
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.8125rem;
 }
@@ -747,14 +668,14 @@ dialog::backdrop {
 .player:fullscreen {
   overflow-y: auto;
   padding: 1rem 1rem 6rem;
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .stage {
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-3);
   border-radius: 1rem;
-  background-color: var(--surface);
-  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1.4px);
+  background-color: var(--raised);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.4px);
   background-size: 16px 16px;
   background-position: 8px 8px;
 }
@@ -855,7 +776,7 @@ dialog::backdrop {
 }
 
 .diagram .node[data-pinned="true"] .node-focus {
-  stroke: var(--focus);
+  stroke: var(--text);
   stroke-dasharray: 4 3;
 }
 
@@ -866,7 +787,7 @@ dialog::backdrop {
 }
 
 .diagram .node:focus-visible .node-focus {
-  stroke: var(--focus);
+  stroke: var(--text);
   stroke-dasharray: none;
   stroke-width: 3;
 }
@@ -882,7 +803,7 @@ dialog::backdrop {
 
 .diagram .edge:focus-visible .edge-hit,
 .diagram .edge[data-pinned="true"] .edge-hit {
-  stroke: var(--focus);
+  stroke: var(--text);
   stroke-width: 3;
   stroke-dasharray: 2 4;
 }
@@ -906,7 +827,7 @@ dialog::backdrop {
 }
 
 .diagram .pill rect {
-  fill: var(--surface);
+  fill: var(--raised);
   stroke: var(--node-stroke-dim);
   stroke-width: 1;
 }
@@ -961,7 +882,7 @@ dialog::backdrop {
   padding: 0.5rem 0.75rem;
   border: 2px solid var(--text);
   border-radius: 0.75rem;
-  background: var(--surface);
+  background: var(--raised);
   font-size: 0.875rem;
   line-height: 1.4;
   box-shadow: 0 4px 0 var(--node-side);
@@ -991,7 +912,7 @@ dialog::backdrop {
   padding: 0;
   list-style: none;
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .legend li {
@@ -1037,7 +958,7 @@ dialog::backdrop {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .timeline {
@@ -1069,11 +990,11 @@ dialog::backdrop {
   display: block;
   height: 0.375rem;
   border-radius: 999px;
-  background: var(--border);
+  background: var(--line-3);
 }
 
 .timeline button[data-state="seen"]::before {
-  background: var(--text-muted);
+  background: var(--muted);
 }
 
 .timeline button[data-state="current"]::before {
@@ -1106,7 +1027,7 @@ dialog::backdrop {
 .hint {
   margin: 0.5rem 0 0;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--muted);
   font-size: 0.875rem;
 }
 
@@ -1122,8 +1043,8 @@ dialog::backdrop {
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: var(--surface-2);
-  border-top: 1px solid var(--border);
+  background: var(--raised-2);
+  border-top: 1px solid var(--line-3);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -1141,7 +1062,7 @@ dialog::backdrop {
   justify-content: space-between;
   border-color: var(--text);
   background: var(--text);
-  color: var(--bg);
+  color: var(--surface);
 }
 
 /* On a phone, Back is just its arrow so the Next button can name the step. */

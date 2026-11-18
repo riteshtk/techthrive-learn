@@ -13,7 +13,7 @@ const PAGES = [
 
 for (const scheme of ["dark", "light"] as const) {
   test.describe(`accessibility (${scheme})`, () => {
-    test.use({ colorScheme: scheme });
+    test.use({ theme: scheme });
 
     for (const path of PAGES) {
       test(`${path} has no serious or critical axe issues`, async ({

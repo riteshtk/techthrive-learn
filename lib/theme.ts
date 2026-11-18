@@ -1,6 +1,7 @@
-// Dark by default, light when the device asks, unless the learner picks one
-// with the toggle. The choice is stored under one versioned key and applied
-// as <html data-theme="…"> before first paint (THEME_SCRIPT in the layout).
+// Dark unless the learner picks light with the theme switch (PRD P1): the
+// device's preference is not consulted. The choice is stored under one
+// versioned key and applied as <html data-theme="…"> before first paint
+// (THEME_SCRIPT in the layout), so it holds across every page.
 
 export type Theme = "dark" | "light";
 
@@ -11,13 +12,9 @@ export const THEME_SCRIPT = `try{var t=localStorage.getItem(${JSON.stringify(
   THEME_KEY,
 )});if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
 
-const LIGHT_QUERY = "(prefers-color-scheme: light)";
-
-/** The theme in effect: the stored choice, or what the device asks for. */
+/** The theme in effect: the stored choice, else dark. */
 export function currentTheme(): Theme {
-  const chosen = document.documentElement.dataset.theme;
-  if (chosen === "dark" || chosen === "light") return chosen;
-  return window.matchMedia(LIGHT_QUERY).matches ? "light" : "dark";
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
 }
 
 export function setTheme(theme: Theme) {
@@ -29,17 +26,21 @@ export function setTheme(theme: Theme) {
   }
 }
 
-/** Calls back when the theme attribute or the device preference changes. */
+/** Calls back when the theme changes, here or in another tab. */
 export function subscribeTheme(callback: () => void): () => void {
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ["data-theme"],
   });
-  const query = window.matchMedia(LIGHT_QUERY);
-  query.addEventListener("change", callback);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== THEME_KEY) return;
+    const theme = event.newValue === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+  };
+  window.addEventListener("storage", onStorage);
   return () => {
     observer.disconnect();
-    query.removeEventListener("change", callback);
+    window.removeEventListener("storage", onStorage);
   };
 }

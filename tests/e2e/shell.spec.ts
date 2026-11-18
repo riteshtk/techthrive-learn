@@ -4,31 +4,34 @@ test.describe("theme toggle", () => {
   test("switches theme, swaps the logo and remembers the choice", async ({
     page,
   }) => {
-    await page.emulateMedia({ colorScheme: "light" });
     await page.goto("./");
     const toggle = page.getByTestId("theme-toggle");
-    await expect(toggle).toHaveAccessibleName("Switch to dark theme");
+    await expect(toggle).toHaveAccessibleName("Switch to light theme");
     const logo = page.getByRole("img", { name: "Tech & Thrive" });
-    await expect(logo).toHaveAttribute("src", /on-light\.svg$/);
+    await expect(logo).toHaveAttribute("src", /on-dark\.svg$/);
 
     await toggle.click();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    await expect(toggle).toHaveAccessibleName("Switch to light theme");
-    await expect(logo).toHaveAttribute("src", /on-dark\.svg$/);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(toggle).toHaveAccessibleName("Switch to dark theme");
+    await expect(logo).toHaveAttribute("src", /on-light\.svg$/);
+    const bg = await page.evaluate(
+      () => getComputedStyle(document.body).backgroundColor,
+    );
+    expect(bg).toBe("rgb(244, 241, 234)");
+
+    // Applied before paint on the next visit.
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  });
+
+  test("is dark by default, whatever the device asks", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("./");
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
     const bg = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     );
     expect(bg).toBe("rgb(7, 10, 18)");
-
-    // Applied before paint on the next visit.
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  });
-
-  test("follows the device when nothing is chosen", async ({ page }) => {
-    await page.emulateMedia({ colorScheme: "dark" });
-    await page.goto("./");
-    await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
     await expect(page.getByTestId("theme-toggle")).toHaveAccessibleName(
       "Switch to light theme",
     );

@@ -1,0 +1,22 @@
+.kit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.kit-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.kit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-field {
+  padding: 16px;
+}

@@ -14,7 +14,8 @@ export default defineConfig({
   webServer: {
     command: "npm run build && node scripts/serve-out.ts",
     url: baseURL,
-    env: { ...process.env, BASE_PATH, PORT: String(PORT) } as Record<
+    // KIT=1 builds the component kit page for the axe checks.
+    env: { ...process.env, BASE_PATH, KIT: "1", PORT: String(PORT) } as Record<
       string,
       string
     >,
